@@ -14,8 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
+        // MWRD brand: Plus Jakarta Sans is the primary typeface (Latin).
+        // IBM Plex Sans Arabic ships via the RTL rule in index.css.
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
         display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        arabic: ["IBM Plex Sans Arabic", "Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

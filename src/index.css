@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,80 +6,95 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 40% 13%;
+    /* MWRD brand tokens — see /Users/bigo/Downloads/مورد/Mwrd Guideline.pdf */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%; /* Rich Black #1A1A1A */
 
     --card: 0 0% 100%;
-    --card-foreground: 220 40% 13%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 13%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 220 60% 20%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 0 0% 10%; /* Rich Black */
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 215 25% 94%;
-    --secondary-foreground: 220 40% 13%;
+    --secondary: 38 11% 94%; /* Stone tint */
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 215 20% 94%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 38 11% 94%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 200 80% 45%;
+    --accent: 13 100% 63%; /* Vibrant Carrot #FF6D43 */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 355 80% 62%; /* Lobster Red #EB4F5D */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 215 20% 88%;
-    --input: 215 20% 88%;
-    --ring: 220 60% 20%;
+    --border: 38 11% 88%; /* Stone mid */
+    --input: 38 11% 88%;
+    --ring: 13 100% 63%; /* focus ring = Carrot */
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --navy: 220 60% 20%;
-    --navy-light: 220 50% 30%;
-    --navy-dark: 220 65% 12%;
-    --sky: 200 80% 45%;
-    --sky-light: 200 80% 92%;
+    /* Legacy aliases — kept so existing class names keep working, repointed to brand */
+    --navy: 0 0% 10%;
+    --navy-light: 0 0% 20%;
+    --navy-dark: 0 0% 6%;
+    --sky: 13 100% 63%; /* was blue, now Carrot */
+    --sky-light: 195 54% 86%; /* Interactive Cyan #C6E4EE */
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 0 0% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 38 11% 94%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 38 11% 88%;
+    --sidebar-ring: 13 100% 63%;
   }
 
   .dark {
-    --background: 220 40% 7%;
-    --foreground: 210 20% 95%;
-    --card: 220 40% 10%;
-    --card-foreground: 210 20% 95%;
-    --popover: 220 40% 10%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 200 80% 55%;
-    --primary-foreground: 220 40% 7%;
-    --secondary: 220 30% 16%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 220 30% 16%;
-    --muted-foreground: 215 15% 60%;
-    --accent: 200 80% 55%;
-    --accent-foreground: 220 40% 7%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 30% 18%;
-    --input: 220 30% 18%;
-    --ring: 200 80% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 95%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 13 100% 63%; /* Carrot stays vivid on dark */
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 355 80% 62%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 13 100% 63%;
+
+    --navy: 0 0% 95%;
+    --navy-light: 0 0% 80%;
+    --navy-dark: 0 0% 98%;
+    --sky: 13 100% 63%;
+    --sky-light: 195 40% 30%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 95%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 13 100% 63%;
   }
 }
 
@@ -89,5 +104,10 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+  }
+  /* Arabic text uses IBM Plex Sans Arabic when direction is RTL */
+  [dir="rtl"] body,
+  [dir="rtl"] {
+    font-family: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 }
