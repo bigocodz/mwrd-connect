@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 import AccountStatus from "./pages/AccountStatus";
 import Unauthorized from "./pages/Unauthorized";
 import ClientDashboard from "./pages/dashboards/ClientDashboard";
@@ -62,6 +63,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/change-password" element={<ChangePassword />} />
                 <Route path="/account-status" element={<AccountStatus />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 {/* Client */}

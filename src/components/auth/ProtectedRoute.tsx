@@ -22,6 +22,10 @@ const ProtectedRoute = ({ children, allowedRoles }: Props) => {
     return <Navigate to="/login" replace />;
   }
 
+  if (profile.must_change_password) {
+    return <Navigate to="/change-password" replace />;
+  }
+
   const blockedStatuses = ["PENDING", "REJECTED", "FROZEN", "DEACTIVATED", "REQUIRES_ATTENTION"];
   if (blockedStatuses.includes(profile.status)) {
     return <Navigate to="/account-status" replace />;

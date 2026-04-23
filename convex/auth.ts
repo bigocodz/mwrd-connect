@@ -18,11 +18,13 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       // Parse role/company_name from name field (used by admin-created accounts)
       let role: "CLIENT" | "SUPPLIER" | "ADMIN" = "CLIENT";
       let company_name: string | undefined;
+      let adminCreated = false;
       const profileName = args.profile.name as string | undefined;
       try {
         const meta = JSON.parse(profileName ?? "");
         if (meta.role) role = meta.role;
         if (meta.company_name) company_name = meta.company_name;
+        adminCreated = true;
       } catch {
         // name is a plain string, not JSON — normal self-signup
         company_name = profileName;
@@ -45,6 +47,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         public_id,
         credit_limit: 0,
         current_balance: 0,
+        must_change_password: adminCreated ? true : undefined,
       });
 
       return userId;

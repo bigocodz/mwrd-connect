@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@cvx/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Mail, Phone, Building2, Inbox } from "lucide-react";
+import { Search, Mail, Phone, Building2, Inbox, UserPlus, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
@@ -30,6 +30,7 @@ const accountTypeColors: Record<string, string> = {
 const AdminLeads = () => {
   const leadsData = useQuery(api.leads.listAll);
   const updateStatus = useMutation(api.leads.updateStatus);
+  const approveAndCreateAccount = useAction(api.leads.approveAndCreateAccount);
 
   const loading = leadsData === undefined;
   const leads = leadsData ?? [];
@@ -38,6 +39,8 @@ const AdminLeads = () => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [selected, setSelected] = useState<any>(null);
+  const [approveRole, setApproveRole] = useState<"CLIENT" | "SUPPLIER">("CLIENT");
+  const [approving, setApproving] = useState(false);
 
   const handleUpdateStatus = async (id: string, status: "PENDING" | "REVIEWED" | "APPROVED" | "REJECTED") => {
     try {
@@ -46,6 +49,25 @@ const AdminLeads = () => {
       if (selected?._id === id) setSelected((prev: any) => prev ? { ...prev, status } : prev);
     } catch (err: any) {
       toast.error(err.message);
+    }
+  };
+
+  const openLead = (lead: any) => {
+    setSelected(lead);
+    setApproveRole(lead.account_type === "SUPPLIER" ? "SUPPLIER" : "CLIENT");
+  };
+
+  const handleApproveAndCreate = async () => {
+    if (!selected) return;
+    setApproving(true);
+    try {
+      const result = await approveAndCreateAccount({ id: selected._id, role: approveRole });
+      toast.success(`Account created (${result.public_id ?? "—"}). Credentials emailed to ${result.email}.`);
+      setSelected((prev: any) => (prev ? { ...prev, status: "APPROVED" } : prev));
+    } catch (err: any) {
+      toast.error(err.message || "Failed to approve lead");
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -118,7 +140,7 @@ const AdminLeads = () => {
                 </TableHeader>
                 <TableBody>
                   {paginated.map((l: any) => (
-                    <TableRow key={l._id} className="cursor-pointer" onClick={() => setSelected(l)}>
+                    <TableRow key={l._id} className="cursor-pointer" onClick={() => openLead(l)}>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                         {format(new Date(l._creationTime), "MMM d, yyyy")}
                       </TableCell>
@@ -139,7 +161,7 @@ const AdminLeads = () => {
                         <Badge variant="secondary" className={statusColors[l.status]}>{l.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelected(l); }}>View</Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openLead(l); }}>View</Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -220,6 +242,28 @@ const AdminLeads = () => {
                     ))}
                   </div>
                 </div>
+
+                {selected.status !== "APPROVED" && (
+                  <div className="border-t border-border pt-4">
+                    <p className="text-muted-foreground text-xs uppercase tracking-wide mb-2">Approve & create account</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      This creates a user with an auto-generated temporary password and emails the credentials to <span className="font-medium text-foreground">{selected.email}</span>.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Select value={approveRole} onValueChange={(v) => setApproveRole(v as "CLIENT" | "SUPPLIER")}>
+                        <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CLIENT">Client</SelectItem>
+                          <SelectItem value="SUPPLIER">Supplier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" onClick={handleApproveAndCreate} disabled={approving}>
+                        {approving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <UserPlus className="w-4 h-4 mr-1.5" />}
+                        Approve & email credentials
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

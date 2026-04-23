@@ -17,6 +17,7 @@ type Profile = {
   client_margin?: number;
   frozen_at?: number;
   freeze_reason?: string;
+  must_change_password?: boolean;
 };
 
 type AuthContextType = {

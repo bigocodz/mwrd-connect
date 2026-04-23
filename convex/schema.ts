@@ -31,6 +31,7 @@ export default defineSchema({
     frozen_at: v.optional(v.number()),
     freeze_reason: v.optional(v.string()),
     frozen_by: v.optional(v.id("profiles")),
+    must_change_password: v.optional(v.boolean()),
   })
     .index("by_userId", ["userId"])
     .index("by_role", ["role"])

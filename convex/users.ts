@@ -1,5 +1,7 @@
-import { query, mutation, internalQuery } from "./_generated/server";
-import { v } from "convex/values";
+import { query, mutation, action, internalMutation, internalQuery } from "./_generated/server";
+import { v, ConvexError } from "convex/values";
+import { modifyAccountCredentials } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 import { getAuthenticatedProfile, requireAdmin } from "./lib";
 
 export const getMyProfile = query({
@@ -142,4 +144,57 @@ export const adjustBalance = mutation({
     await ctx.db.patch(args.id, { current_balance: newBalance });
     return { newBalance };
   },
+});
+
+export const activateAndFlagPasswordChange = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (!profile) return;
+    await ctx.db.patch(profile._id, {
+      status: "ACTIVE",
+      must_change_password: true,
+    });
+  },
+});
+
+export const clearMustChangePassword = internalMutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .unique();
+    if (!profile) return;
+    await ctx.db.patch(profile._id, { must_change_password: undefined });
+  },
+});
+
+export const changePassword = action({
+  args: { newPassword: v.string() },
+  handler: async (ctx, args) => {
+    if (args.newPassword.length < 8) {
+      throw new ConvexError("Password must be at least 8 characters");
+    }
+    const profile = await ctx.runQuery(internal.users.getMyProfileInternal);
+    if (!profile) throw new ConvexError("Not authenticated");
+
+    const user = await ctx.runQuery(internal.users.getUserById, { userId: profile.userId });
+    if (!user?.email) throw new ConvexError("No email on account");
+
+    await modifyAccountCredentials(ctx, {
+      provider: "password",
+      account: { id: user.email, secret: args.newPassword },
+    });
+
+    await ctx.runMutation(internal.users.clearMustChangePassword, { userId: profile.userId });
+  },
+});
+
+export const getUserById = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => ctx.db.get(args.userId),
 });
