@@ -1,5 +1,7 @@
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalAction } from "./_generated/server";
 import { v } from "convex/values";
+import { createAccount } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 /**
  * Temporary seed: promotes a user (by email) to ADMIN role with ACTIVE status.
@@ -41,5 +43,31 @@ export const promoteAdmin = internalMutation({
       kyc_status: "VERIFIED",
     });
     return { promoted: true, profileId: profile._id };
+  },
+});
+
+/**
+ * Creates a brand new admin account (user + auth + profile) in one shot.
+ * Run with: npx convex run seed:createAdmin '{"email":"x@y.com","password":"YourPass123"}'
+ */
+export const createAdmin = internalAction({
+  args: { email: v.string(), password: v.string() },
+  handler: async (ctx, args) => {
+    // Create the auth account (user row + password hash) via the auth provider
+    await createAccount(ctx, {
+      provider: "password",
+      account: { id: args.email, secret: args.password },
+      profile: {
+        email: args.email,
+        name: JSON.stringify({
+          role: "ADMIN",
+          company_name: "MWRD Admin",
+        }),
+      },
+    });
+
+    // Now promote the freshly-created user to ADMIN
+    await ctx.runMutation(internal.seed.promoteAdmin, { email: args.email });
+    return { success: true };
   },
 });
