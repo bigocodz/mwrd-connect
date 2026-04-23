@@ -23,6 +23,7 @@ import type * as products from "../products.js";
 import type * as quotes from "../quotes.js";
 import type * as reviews from "../reviews.js";
 import type * as rfqs from "../rfqs.js";
+import type * as seed from "../seed.js";
 import type * as users from "../users.js";
 
 import type {
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   quotes: typeof quotes;
   reviews: typeof reviews;
   rfqs: typeof rfqs;
+  seed: typeof seed;
   users: typeof users;
 }>;
 
