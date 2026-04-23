@@ -1,0 +1,198 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@cvx/api";
+import { calculateFinalPrice, calculatePriceWithVat } from "@/lib/margin";
+import AdminLayout from "@/components/admin/AdminLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { ArrowLeft, Send } from "lucide-react";
+import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
+
+const AdminQuoteReview = () => {
+  const { quoteId } = useParams();
+  const navigate = useNavigate();
+  const sendToClient = useMutation(api.quotes.sendToClient);
+
+  const quoteData = useQuery(api.quotes.getForReview, quoteId ? { id: quoteId as any } : "skip");
+  const loading = quoteData === undefined;
+
+  const [margins, setMargins] = useState<Record<string, number>>({});
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!quoteData) return;
+    const globalMargin = quoteData.marginSettings?.find((m: any) => m.type === "GLOBAL")?.margin_percent ?? 15;
+    const catMargins: Record<string, number> = {};
+    for (const m of quoteData.marginSettings ?? []) {
+      if (m.type === "CATEGORY" && m.category) catMargins[m.category] = m.margin_percent;
+    }
+    const clientMargin = quoteData.rfq?.client_margin;
+
+    const initMargins: Record<string, number> = {};
+    for (const item of quoteData.items ?? []) {
+      const category = item.rfq_item?.product?.category;
+      let suggested = globalMargin;
+      if (clientMargin != null && clientMargin >= 0) {
+        suggested = clientMargin;
+      } else if (category && catMargins[category] != null) {
+        suggested = catMargins[category];
+      }
+      initMargins[item._id] = suggested;
+    }
+    setMargins(initMargins);
+  }, [quoteData?._id]);
+
+  const globalMargin = quoteData?.marginSettings?.find((m: any) => m.type === "GLOBAL")?.margin_percent ?? 15;
+  const catMargins: Record<string, number> = {};
+  for (const m of quoteData?.marginSettings ?? []) {
+    if ((m as any).type === "CATEGORY" && (m as any).category) catMargins[(m as any).category] = (m as any).margin_percent;
+  }
+  const clientMargin = quoteData?.rfq?.client_margin;
+
+  const getCalculated = (costPrice: number, marginPct: number) => {
+    const finalPrice = calculateFinalPrice(costPrice, marginPct);
+    const withVat = calculatePriceWithVat(finalPrice);
+    return { finalPrice: Math.round(finalPrice * 100) / 100, withVat: Math.round(withVat * 100) / 100 };
+  };
+
+  const handleSendToClient = async () => {
+    if (!quoteData) return;
+    setSending(true);
+    try {
+      const itemsPayload = quoteData.items
+        .filter((item: any) => item.is_quoted)
+        .map((item: any) => {
+          const margin = margins[item._id] ?? globalMargin;
+          const costPrice = item.cost_price ?? 0;
+          const { finalPrice, withVat } = getCalculated(costPrice, margin);
+          return { id: item._id, margin_percent: margin, final_price_before_vat: finalPrice, final_price_with_vat: withVat };
+        });
+      await sendToClient({ id: quoteId as any, items: itemsPayload });
+      toast.success("Quote sent to client");
+      navigate("/admin/quotes/pending");
+    } catch (err: any) {
+      toast.error("Error: " + err.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return <AdminLayout><div className="text-muted-foreground text-center py-20">Loading…</div></AdminLayout>;
+  }
+
+  if (!quoteData) {
+    return <AdminLayout><div className="text-center py-20 text-muted-foreground">Quote not found.</div></AdminLayout>;
+  }
+
+  const items = quoteData.items ?? [];
+
+  const totalWithVat = items
+    .filter((i: any) => i.is_quoted)
+    .reduce((sum: number, i: any) => {
+      const margin = margins[i._id] ?? globalMargin;
+      const { withVat } = getCalculated(i.cost_price ?? 0, margin);
+      return sum + withVat * (i.rfq_item?.quantity || 1);
+    }, 0);
+
+  return (
+    <AdminLayout>
+      <div className="max-w-4xl space-y-6">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/admin/quotes/pending")}>
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Review Quote</h1>
+            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+              <span>Quote <span className="font-mono">{quoteId?.slice(0, 8)}</span></span>
+              <span>•</span>
+              <span>Supplier: {quoteData.supplier_public_id}</span>
+              <span>•</span>
+              <span>Client: {quoteData.rfq?.client_public_id}</span>
+            </div>
+          </div>
+        </div>
+
+        {items.map((item: any, idx: number) => {
+          const margin = margins[item._id] ?? globalMargin;
+          const calc = item.is_quoted ? getCalculated(item.cost_price ?? 0, margin) : null;
+          const itemName = item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || "Custom Item";
+          const category = item.rfq_item?.product?.category;
+
+          let marginSource = "Global";
+          if (clientMargin != null && clientMargin >= 0) marginSource = "Client";
+          else if (category && catMargins[category] != null) marginSource = "Category";
+
+          return (
+            <Card key={item._id}>
+              <CardHeader className="py-3 px-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm">Item {idx + 1}: {itemName}</CardTitle>
+                  {!item.is_quoted && <Badge variant="destructive">Unavailable</Badge>}
+                </div>
+                <div className="flex gap-4 text-xs text-muted-foreground mt-1">
+                  <span>Qty: {item.rfq_item?.quantity}</span>
+                  {category && <span>Category: {category}</span>}
+                  {item.alternative_product && <span className="text-primary">Alt: {item.alternative_product.name}</span>}
+                </div>
+              </CardHeader>
+              {item.is_quoted && (
+                <CardContent className="px-4 pb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Supplier Cost (SAR)</Label>
+                      <p className="font-medium">{(item.cost_price ?? 0).toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Lead Time</Label>
+                      <p className="font-medium">{item.lead_time_days} days</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">
+                        Margin % <span className="text-primary">({marginSource})</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="0.1"
+                        value={margin}
+                        onChange={(e) => setMargins((prev) => ({ ...prev, [item._id]: parseFloat(e.target.value) || 0 }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1">Final <VatBadge /></Label>
+                      <p className="font-bold text-lg text-primary">{formatSAR(calc?.withVat || 0)}</p>
+                      <p className="text-xs text-muted-foreground">Before VAT: {formatSAR(calc?.finalPrice || 0)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          );
+        })}
+
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground flex items-center gap-2">Total <VatBadge /></p>
+              <p className="text-2xl font-bold text-primary">{formatSAR(totalWithVat)}</p>
+            </div>
+            <Button onClick={handleSendToClient} disabled={sending} size="lg">
+              <Send className="w-4 h-4 mr-2" />
+              {sending ? "Sending…" : "Send to Client"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default AdminQuoteReview;
