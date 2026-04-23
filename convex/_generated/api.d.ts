@@ -12,6 +12,7 @@ import type * as admin from "../admin.js";
 import type * as auditLog from "../auditLog.js";
 import type * as auth from "../auth.js";
 import type * as dashboard from "../dashboard.js";
+import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as leads from "../leads.js";
 import type * as lib from "../lib.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   auditLog: typeof auditLog;
   auth: typeof auth;
   dashboard: typeof dashboard;
+  email: typeof email;
   http: typeof http;
   leads: typeof leads;
   lib: typeof lib;

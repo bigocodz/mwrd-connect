@@ -1,73 +1,83 @@
-# Welcome to your Lovable project
+# MWRD Connect
 
-## Project info
+B2B procurement platform connecting verified clients with suppliers. Clients submit RFQs, suppliers respond with quotes, and admins review and approve every transaction.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech stack
 
-## How can I edit this code?
+- **Frontend:** Vite + React 18 + TypeScript
+- **Styling:** Tailwind CSS + shadcn/ui + Radix primitives
+- **Backend:** [Convex](https://convex.dev) (database, functions, auth, HTTP endpoints)
+- **Auth:** `@convex-dev/auth` with the Password provider
+- **Email:** [Resend](https://resend.com) HTTP API (called from a Convex action)
+- **Testing:** Vitest + Testing Library + jsdom
 
-There are several ways of editing your application.
+## Project layout
 
-**Use Lovable**
+```
+convex/                Convex backend (schema, queries, mutations, actions, HTTP routes)
+  _generated/          Auto-generated types — do not edit
+  auth.ts              Password provider + profile creation callback
+  email.ts             Resend email sender
+  schema.ts            Database schema
+  http.ts              Public HTTP endpoints (e.g. /submit-lead)
+  leads.ts             Interest submissions + admin approval flow
+  users.ts             Profile queries + password change action
+  ...                  (products, rfqs, quotes, payments, payouts, etc.)
+public/landing/        Static marketing page (served at /landing)
+src/
+  pages/               Route-level screens grouped by role (admin/, client/, supplier/)
+  components/          Shared UI (shadcn primitives + feature components)
+  hooks/useAuth.tsx    Auth context wrapping @convex-dev/auth
+  contexts/            Language + theming providers
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Getting started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Install dependencies
+npm install
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Start the Convex backend (first run will prompt you to log in and link a deployment)
+npx convex dev
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. In another terminal, start the Vite dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend reads `VITE_CONVEX_URL` and `VITE_CONVEX_SITE_URL` from `.env.local`, which `npx convex dev` creates automatically.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Required Convex environment variables
 
-**Use GitHub Codespaces**
+Set these on your Convex deployment with `npx convex env set <NAME> <VALUE>`:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Variable | Purpose |
+|----------|---------|
+| `RESEND_API_KEY` | API key used by `convex/email.ts` to send transactional email. |
+| `RESEND_FROM` | From address, e.g. `"MWRD <no-reply@yourdomain.com>"`. Defaults to Resend's sandbox sender, which only delivers to your Resend account email. |
+| `APP_URL` | Public login URL included in credentials emails, e.g. `https://app.mwrd.example/login`. |
 
-## What technologies are used for this project?
+## Onboarding flow
 
-This project is built with:
+1. **Interest:** Visitor submits the form on `/landing`. It POSTs to the Convex HTTP route `/submit-lead`, which inserts a row into `interest_submissions` with status `PENDING`.
+2. **Review:** An admin opens **Admin → Leads** (`/admin/leads`), reviews the submission, and clicks **Approve & email credentials**.
+3. **Provisioning:** `leads.approveAndCreateAccount` generates a 16-character temporary password, signs up a new user with the admin-chosen role (`CLIENT` or `SUPPLIER`), marks the profile `ACTIVE`, and sets `must_change_password = true`.
+4. **Email:** Resend delivers the temporary credentials to the user.
+5. **First login:** The user signs in; `ProtectedRoute` detects `must_change_password` and redirects them to `/change-password`. Their new password is written via `modifyAccountCredentials`, the flag is cleared, and they're routed to their role dashboard.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Available scripts
 
-## How can I deploy this project?
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start Vite in development mode on port 8080 (auto-reassigned if busy) |
+| `npm run build` | Production build |
+| `npm run build:dev` | Development-mode build (sourcemaps, non-minified) |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run ESLint across the repo |
+| `npm run test` | Run Vitest once |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npx convex dev` | Sync schema and functions to the dev Convex deployment |
+| `npx convex deploy` | Deploy Convex functions to production |
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Deployment
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Any static host works for the frontend (Vercel, Netlify, Cloudflare Pages, etc.). The Convex backend is hosted by Convex — run `npx convex deploy` for production. Make sure production Convex env vars (`RESEND_API_KEY`, `RESEND_FROM`, `APP_URL`) are set before the approval flow is used.
