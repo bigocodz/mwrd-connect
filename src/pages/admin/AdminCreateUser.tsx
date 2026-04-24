@@ -23,8 +23,13 @@ const AdminCreateUser = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (tempPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (
+      tempPassword.length < 8 ||
+      !/[a-z]/.test(tempPassword) ||
+      !/[A-Z]/.test(tempPassword) ||
+      !/\d/.test(tempPassword)
+    ) {
+      toast.error("Password must be 8+ characters with upper, lower, and a number");
       return;
     }
     setLoading(true);
@@ -77,8 +82,8 @@ const AdminCreateUser = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Temporary Password</Label>
-              <Input id="password" type="text" value={tempPassword} onChange={(e) => setTempPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" />
-              <p className="text-xs text-muted-foreground">The user should change this after first login.</p>
+              <Input id="password" type="text" value={tempPassword} onChange={(e) => setTempPassword(e.target.value)} required minLength={8} placeholder="Min 8 chars, upper + lower + number" />
+              <p className="text-xs text-muted-foreground">Requires 8+ characters with uppercase, lowercase, and a number. The user should change this after first login.</p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}

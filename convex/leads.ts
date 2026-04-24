@@ -104,12 +104,26 @@ export const approveAndCreateAccount = action({
 });
 
 function generateTempPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnopqrstuvwxyz";
+  const digits = "23456789";
+  const all = upper + lower + digits;
+
   const buf = new Uint8Array(16);
   crypto.getRandomValues(buf);
-  let out = "";
-  for (let i = 0; i < buf.length; i++) out += chars[buf[i] % chars.length];
-  return out;
+  const pick = (pool: string, i: number) => pool[buf[i] % pool.length];
+
+  const chars = [pick(upper, 0), pick(lower, 1), pick(digits, 2)];
+  for (let i = 3; i < buf.length; i++) chars.push(pick(all, i));
+
+  // Fisher–Yates shuffle so the guaranteed classes aren't always at the start.
+  const shuffle = new Uint8Array(chars.length);
+  crypto.getRandomValues(shuffle);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = shuffle[i] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
 }
 
 function escapeHtml(s: string): string {
