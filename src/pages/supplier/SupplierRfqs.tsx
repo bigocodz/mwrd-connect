@@ -15,6 +15,16 @@ const statusColor: Record<string, string> = {
   CLOSED: "bg-muted text-muted-foreground",
 };
 
+const quoteStatusLabel: Record<string, string> = {
+  PENDING_ADMIN: "Pending MWRD review",
+  SENT_TO_CLIENT: "Sent to client",
+  CLIENT_REVISION_REQUESTED: "Client requested revision",
+  SUPPLIER_REVISION_REQUESTED: "Revision requested",
+  REVISION_SUBMITTED: "Revision submitted",
+  ACCEPTED: "Accepted",
+  REJECTED: "Rejected",
+};
+
 const SupplierRfqs = () => {
   const assignmentsData = useQuery(api.rfqs.listAssigned);
   const loading = assignmentsData === undefined;
@@ -53,9 +63,15 @@ const SupplierRfqs = () => {
                     <TableCell>{a.rfq?.items_count}</TableCell>
                     <TableCell className="text-sm">{a.assigned_at ? new Date(a.assigned_at).toLocaleDateString() : new Date(a._creationTime).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      {a.has_quote ? <Badge variant="secondary">Quoted</Badge>
-                        : a.rfq?.status === "OPEN" ? <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>Respond</Link></Button>
-                        : <span className="text-xs text-muted-foreground">Closed</span>}
+                      {a.existing_quote_status === "SUPPLIER_REVISION_REQUESTED" ? (
+                        <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>Revise</Link></Button>
+                      ) : a.has_quote ? (
+                        <Badge variant="secondary">{quoteStatusLabel[a.existing_quote_status] || "Quoted"}</Badge>
+                      ) : a.rfq?.status === "OPEN" ? (
+                        <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>Respond</Link></Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Closed</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

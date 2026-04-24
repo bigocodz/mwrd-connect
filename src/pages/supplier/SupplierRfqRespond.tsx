@@ -64,6 +64,7 @@ const SupplierRfqRespond = () => {
   const { rfqId } = useParams();
   const navigate = useNavigate();
   const submitQuote = useMutation(api.quotes.submit);
+  const reviseQuote = useMutation(api.quotes.reviseBySupplier);
   const generateUploadUrl = useMutation(api.rfqs.generateAttachmentUploadUrl);
 
   const rfqData = useQuery(api.rfqs.getAssigned, rfqId ? { rfq_id: rfqId as any } : "skip");
@@ -74,22 +75,26 @@ const SupplierRfqRespond = () => {
   const [attachments, setAttachments] = useState<QuoteAttachmentDraft[]>([]);
   const [uploadingAttachmentKey, setUploadingAttachmentKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const existingQuote = rfqData?.existingQuote;
+  const isRevision = existingQuote?.status === "SUPPLIER_REVISION_REQUESTED";
 
   useEffect(() => {
     if (!rfqData) return;
     const init: Record<string, ItemResponse> = {};
     for (const item of rfqData.items ?? []) {
+      const existingItem = existingQuote?.items?.find((quoteItem: any) => quoteItem.rfq_item_id === item._id);
       init[item._id] = {
         rfq_item_id: item._id,
-        is_quoted: true,
-        cost_price: 0,
-        lead_time_days: 7,
-        supplier_product_id: item.product_id ?? null,
-        alternative_product_id: null,
+        is_quoted: existingItem?.is_quoted ?? true,
+        cost_price: existingItem?.cost_price ?? 0,
+        lead_time_days: existingItem?.lead_time_days ?? 7,
+        supplier_product_id: existingItem?.supplier_product_id ?? item.product_id ?? null,
+        alternative_product_id: existingItem?.alternative_product_id ?? null,
       };
     }
     setResponses(init);
-  }, [rfqData?._id]);
+    setSupplierNotes(existingQuote?.supplier_notes ?? "");
+  }, [rfqData?._id, existingQuote?._id]);
 
   const updateResponse = (itemId: string, updates: Partial<ItemResponse>) => {
     setResponses((prev) => ({ ...prev, [itemId]: { ...prev[itemId], ...updates } }));
@@ -155,8 +160,7 @@ const SupplierRfqRespond = () => {
         supplier_product_id: r.supplier_product_id ? (r.supplier_product_id as any) : undefined,
         alternative_product_id: r.alternative_product_id ? (r.alternative_product_id as any) : undefined,
       }));
-      await submitQuote({
-        rfq_id: rfqId as any,
+      const payload = {
         supplier_notes: supplierNotes || undefined,
         attachments: attachments.map(({ key: _key, notes, storage_id, url, content_type, size, ...attachment }) => ({
           ...attachment,
@@ -167,8 +171,14 @@ const SupplierRfqRespond = () => {
           notes: notes || undefined,
         })),
         items,
-      });
-      toast.success("Quote submitted for admin review");
+      };
+      if (isRevision && existingQuote?._id) {
+        await reviseQuote({ quote_id: existingQuote._id as any, ...payload });
+        toast.success("Revised quote submitted for MWRD review");
+      } else {
+        await submitQuote({ rfq_id: rfqId as any, ...payload });
+        toast.success("Quote submitted for admin review");
+      }
       navigate("/supplier/rfqs");
     } catch (err: any) {
       toast.error("Error submitting quote: " + err.message);
@@ -188,6 +198,7 @@ const SupplierRfqRespond = () => {
   const rfqItems = rfqData.items ?? [];
   const myProducts = rfqData.myProducts ?? [];
   const requestAttachments = rfqData.attachments ?? [];
+  const revisionEvents = existingQuote?.revision_events ?? [];
 
   return (
     <SupplierLayout>
@@ -197,12 +208,20 @@ const SupplierRfqRespond = () => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Respond to RFQ</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">{isRevision ? "Revise Quote" : "Respond to RFQ"}</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              RFQ <span className="font-mono">{rfqId?.slice(0, 8)}</span> — Provide pricing for each item
+              RFQ <span className="font-mono">{rfqId?.slice(0, 8)}</span> — {isRevision ? "Update pricing, documents, or terms requested by MWRD" : "Provide pricing for each item"}
             </p>
           </div>
         </div>
+
+        {existingQuote && !isRevision && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardContent className="py-4 text-sm text-amber-900">
+              This RFQ already has a quote with status <span className="font-medium">{existingQuote.status.replace(/_/g, " ")}</span>.
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -252,6 +271,25 @@ const SupplierRfqRespond = () => {
                       Open
                     </a>
                   </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {revisionEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Revision history</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {revisionEvents.map((event: any) => (
+                <div key={event._id} className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <Badge variant="secondary">{event.actor_role}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{event.message}</p>
                 </div>
               ))}
             </CardContent>
@@ -414,9 +452,9 @@ const SupplierRfqRespond = () => {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate("/supplier/rfqs")}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
+          <Button onClick={handleSubmit} disabled={submitting || (!!existingQuote && !isRevision)}>
             <Send className="w-4 h-4 mr-2" />
-            {submitting ? "Submitting…" : "Submit Quote"}
+            {submitting ? "Submitting…" : isRevision ? "Submit Revision" : "Submit Quote"}
           </Button>
         </div>
       </div>

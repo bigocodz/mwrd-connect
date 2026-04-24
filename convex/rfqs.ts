@@ -161,6 +161,13 @@ export const listAssigned = query({
           .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
           .filter((q) => q.eq(q.field("supplier_id"), profile._id))
           .unique();
+        const revisionEvents = existingQuote
+          ? await ctx.db
+              .query("quote_revision_events")
+              .withIndex("by_quote", (q) => q.eq("quote_id", existingQuote._id))
+              .order("asc")
+              .collect()
+          : [];
         return {
           ...a,
           rfq: {
@@ -169,6 +176,9 @@ export const listAssigned = query({
             items_count: items.length,
           },
           has_quote: !!existingQuote,
+          quote_id: existingQuote?._id,
+          existing_quote_status: existingQuote?.status,
+          latest_revision_event: revisionEvents[revisionEvents.length - 1] ?? null,
         };
       }),
     );
@@ -207,13 +217,41 @@ export const getAssigned = query({
       .withIndex("by_rfq", (q) => q.eq("rfq_id", args.rfq_id))
       .filter((q) => q.eq(q.field("supplier_id"), profile._id))
       .unique();
+    let existingQuoteWithDetails = null;
+    if (existingQuote) {
+      const quoteItems = await ctx.db
+        .query("quote_items")
+        .withIndex("by_quote", (q) => q.eq("quote_id", existingQuote._id))
+        .collect();
+      const quoteAttachments = await ctx.db
+        .query("procurement_attachments")
+        .withIndex("by_quote", (q) => q.eq("quote_id", existingQuote._id))
+        .collect();
+      const revisionEvents = await ctx.db
+        .query("quote_revision_events")
+        .withIndex("by_quote", (q) => q.eq("quote_id", existingQuote._id))
+        .order("asc")
+        .collect();
+      existingQuoteWithDetails = {
+        ...existingQuote,
+        items: quoteItems,
+        attachments: await resolveAttachments(ctx, quoteAttachments),
+        revision_events: revisionEvents,
+      };
+    }
     // Get supplier's own approved products for the quote form
     const myProducts = await ctx.db
       .query("products")
       .withIndex("by_supplier", (q) => q.eq("supplier_id", profile._id))
       .filter((q) => q.eq(q.field("approval_status"), "APPROVED"))
       .collect();
-    return { ...rfq, items: itemsWithProducts, attachments: await resolveAttachments(ctx, attachments), existingQuote, myProducts };
+    return {
+      ...rfq,
+      items: itemsWithProducts,
+      attachments: await resolveAttachments(ctx, attachments),
+      existingQuote: existingQuoteWithDetails,
+      myProducts,
+    };
   },
 });
 

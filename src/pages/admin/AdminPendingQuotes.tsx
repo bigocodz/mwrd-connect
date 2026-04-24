@@ -3,6 +3,7 @@ import { api } from "@cvx/api";
 import { Link } from "react-router-dom";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Loader2 } from "lucide-react";
@@ -35,6 +36,7 @@ const AdminPendingQuotes = () => {
               <TableRow>
                 <TableHead>Quote ID</TableHead>
                 <TableHead>Supplier</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>RFQ</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Submitted</TableHead>
@@ -46,6 +48,9 @@ const AdminPendingQuotes = () => {
                 <TableRow key={q._id}>
                   <TableCell className="font-mono text-xs">{q._id.slice(0, 8)}…</TableCell>
                   <TableCell className="font-medium">{(q as any).supplier_public_id}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{q.status.replace(/_/g, " ")}</Badge>
+                  </TableCell>
                   <TableCell className="font-mono text-xs">{q.rfq_id.slice(0, 8)}…</TableCell>
                   <TableCell>{(q as any).items_count}</TableCell>
                   <TableCell className="text-sm">{new Date(q._creationTime).toLocaleDateString()}</TableCell>

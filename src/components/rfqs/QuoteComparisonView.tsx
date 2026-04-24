@@ -141,7 +141,7 @@ export const QuoteComparisonView = ({ comparison, mode, backHref }: QuoteCompari
                         ))}
                       </div>
                     )}
-                    {mode === "admin" && quote.status === "PENDING_ADMIN" && (
+                    {mode === "admin" && ["PENDING_ADMIN", "CLIENT_REVISION_REQUESTED", "REVISION_SUBMITTED"].includes(quote.status) && (
                       <Button className="w-full" asChild>
                         <Link to={`/admin/quotes/${quote._id}/review`}>Review Quote</Link>
                       </Button>

@@ -104,12 +104,16 @@ export default defineSchema({
     status: v.union(
       v.literal("PENDING_ADMIN"),
       v.literal("SENT_TO_CLIENT"),
+      v.literal("CLIENT_REVISION_REQUESTED"),
+      v.literal("SUPPLIER_REVISION_REQUESTED"),
+      v.literal("REVISION_SUBMITTED"),
       v.literal("ACCEPTED"),
       v.literal("REJECTED"),
     ),
     reviewed_by: v.optional(v.id("profiles")),
     reviewed_at: v.optional(v.number()),
     supplier_notes: v.optional(v.string()),
+    revision_count: v.optional(v.number()),
   })
     .index("by_rfq", ["rfq_id"])
     .index("by_supplier", ["supplier_id"])
@@ -127,6 +131,23 @@ export default defineSchema({
     final_price_before_vat: v.optional(v.number()),
     final_price_with_vat: v.optional(v.number()),
   }).index("by_quote", ["quote_id"]),
+
+  quote_revision_events: defineTable({
+    quote_id: v.id("quotes"),
+    rfq_id: v.id("rfqs"),
+    actor_id: v.id("profiles"),
+    actor_role: v.union(v.literal("CLIENT"), v.literal("SUPPLIER"), v.literal("ADMIN")),
+    event_type: v.union(
+      v.literal("CLIENT_REQUESTED"),
+      v.literal("ADMIN_REQUESTED"),
+      v.literal("SUPPLIER_SUBMITTED"),
+      v.literal("ADMIN_SENT_TO_CLIENT"),
+    ),
+    message: v.string(),
+    created_at: v.number(),
+  })
+    .index("by_quote", ["quote_id"])
+    .index("by_rfq", ["rfq_id"]),
 
   procurement_attachments: defineTable({
     rfq_id: v.optional(v.id("rfqs")),

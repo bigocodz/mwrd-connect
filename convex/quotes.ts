@@ -19,6 +19,8 @@ const attachmentInput = v.object({
   notes: v.optional(v.string()),
 });
 
+const adminReviewStatuses = ["PENDING_ADMIN", "CLIENT_REVISION_REQUESTED", "REVISION_SUBMITTED"] as const;
+
 const resolveAttachments = async (ctx: any, attachments: any[]) =>
   Promise.all(
     attachments.map(async (attachment) => {
@@ -56,6 +58,31 @@ const getQuoteAttachments = async (ctx: any, quoteId: any) =>
       .withIndex("by_quote", (q: any) => q.eq("quote_id", quoteId))
       .collect(),
   );
+
+const getRevisionEvents = async (ctx: any, quoteId: any) =>
+  ctx.db
+    .query("quote_revision_events")
+    .withIndex("by_quote", (q: any) => q.eq("quote_id", quoteId))
+    .order("asc")
+    .collect();
+
+const notifyAdmins = async (ctx: any, title: string, message: string, link: string) => {
+  const admins = await ctx.db
+    .query("profiles")
+    .withIndex("by_role", (q: any) => q.eq("role", "ADMIN"))
+    .collect();
+  await Promise.all(
+    admins.map((admin: any) =>
+      ctx.db.insert("notifications", {
+        user_id: admin._id,
+        title,
+        message,
+        link,
+        read: false,
+      }),
+    ),
+  );
+};
 
 const calculateQuoteMetrics = (rfqItems: any[], quoteItems: any[]) => {
   const quotedItems = quoteItems.filter((item) => item.is_quoted);
@@ -154,11 +181,15 @@ const buildComparison = async (ctx: any, rfq: any, quotes: any[]) => {
 export const listPending = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    const quotes = await ctx.db
-      .query("quotes")
-      .withIndex("by_status", (q) => q.eq("status", "PENDING_ADMIN"))
-      .order("desc")
-      .collect();
+    const quoteArrays = await Promise.all(
+      adminReviewStatuses.map((status) =>
+        ctx.db
+          .query("quotes")
+          .withIndex("by_status", (q) => q.eq("status", status))
+          .collect(),
+      ),
+    );
+    const quotes = quoteArrays.flat().sort((a, b) => b._creationTime - a._creationTime);
     return Promise.all(
       quotes.map(async (q) => {
         const supplier = await ctx.db.get(q.supplier_id);
@@ -166,11 +197,14 @@ export const listPending = query({
           .query("quote_items")
           .withIndex("by_quote", (q2) => q2.eq("quote_id", q._id))
           .collect();
+        const revisionEvents = await getRevisionEvents(ctx, q._id);
+        const latestRevisionEvent = revisionEvents[revisionEvents.length - 1] ?? null;
         return {
           ...q,
           supplier_public_id: supplier?.public_id ?? "—",
           supplier_company_name: supplier?.company_name,
           items_count: items.length,
+          latest_revision_event: latestRevisionEvent,
         };
       }),
     );
@@ -188,6 +222,7 @@ export const getForReview = query({
     const client = rfq ? await ctx.db.get(rfq.client_id) : null;
     const itemsWithDetails = await getQuoteItemsWithDetails(ctx, args.id);
     const attachments = await getQuoteAttachments(ctx, args.id);
+    const revisionEvents = await getRevisionEvents(ctx, args.id);
     const marginSettings = await ctx.db.query("margin_settings").collect();
     return {
       ...quote,
@@ -202,6 +237,7 @@ export const getForReview = query({
         : null,
       items: itemsWithDetails,
       attachments,
+      revision_events: revisionEvents,
       marginSettings,
     };
   },
@@ -247,7 +283,8 @@ export const getById = query({
     if (!rfq || rfq.client_id !== profile._id) return null;
     const itemsWithDetails = await getQuoteItemsWithDetails(ctx, args.id);
     const attachments = await getQuoteAttachments(ctx, args.id);
-    return { ...quote, items: itemsWithDetails, attachments };
+    const revisionEvents = await getRevisionEvents(ctx, args.id);
+    return { ...quote, items: itemsWithDetails, attachments, revision_events: revisionEvents };
   },
 });
 
@@ -316,6 +353,7 @@ export const submit = mutation({
       supplier_id: profile._id,
       status: "PENDING_ADMIN",
       supplier_notes: args.supplier_notes,
+      revision_count: 0,
     });
     await Promise.all(args.items.map((item) => ctx.db.insert("quote_items", { ...item, quote_id: quoteId })));
     await Promise.all(
@@ -348,6 +386,9 @@ export const sendToClient = mutation({
     const admin = await requireAdmin(ctx);
     const quote = await ctx.db.get(args.id);
     if (!quote) throw new Error("Quote not found");
+    if (quote.status === "SUPPLIER_REVISION_REQUESTED") {
+      throw new Error("Supplier revision is still pending");
+    }
 
     await Promise.all(
       args.items.map((item) =>
@@ -363,6 +404,17 @@ export const sendToClient = mutation({
       reviewed_by: admin._id,
       reviewed_at: Date.now(),
     });
+    if (quote.status !== "PENDING_ADMIN") {
+      await ctx.db.insert("quote_revision_events", {
+        quote_id: args.id,
+        rfq_id: quote.rfq_id,
+        actor_id: admin._id,
+        actor_role: "ADMIN",
+        event_type: "ADMIN_SENT_TO_CLIENT",
+        message: "MWRD sent the revised quote to the client.",
+        created_at: Date.now(),
+      });
+    }
 
     const rfq = await ctx.db.get(quote.rfq_id);
     if (rfq) {
@@ -389,9 +441,159 @@ export const respond = mutation({
     if (!quote) throw new Error("Quote not found");
     const rfq = await ctx.db.get(quote.rfq_id);
     if (!rfq || rfq.client_id !== profile._id) throw new Error("Not authorized");
+    if (quote.status !== "SENT_TO_CLIENT") throw new Error("Quote is not ready for client response");
     await ctx.db.patch(args.id, { status: args.status });
     if (args.status === "ACCEPTED") {
       await ctx.db.patch(rfq._id, { status: "CLOSED" });
     }
+  },
+});
+
+export const requestClientRevision = mutation({
+  args: {
+    id: v.id("quotes"),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const profile = await requireClient(ctx);
+    const quote = await ctx.db.get(args.id);
+    if (!quote) throw new Error("Quote not found");
+    if (quote.status !== "SENT_TO_CLIENT") throw new Error("Only sent quotes can be revised");
+    const rfq = await ctx.db.get(quote.rfq_id);
+    if (!rfq || rfq.client_id !== profile._id) throw new Error("Not authorized");
+
+    await ctx.db.patch(args.id, {
+      status: "CLIENT_REVISION_REQUESTED",
+      revision_count: (quote.revision_count ?? 0) + 1,
+    });
+    await ctx.db.insert("quote_revision_events", {
+      quote_id: args.id,
+      rfq_id: quote.rfq_id,
+      actor_id: profile._id,
+      actor_role: "CLIENT",
+      event_type: "CLIENT_REQUESTED",
+      message: args.message,
+      created_at: Date.now(),
+    });
+    await notifyAdmins(
+      ctx,
+      "Client requested quote revision",
+      "A client requested changes to a quote.",
+      `/admin/quotes/${args.id}/review`,
+    );
+  },
+});
+
+export const requestSupplierRevision = mutation({
+  args: {
+    id: v.id("quotes"),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx);
+    const quote = await ctx.db.get(args.id);
+    if (!quote) throw new Error("Quote not found");
+    if (!["PENDING_ADMIN", "CLIENT_REVISION_REQUESTED", "REVISION_SUBMITTED"].includes(quote.status)) {
+      throw new Error("Quote cannot be sent for supplier revision");
+    }
+
+    await ctx.db.patch(args.id, { status: "SUPPLIER_REVISION_REQUESTED" });
+    await ctx.db.insert("quote_revision_events", {
+      quote_id: args.id,
+      rfq_id: quote.rfq_id,
+      actor_id: admin._id,
+      actor_role: "ADMIN",
+      event_type: "ADMIN_REQUESTED",
+      message: args.message,
+      created_at: Date.now(),
+    });
+    await ctx.db.insert("notifications", {
+      user_id: quote.supplier_id,
+      title: "Quote revision requested",
+      message: "MWRD requested updates to your quote.",
+      link: `/supplier/rfqs/${quote.rfq_id}/respond`,
+      read: false,
+    });
+  },
+});
+
+export const reviseBySupplier = mutation({
+  args: {
+    quote_id: v.id("quotes"),
+    supplier_notes: v.optional(v.string()),
+    attachments: v.optional(v.array(attachmentInput)),
+    items: v.array(
+      v.object({
+        rfq_item_id: v.id("rfq_items"),
+        is_quoted: v.boolean(),
+        cost_price: v.optional(v.number()),
+        lead_time_days: v.optional(v.number()),
+        supplier_product_id: v.optional(v.id("products")),
+        alternative_product_id: v.optional(v.id("products")),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const profile = await requireSupplier(ctx);
+    const quote = await ctx.db.get(args.quote_id);
+    if (!quote || quote.supplier_id !== profile._id) throw new Error("Quote not found");
+    if (quote.status !== "SUPPLIER_REVISION_REQUESTED") throw new Error("No supplier revision is currently requested");
+
+    const existingItems = await ctx.db
+      .query("quote_items")
+      .withIndex("by_quote", (q) => q.eq("quote_id", args.quote_id))
+      .collect();
+
+    await Promise.all(
+      args.items.map(async (item) => {
+        const existing = existingItems.find((candidate) => candidate.rfq_item_id === item.rfq_item_id);
+        const patch = {
+          is_quoted: item.is_quoted,
+          supplier_product_id: item.supplier_product_id,
+          alternative_product_id: item.alternative_product_id,
+          cost_price: item.is_quoted ? item.cost_price : undefined,
+          lead_time_days: item.is_quoted ? item.lead_time_days : undefined,
+          margin_percent: undefined,
+          final_price_before_vat: undefined,
+          final_price_with_vat: undefined,
+        };
+        if (existing) {
+          await ctx.db.patch(existing._id, patch);
+        } else {
+          await ctx.db.insert("quote_items", { ...patch, quote_id: args.quote_id, rfq_item_id: item.rfq_item_id });
+        }
+      }),
+    );
+
+    await Promise.all(
+      (args.attachments ?? []).map((attachment) =>
+        ctx.db.insert("procurement_attachments", {
+          ...attachment,
+          quote_id: args.quote_id,
+          uploaded_by: profile._id,
+          created_at: Date.now(),
+        }),
+      ),
+    );
+
+    await ctx.db.patch(args.quote_id, {
+      status: "REVISION_SUBMITTED",
+      supplier_notes: args.supplier_notes,
+    });
+    await ctx.db.insert("quote_revision_events", {
+      quote_id: args.quote_id,
+      rfq_id: quote.rfq_id,
+      actor_id: profile._id,
+      actor_role: "SUPPLIER",
+      event_type: "SUPPLIER_SUBMITTED",
+      message: args.supplier_notes || "Supplier submitted a revised quote.",
+      created_at: Date.now(),
+    });
+    await notifyAdmins(
+      ctx,
+      "Supplier submitted revised quote",
+      "A revised quote is ready for MWRD review.",
+      `/admin/quotes/${args.quote_id}/review`,
+    );
   },
 });

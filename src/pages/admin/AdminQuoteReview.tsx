@@ -6,11 +6,12 @@ import { calculateFinalPrice, calculatePriceWithVat } from "@/lib/margin";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, ExternalLink, FileText, Send } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, MessageSquare, Send } from "lucide-react";
 import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
 
 const documentLabel: Record<string, string> = {
@@ -26,12 +27,15 @@ const AdminQuoteReview = () => {
   const { quoteId } = useParams();
   const navigate = useNavigate();
   const sendToClient = useMutation(api.quotes.sendToClient);
+  const requestSupplierRevision = useMutation(api.quotes.requestSupplierRevision);
 
   const quoteData = useQuery(api.quotes.getForReview, quoteId ? { id: quoteId as any } : "skip");
   const loading = quoteData === undefined;
 
   const [margins, setMargins] = useState<Record<string, number>>({});
+  const [revisionInstructions, setRevisionInstructions] = useState("");
   const [sending, setSending] = useState(false);
+  const [requestingRevision, setRequestingRevision] = useState(false);
 
   useEffect(() => {
     if (!quoteData) return;
@@ -91,6 +95,23 @@ const AdminQuoteReview = () => {
     }
   };
 
+  const handleRequestSupplierRevision = async () => {
+    if (!quoteData || !revisionInstructions.trim()) {
+      toast.error("Add instructions for the supplier");
+      return;
+    }
+    setRequestingRevision(true);
+    try {
+      await requestSupplierRevision({ id: quoteId as any, message: revisionInstructions.trim() });
+      toast.success("Revision request sent to supplier");
+      navigate("/admin/quotes/pending");
+    } catch (err: any) {
+      toast.error("Error: " + err.message);
+    } finally {
+      setRequestingRevision(false);
+    }
+  };
+
   if (loading) {
     return <AdminLayout><div className="text-muted-foreground text-center py-20">Loading…</div></AdminLayout>;
   }
@@ -101,6 +122,9 @@ const AdminQuoteReview = () => {
 
   const items = quoteData.items ?? [];
   const attachments = quoteData.attachments ?? [];
+  const revisionEvents = quoteData.revision_events ?? [];
+  const canRequestSupplierRevision = ["PENDING_ADMIN", "CLIENT_REVISION_REQUESTED", "REVISION_SUBMITTED"].includes(quoteData.status);
+  const canSendToClient = quoteData.status !== "SUPPLIER_REVISION_REQUESTED";
 
   const totalWithVat = items
     .filter((i: any) => i.is_quoted)
@@ -157,6 +181,31 @@ const AdminQuoteReview = () => {
                       Open
                     </a>
                   </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {revisionEvents.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                Revision timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {revisionEvents.map((event: any) => (
+                <div key={event._id} className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{event.actor_role}</Badge>
+                      <span className="text-xs text-muted-foreground">{event.event_type.replace(/_/g, " ")}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{event.message}</p>
                 </div>
               ))}
             </CardContent>
@@ -222,15 +271,42 @@ const AdminQuoteReview = () => {
           );
         })}
 
+        {canRequestSupplierRevision && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                Request supplier revision
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <Label>Instructions</Label>
+                <Textarea
+                  value={revisionInstructions}
+                  onChange={(e) => setRevisionInstructions(e.target.value)}
+                  placeholder="Ask for revised prices, faster delivery, alternate product details, missing documents, or commercial clarification…"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={handleRequestSupplierRevision} disabled={requestingRevision}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  {requestingRevision ? "Sending…" : "Send Revision Request"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="bg-primary/5 border-primary/20">
           <CardContent className="py-4 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground flex items-center gap-2">Total <VatBadge /></p>
               <p className="text-2xl font-bold text-primary">{formatSAR(totalWithVat)}</p>
             </div>
-            <Button onClick={handleSendToClient} disabled={sending} size="lg">
+            <Button onClick={handleSendToClient} disabled={sending || !canSendToClient} size="lg">
               <Send className="w-4 h-4 mr-2" />
-              {sending ? "Sending…" : "Send to Client"}
+              {quoteData.status === "SUPPLIER_REVISION_REQUESTED" ? "Waiting for Supplier" : sending ? "Sending…" : "Send to Client"}
             </Button>
           </CardContent>
         </Card>

@@ -5,10 +5,12 @@ import ClientLayout from "@/components/client/ClientLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, MessageSquare, XCircle } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
@@ -16,6 +18,9 @@ import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
 
 const statusColor: Record<string, string> = {
   SENT_TO_CLIENT: "bg-blue-100 text-blue-800",
+  CLIENT_REVISION_REQUESTED: "bg-amber-100 text-amber-800",
+  SUPPLIER_REVISION_REQUESTED: "bg-amber-100 text-amber-800",
+  REVISION_SUBMITTED: "bg-purple-100 text-purple-800",
   ACCEPTED: "bg-green-100 text-green-800",
   REJECTED: "bg-red-100 text-red-800",
 };
@@ -25,10 +30,12 @@ const ClientQuotes = () => {
   const loading = quotesData === undefined;
   const quotes = quotesData ?? [];
   const respond = useMutation(api.quotes.respond);
+  const requestRevision = useMutation(api.quotes.requestClientRevision);
 
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [acting, setActing] = useState(false);
+  const [revisionMessage, setRevisionMessage] = useState("");
   const { page, setPage, totalPages, paginated, total } = usePagination(quotes);
 
   const detailData = useQuery(
@@ -37,9 +44,11 @@ const ClientQuotes = () => {
   );
   const quoteItems = detailData?.items ?? [];
   const selectedQuote = quotes.find((q: any) => q._id === selectedQuoteId);
+  const revisionEvents = detailData?.revision_events ?? [];
 
   const openDetail = (quoteId: string) => {
     setSelectedQuoteId(quoteId);
+    setRevisionMessage("");
     setDetailOpen(true);
   };
 
@@ -49,6 +58,24 @@ const ClientQuotes = () => {
     try {
       await respond({ id: selectedQuoteId as any, status });
       toast.success(status === "ACCEPTED" ? "Quote accepted!" : "Quote rejected");
+      setDetailOpen(false);
+    } catch (err: any) {
+      toast.error("Error: " + err.message);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleRevisionRequest = async () => {
+    if (!selectedQuoteId || !revisionMessage.trim()) {
+      toast.error("Add revision notes for MWRD");
+      return;
+    }
+    setActing(true);
+    try {
+      await requestRevision({ id: selectedQuoteId as any, message: revisionMessage.trim() });
+      toast.success("Revision request sent to MWRD");
+      setRevisionMessage("");
       setDetailOpen(false);
     } catch (err: any) {
       toast.error("Error: " + err.message);
@@ -156,15 +183,42 @@ const ClientQuotes = () => {
               </p>
             </div>
           )}
+          {revisionEvents.length > 0 && (
+            <div className="space-y-2 border-t pt-3">
+              <p className="text-sm font-medium">Revision history</p>
+              {revisionEvents.map((event: any) => (
+                <div key={event._id} className="rounded-lg border border-border p-3 text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <Badge variant="secondary">{event.actor_role.replace(/_/g, " ")}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="mt-2 text-muted-foreground">{event.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
           {selectedQuote?.status === "SENT_TO_CLIENT" && (
-            <DialogFooter className="gap-2">
-              <Button variant="destructive" onClick={() => handleAction("REJECTED")} disabled={acting}>
-                <XCircle className="w-4 h-4 mr-2" /> Reject
-              </Button>
-              <Button onClick={() => handleAction("ACCEPTED")} disabled={acting}>
-                <CheckCircle className="w-4 h-4 mr-2" /> Accept Quote
-              </Button>
-            </DialogFooter>
+            <>
+              <div className="space-y-2 border-t pt-3">
+                <Label>Request Revision</Label>
+                <Textarea
+                  value={revisionMessage}
+                  onChange={(e) => setRevisionMessage(e.target.value)}
+                  placeholder="Tell MWRD what should change: quantities, delivery date, item substitution, pricing, payment terms…"
+                />
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="destructive" onClick={() => handleAction("REJECTED")} disabled={acting}>
+                  <XCircle className="w-4 h-4 mr-2" /> Reject
+                </Button>
+                <Button variant="outline" onClick={handleRevisionRequest} disabled={acting}>
+                  <MessageSquare className="w-4 h-4 mr-2" /> Request Revision
+                </Button>
+                <Button onClick={() => handleAction("ACCEPTED")} disabled={acting}>
+                  <CheckCircle className="w-4 h-4 mr-2" /> Accept Quote
+                </Button>
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>

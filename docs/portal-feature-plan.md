@@ -16,6 +16,7 @@ MWRD should stay focused on competitive RFQ-led procurement, verified suppliers,
 ## Phase 2: RFQ Depth
 
 - Started in the app with RFQ templates, RFQ document links, supplier quote document links, client quote comparison, and admin quote scoring/comparison.
+- Added quote revision flow: client revision requests, admin supplier revision requests, supplier resubmission, and quote revision timeline.
 - Add RFQ attachments for specs, quotations, purchase policies, and supporting documents.
 - Add side-by-side quote comparison for clients.
 - Add admin-side quote comparison and supplier scoring.
