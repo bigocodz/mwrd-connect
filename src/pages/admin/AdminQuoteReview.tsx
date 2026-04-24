@@ -10,8 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, Send } from "lucide-react";
 import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
+
+const documentLabel: Record<string, string> = {
+  SPECIFICATION: "Specification",
+  PURCHASE_POLICY: "Purchase Policy",
+  SUPPORTING_DOCUMENT: "Supporting Document",
+  SUPPLIER_QUOTATION: "Supplier Quotation",
+  COMMERCIAL_TERMS: "Commercial Terms",
+  OTHER: "Other",
+};
 
 const AdminQuoteReview = () => {
   const { quoteId } = useParams();
@@ -91,6 +100,7 @@ const AdminQuoteReview = () => {
   }
 
   const items = quoteData.items ?? [];
+  const attachments = quoteData.attachments ?? [];
 
   const totalWithVat = items
     .filter((i: any) => i.is_quoted)
@@ -118,6 +128,40 @@ const AdminQuoteReview = () => {
             </div>
           </div>
         </div>
+
+        {(quoteData.supplier_notes || attachments.length > 0) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4 text-primary" />
+                Supplier context
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {quoteData.supplier_notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Notes</p>
+                  <p className="text-sm font-medium">{quoteData.supplier_notes}</p>
+                </div>
+              )}
+              {attachments.map((attachment: any) => (
+                <div key={attachment._id} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+                  <div>
+                    <Badge variant="secondary" className="mb-2">{documentLabel[attachment.document_type] || attachment.document_type}</Badge>
+                    <p className="font-medium">{attachment.name}</p>
+                    {attachment.notes && <p className="text-sm text-muted-foreground">{attachment.notes}</p>}
+                  </div>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={attachment.url} target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Open
+                    </a>
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {items.map((item: any, idx: number) => {
           const margin = margins[item._id] ?? globalMargin;

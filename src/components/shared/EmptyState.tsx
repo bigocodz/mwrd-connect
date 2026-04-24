@@ -17,12 +17,12 @@ export const EmptyState = ({
   description,
   action,
 }: {
-  icon?: string;
+  icon?: string | React.ElementType;
   title: string;
   description?: string;
   action?: React.ReactNode;
 }) => {
-  const Icon = icons[icon] || FileText;
+  const Icon = typeof icon === "string" ? icons[icon] || FileText : icon;
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e8e6dc] text-[#4d4c48] shadow-[0_0_0_1px_#d1cfc5]">

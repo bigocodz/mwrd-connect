@@ -5,7 +5,7 @@ import ClientLayout from "@/components/client/ClientLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus } from "lucide-react";
+import { GitCompare, Plus } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
@@ -45,6 +45,8 @@ const ClientRfqs = () => {
                   <TableHead>RFQ ID</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Items</TableHead>
+                  <TableHead>Docs</TableHead>
+                  <TableHead>Quotes</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Expiry</TableHead>
                   <TableHead></TableHead>
@@ -56,9 +58,23 @@ const ClientRfqs = () => {
                     <TableCell className="font-mono text-xs">{rfq._id.slice(0, 8)}…</TableCell>
                     <TableCell><Badge variant="outline" className={statusColor[rfq.status]}>{rfq.status}</Badge></TableCell>
                     <TableCell>{rfq.items_count}</TableCell>
+                    <TableCell>{rfq.attachments_count ?? 0}</TableCell>
+                    <TableCell>{rfq.quotes_count ?? 0}</TableCell>
                     <TableCell className="text-sm">{new Date(rfq._creationTime).toLocaleDateString()}</TableCell>
                     <TableCell className="text-sm">{rfq.expiry_date ? new Date(rfq.expiry_date).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell><Button variant="ghost" size="sm" asChild><Link to={`/client/rfqs/${rfq._id}`}>View</Link></Button></TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        {(rfq.quotes_count ?? 0) > 0 && (
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to={`/client/rfqs/${rfq._id}/compare`}>
+                              <GitCompare className="mr-2 h-4 w-4" />
+                              Compare
+                            </Link>
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" asChild><Link to={`/client/rfqs/${rfq._id}`}>View</Link></Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

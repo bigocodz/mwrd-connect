@@ -5,13 +5,14 @@ import { api } from "@cvx/api";
 import SupplierLayout from "@/components/supplier/SupplierLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, Plus, Send, Trash2 } from "lucide-react";
 
 const flexLabel: Record<string, string> = {
   EXACT_MATCH: "Exact Match",
@@ -28,6 +29,31 @@ interface ItemResponse {
   alternative_product_id: string | null;
 }
 
+interface QuoteAttachmentDraft {
+  key: string;
+  document_type: "SUPPLIER_QUOTATION" | "COMMERCIAL_TERMS" | "SUPPORTING_DOCUMENT" | "OTHER";
+  name: string;
+  url: string;
+  notes: string;
+}
+
+const emptyAttachment = (): QuoteAttachmentDraft => ({
+  key: crypto.randomUUID(),
+  document_type: "SUPPLIER_QUOTATION",
+  name: "",
+  url: "",
+  notes: "",
+});
+
+const documentLabel: Record<string, string> = {
+  SPECIFICATION: "Specification",
+  PURCHASE_POLICY: "Purchase Policy",
+  SUPPORTING_DOCUMENT: "Supporting Document",
+  SUPPLIER_QUOTATION: "Supplier Quotation",
+  COMMERCIAL_TERMS: "Commercial Terms",
+  OTHER: "Other",
+};
+
 const SupplierRfqRespond = () => {
   const { rfqId } = useParams();
   const navigate = useNavigate();
@@ -37,6 +63,8 @@ const SupplierRfqRespond = () => {
   const loading = rfqData === undefined;
 
   const [responses, setResponses] = useState<Record<string, ItemResponse>>({});
+  const [supplierNotes, setSupplierNotes] = useState("");
+  const [attachments, setAttachments] = useState<QuoteAttachmentDraft[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -59,8 +87,22 @@ const SupplierRfqRespond = () => {
     setResponses((prev) => ({ ...prev, [itemId]: { ...prev[itemId], ...updates } }));
   };
 
+  const updateAttachment = (key: string, updates: Partial<QuoteAttachmentDraft>) => {
+    setAttachments((prev) => prev.map((attachment) => (attachment.key === key ? { ...attachment, ...updates } : attachment)));
+  };
+
+  const removeAttachment = (key: string) => {
+    setAttachments((prev) => prev.filter((attachment) => attachment.key !== key));
+  };
+
   const handleSubmit = async () => {
     if (!rfqId) return;
+    for (const attachment of attachments) {
+      if (!attachment.name.trim() || !attachment.url.trim()) {
+        toast.error("Each quote document needs a name and URL");
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const items = Object.values(responses).map((r) => ({
@@ -71,7 +113,15 @@ const SupplierRfqRespond = () => {
         supplier_product_id: r.supplier_product_id ? (r.supplier_product_id as any) : undefined,
         alternative_product_id: r.alternative_product_id ? (r.alternative_product_id as any) : undefined,
       }));
-      await submitQuote({ rfq_id: rfqId as any, items });
+      await submitQuote({
+        rfq_id: rfqId as any,
+        supplier_notes: supplierNotes || undefined,
+        attachments: attachments.map(({ key: _key, notes, ...attachment }) => ({
+          ...attachment,
+          notes: notes || undefined,
+        })),
+        items,
+      });
       toast.success("Quote submitted for admin review");
       navigate("/supplier/rfqs");
     } catch (err: any) {
@@ -91,6 +141,7 @@ const SupplierRfqRespond = () => {
 
   const rfqItems = rfqData.items ?? [];
   const myProducts = rfqData.myProducts ?? [];
+  const requestAttachments = rfqData.attachments ?? [];
 
   return (
     <SupplierLayout>
@@ -106,6 +157,60 @@ const SupplierRfqRespond = () => {
             </p>
           </div>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Request context</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 text-sm md:grid-cols-3">
+            <div>
+              <p className="text-muted-foreground">Category</p>
+              <p className="font-medium">{rfqData.category || "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Required by</p>
+              <p className="font-medium">{rfqData.required_by ? new Date(rfqData.required_by).toLocaleDateString() : "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Delivery</p>
+              <p className="font-medium">{rfqData.delivery_location || "—"}</p>
+            </div>
+            {rfqData.notes && (
+              <div className="md:col-span-3">
+                <p className="text-muted-foreground">Client notes</p>
+                <p className="font-medium">{rfqData.notes}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {requestAttachments.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4 text-primary" />
+                Client documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {requestAttachments.map((attachment: any) => (
+                <div key={attachment._id} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+                  <div>
+                    <Badge variant="secondary" className="mb-2">{documentLabel[attachment.document_type] || attachment.document_type}</Badge>
+                    <p className="font-medium">{attachment.name}</p>
+                    {attachment.notes && <p className="text-sm text-muted-foreground">{attachment.notes}</p>}
+                  </div>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={attachment.url} target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Open
+                    </a>
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         {rfqItems.map((item: any, idx: number) => {
           const resp = responses[item._id];
@@ -186,6 +291,61 @@ const SupplierRfqRespond = () => {
             </Card>
           );
         })}
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Commercial notes and documents</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Attach quotation PDFs, technical sheets, or delivery terms for admin review.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setAttachments([...attachments, emptyAttachment()])}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label>Supplier Notes</Label>
+              <Textarea value={supplierNotes} onChange={(e) => setSupplierNotes(e.target.value)} placeholder="Warranty, delivery schedule, substitutions, or payment notes…" />
+            </div>
+            {attachments.map((attachment) => (
+              <div key={attachment.key} className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[180px_1fr_1fr_auto]">
+                <div>
+                  <Label>Type</Label>
+                  <Select
+                    value={attachment.document_type}
+                    onValueChange={(v) => updateAttachment(attachment.key, { document_type: v as QuoteAttachmentDraft["document_type"] })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SUPPLIER_QUOTATION">Supplier Quotation</SelectItem>
+                      <SelectItem value="COMMERCIAL_TERMS">Commercial Terms</SelectItem>
+                      <SelectItem value="SUPPORTING_DOCUMENT">Supporting Document</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Name</Label>
+                  <Input value={attachment.name} onChange={(e) => updateAttachment(attachment.key, { name: e.target.value })} placeholder="Document name" />
+                </div>
+                <div>
+                  <Label>URL</Label>
+                  <Input value={attachment.url} onChange={(e) => updateAttachment(attachment.key, { url: e.target.value })} placeholder="https://…" />
+                </div>
+                <div className="flex items-end">
+                  <Button variant="ghost" size="icon" onClick={() => removeAttachment(attachment.key)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <div className="md:col-span-4">
+                  <Label>Notes</Label>
+                  <Input value={attachment.notes} onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })} placeholder="Optional context for MWRD" />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate("/supplier/rfqs")}>Cancel</Button>

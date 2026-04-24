@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@cvx/api";
+import { Link } from "react-router-dom";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
@@ -57,7 +59,10 @@ const AdminRfqs = () => {
                   <TableHead>Client</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Items</TableHead>
+                  <TableHead>Docs</TableHead>
+                  <TableHead>Quotes</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -69,7 +74,14 @@ const AdminRfqs = () => {
                       <Badge variant="outline" className={statusColor[rfq.status] || ""}>{rfq.status}</Badge>
                     </TableCell>
                     <TableCell>{(rfq as any).items_count}</TableCell>
+                    <TableCell>{(rfq as any).attachments_count ?? 0}</TableCell>
+                    <TableCell>{(rfq as any).quotes_count ?? 0}</TableCell>
                     <TableCell className="text-sm">{new Date(rfq._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/admin/rfqs/${rfq._id}/quotes`}>Compare</Link>
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

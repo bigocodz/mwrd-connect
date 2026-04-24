@@ -168,7 +168,7 @@ const AdminLeads = () => {
                 </TableBody>
               </Table>
               <div className="px-4 py-3 border-t border-border">
-                <PaginationControls page={page} setPage={setPage} totalPages={totalPages} total={total} />
+                <PaginationControls page={page} onPageChange={setPage} totalPages={totalPages} total={total} />
               </div>
             </>
           )}

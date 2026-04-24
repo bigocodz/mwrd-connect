@@ -29,9 +29,11 @@ import ClientCatalog from "./pages/client/ClientCatalog";
 import ClientRfqs from "./pages/client/ClientRfqs";
 import ClientCreateRfq from "./pages/client/ClientCreateRfq";
 import ClientRfqDetail from "./pages/client/ClientRfqDetail";
+import ClientQuoteComparison from "./pages/client/ClientQuoteComparison";
 import ClientQuotes from "./pages/client/ClientQuotes";
 import ClientAccount from "./pages/client/ClientAccount";
 import AdminRfqs from "./pages/admin/AdminRfqs";
+import AdminRfqQuoteComparison from "./pages/admin/AdminRfqQuoteComparison";
 import AdminPendingQuotes from "./pages/admin/AdminPendingQuotes";
 import AdminQuoteReview from "./pages/admin/AdminQuoteReview";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -81,6 +83,9 @@ const App = () => (
                 } />
                 <Route path="/client/rfqs/:rfqId" element={
                   <ProtectedRoute allowedRoles={["CLIENT"]}><ClientRfqDetail /></ProtectedRoute>
+                } />
+                <Route path="/client/rfqs/:rfqId/compare" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientQuoteComparison /></ProtectedRoute>
                 } />
                 <Route path="/client/quotes" element={
                   <ProtectedRoute allowedRoles={["CLIENT"]}><ClientQuotes /></ProtectedRoute>
@@ -134,6 +139,9 @@ const App = () => (
                 } />
                 <Route path="/admin/rfqs" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminRfqs /></ProtectedRoute>
+                } />
+                <Route path="/admin/rfqs/:rfqId/quotes" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminRfqQuoteComparison /></ProtectedRoute>
                 } />
                 <Route path="/admin/quotes/pending" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPendingQuotes /></ProtectedRoute>

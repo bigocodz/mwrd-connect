@@ -2,6 +2,20 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthenticatedProfile, requireAdmin, requireClient, requireSupplier } from "./lib";
 
+const attachmentInput = v.object({
+  document_type: v.union(
+    v.literal("SPECIFICATION"),
+    v.literal("PURCHASE_POLICY"),
+    v.literal("SUPPORTING_DOCUMENT"),
+    v.literal("SUPPLIER_QUOTATION"),
+    v.literal("COMMERCIAL_TERMS"),
+    v.literal("OTHER"),
+  ),
+  name: v.string(),
+  url: v.string(),
+  notes: v.optional(v.string()),
+});
+
 export const listMine = query({
   handler: async (ctx) => {
     const profile = await requireClient(ctx);
@@ -16,7 +30,21 @@ export const listMine = query({
           .query("rfq_items")
           .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
           .collect();
-        return { ...rfq, items_count: items.length };
+        const attachments = await ctx.db
+          .query("procurement_attachments")
+          .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
+          .collect();
+        const quotes = await ctx.db
+          .query("quotes")
+          .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
+          .filter((q) => q.neq(q.field("status"), "PENDING_ADMIN"))
+          .collect();
+        return {
+          ...rfq,
+          items_count: items.length,
+          attachments_count: attachments.length,
+          quotes_count: quotes.length,
+        };
       }),
     );
   },
@@ -29,6 +57,15 @@ export const getById = query({
     if (!profile) return null;
     const rfq = await ctx.db.get(args.id);
     if (!rfq) return null;
+    if (profile.role === "CLIENT" && rfq.client_id !== profile._id) return null;
+    if (profile.role === "SUPPLIER") {
+      const assignment = await ctx.db
+        .query("rfq_supplier_assignments")
+        .withIndex("by_rfq", (q) => q.eq("rfq_id", args.id))
+        .filter((q) => q.eq(q.field("supplier_id"), profile._id))
+        .unique();
+      if (!assignment) return null;
+    }
     const items = await ctx.db
       .query("rfq_items")
       .withIndex("by_rfq", (q) => q.eq("rfq_id", args.id))
@@ -39,7 +76,16 @@ export const getById = query({
         return { ...item, product };
       }),
     );
-    return { ...rfq, items: itemsWithProducts };
+    const attachments = await ctx.db
+      .query("procurement_attachments")
+      .withIndex("by_rfq", (q) => q.eq("rfq_id", args.id))
+      .collect();
+    const quotesQuery = ctx.db.query("quotes").withIndex("by_rfq", (q) => q.eq("rfq_id", args.id));
+    const quotes =
+      profile.role === "ADMIN"
+        ? await quotesQuery.collect()
+        : await quotesQuery.filter((q) => q.neq(q.field("status"), "PENDING_ADMIN")).collect();
+    return { ...rfq, items: itemsWithProducts, attachments, quotes_count: quotes.length };
   },
 });
 
@@ -54,10 +100,20 @@ export const listAll = query({
           .query("rfq_items")
           .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
           .collect();
+        const attachments = await ctx.db
+          .query("procurement_attachments")
+          .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
+          .collect();
+        const quotes = await ctx.db
+          .query("quotes")
+          .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
+          .collect();
         return {
           ...rfq,
           client_public_id: client?.public_id ?? "Unknown",
           items_count: items.length,
+          attachments_count: attachments.length,
+          quotes_count: quotes.length,
         };
       }),
     );
@@ -117,6 +173,10 @@ export const getAssigned = query({
       .query("rfq_items")
       .withIndex("by_rfq", (q) => q.eq("rfq_id", args.rfq_id))
       .collect();
+    const attachments = await ctx.db
+      .query("procurement_attachments")
+      .withIndex("by_rfq", (q) => q.eq("rfq_id", args.rfq_id))
+      .collect();
     const itemsWithProducts = await Promise.all(
       items.map(async (item) => {
         const product = item.product_id ? await ctx.db.get(item.product_id) : null;
@@ -134,14 +194,19 @@ export const getAssigned = query({
       .withIndex("by_supplier", (q) => q.eq("supplier_id", profile._id))
       .filter((q) => q.eq(q.field("approval_status"), "APPROVED"))
       .collect();
-    return { ...rfq, items: itemsWithProducts, existingQuote, myProducts };
+    return { ...rfq, items: itemsWithProducts, attachments, existingQuote, myProducts };
   },
 });
 
 export const create = mutation({
   args: {
+    category: v.optional(v.string()),
+    template_key: v.optional(v.string()),
     notes: v.optional(v.string()),
     expiry_date: v.optional(v.string()),
+    required_by: v.optional(v.string()),
+    delivery_location: v.optional(v.string()),
+    attachments: v.optional(v.array(attachmentInput)),
     items: v.array(
       v.object({
         product_id: v.optional(v.id("products")),
@@ -163,11 +228,25 @@ export const create = mutation({
     const rfqId = await ctx.db.insert("rfqs", {
       client_id: profile._id,
       status: "OPEN",
+      category: args.category,
+      template_key: args.template_key,
       notes: args.notes,
       expiry_date: args.expiry_date,
+      required_by: args.required_by,
+      delivery_location: args.delivery_location,
     });
 
     await Promise.all(args.items.map((item) => ctx.db.insert("rfq_items", { ...item, rfq_id: rfqId })));
+    await Promise.all(
+      (args.attachments ?? []).map((attachment) =>
+        ctx.db.insert("procurement_attachments", {
+          ...attachment,
+          rfq_id: rfqId,
+          uploaded_by: profile._id,
+          created_at: Date.now(),
+        }),
+      ),
+    );
 
     // Auto-assign suppliers who own selected products
     const productIds = args.items.flatMap((i) => (i.product_id ? [i.product_id] : []));

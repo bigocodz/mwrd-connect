@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, ShoppingBag, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Trash2, ShoppingBag, AlertTriangle, Loader2, FileText, Sparkles } from "lucide-react";
+import { getRfqTemplate, rfqTemplates } from "@/data/rfqTemplates";
 
 interface RfqItemDraft {
   key: string;
@@ -20,6 +21,20 @@ interface RfqItemDraft {
   quantity: number;
   flexibility: "EXACT_MATCH" | "OPEN_TO_EQUIVALENT" | "OPEN_TO_ALTERNATIVES";
   special_notes: string;
+}
+
+interface RfqAttachmentDraft {
+  key: string;
+  document_type:
+    | "SPECIFICATION"
+    | "PURCHASE_POLICY"
+    | "SUPPORTING_DOCUMENT"
+    | "SUPPLIER_QUOTATION"
+    | "COMMERCIAL_TERMS"
+    | "OTHER";
+  name: string;
+  url: string;
+  notes: string;
 }
 
 const emptyItem = (): RfqItemDraft => ({
@@ -31,6 +46,20 @@ const emptyItem = (): RfqItemDraft => ({
   special_notes: "",
 });
 
+const emptyAttachment = (): RfqAttachmentDraft => ({
+  key: crypto.randomUUID(),
+  document_type: "SPECIFICATION",
+  name: "",
+  url: "",
+  notes: "",
+});
+
+const dateInputFromToday = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
 const ClientCreateRfq = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
@@ -41,8 +70,13 @@ const ClientCreateRfq = () => {
   const products = productsData ?? [];
 
   const [items, setItems] = useState<RfqItemDraft[]>([emptyItem()]);
+  const [templateKey, setTemplateKey] = useState("blank");
+  const [category, setCategory] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [requiredBy, setRequiredBy] = useState("");
   const [notes, setNotes] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const [attachments, setAttachments] = useState<RfqAttachmentDraft[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const isFrozen = profile?.status === "FROZEN";
@@ -53,6 +87,35 @@ const ClientCreateRfq = () => {
 
   const removeItem = (key: string) => {
     setItems((prev) => prev.filter((i) => i.key !== key));
+  };
+
+  const applyTemplate = (key: string) => {
+    setTemplateKey(key);
+    const template = getRfqTemplate(key);
+    if (!template) return;
+
+    setCategory(template.category);
+    setRequiredBy(dateInputFromToday(template.daysUntilRequired));
+    setDeliveryLocation(template.delivery_location ?? "");
+    setNotes(template.notes);
+    setItems(
+      template.items.map((item) => ({
+        key: crypto.randomUUID(),
+        product_id: null,
+        custom_item_description: item.custom_item_description,
+        quantity: item.quantity,
+        flexibility: item.flexibility,
+        special_notes: item.special_notes ?? "",
+      })),
+    );
+  };
+
+  const updateAttachment = (key: string, updates: Partial<RfqAttachmentDraft>) => {
+    setAttachments((prev) => prev.map((attachment) => (attachment.key === key ? { ...attachment, ...updates } : attachment)));
+  };
+
+  const removeAttachment = (key: string) => {
+    setAttachments((prev) => prev.filter((attachment) => attachment.key !== key));
   };
 
   const handleSubmit = async () => {
@@ -71,12 +134,26 @@ const ClientCreateRfq = () => {
         return;
       }
     }
+    for (const attachment of attachments) {
+      if (!attachment.name.trim() || !attachment.url.trim()) {
+        toast.error("Each document link needs a name and URL");
+        return;
+      }
+    }
 
     setSubmitting(true);
     try {
       await createRfq({
+        category: category || undefined,
+        template_key: templateKey === "blank" ? undefined : templateKey,
         notes: notes || undefined,
         expiry_date: expiryDate || undefined,
+        required_by: requiredBy || undefined,
+        delivery_location: deliveryLocation || undefined,
+        attachments: attachments.map(({ key: _key, notes: attachmentNotes, ...attachment }) => ({
+          ...attachment,
+          notes: attachmentNotes || undefined,
+        })),
         items: items.map((item) => ({
           product_id: item.product_id ? (item.product_id as any) : undefined,
           custom_item_description: item.custom_item_description || undefined,
@@ -107,7 +184,7 @@ const ClientCreateRfq = () => {
       <div className="max-w-3xl space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">New Request for Quote</h1>
-          <p className="text-muted-foreground mt-1">Select products or describe custom items you need.</p>
+          <p className="text-muted-foreground mt-1">Use a template, attach requirements, and describe exactly what suppliers should quote.</p>
         </div>
 
         {isFrozen && (
@@ -120,6 +197,54 @@ const ClientCreateRfq = () => {
             </CardContent>
           </Card>
         )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4 text-primary" />
+              RFQ setup
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Template</Label>
+              <Select value={templateKey} onValueChange={applyTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Start from a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blank">Blank RFQ</SelectItem>
+                  {rfqTemplates.map((template) => (
+                    <SelectItem key={template.key} value={template.key}>
+                      {template.label} ({template.category})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {templateKey !== "blank" && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {getRfqTemplate(templateKey)?.description}
+                </p>
+              )}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <Label>Category</Label>
+                <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Office Supplies, IT, Facilities…" />
+              </div>
+              <div>
+                <Label>Required By</Label>
+                <Input type="date" value={requiredBy} onChange={(e) => setRequiredBy(e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              <Label>Delivery Location</Label>
+              <Input value={deliveryLocation} onChange={(e) => setDeliveryLocation(e.target.value)} placeholder="Branch, city, warehouse, or delivery instruction" />
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="space-y-4">
           {items.map((item, idx) => (
@@ -231,6 +356,62 @@ const ClientCreateRfq = () => {
               />
             </div>
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <FileText className="h-4 w-4 text-primary" />
+                Supporting documents
+              </CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">Add links to specs, purchase policies, drawings, or other files.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setAttachments([...attachments, emptyAttachment()])}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add
+            </Button>
+          </CardHeader>
+          {attachments.length > 0 && (
+            <CardContent className="space-y-3">
+              {attachments.map((attachment) => (
+                <div key={attachment.key} className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[160px_1fr_1fr_auto]">
+                  <div>
+                    <Label>Type</Label>
+                    <Select
+                      value={attachment.document_type}
+                      onValueChange={(v) => updateAttachment(attachment.key, { document_type: v as RfqAttachmentDraft["document_type"] })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SPECIFICATION">Specification</SelectItem>
+                        <SelectItem value="PURCHASE_POLICY">Purchase Policy</SelectItem>
+                        <SelectItem value="SUPPORTING_DOCUMENT">Supporting Document</SelectItem>
+                        <SelectItem value="OTHER">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Name</Label>
+                    <Input value={attachment.name} onChange={(e) => updateAttachment(attachment.key, { name: e.target.value })} placeholder="Document name" />
+                  </div>
+                  <div>
+                    <Label>URL</Label>
+                    <Input value={attachment.url} onChange={(e) => updateAttachment(attachment.key, { url: e.target.value })} placeholder="https://…" />
+                  </div>
+                  <div className="flex items-end">
+                    <Button variant="ghost" size="icon" onClick={() => removeAttachment(attachment.key)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="md:col-span-4">
+                    <Label>Notes</Label>
+                    <Input value={attachment.notes} onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })} placeholder="Optional context for suppliers" />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          )}
         </Card>
 
         <div className="flex justify-end gap-3">

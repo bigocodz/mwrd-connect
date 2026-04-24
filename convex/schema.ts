@@ -67,7 +67,11 @@ export default defineSchema({
   rfqs: defineTable({
     client_id: v.id("profiles"),
     status: v.union(v.literal("OPEN"), v.literal("QUOTED"), v.literal("CLOSED")),
+    category: v.optional(v.string()),
+    template_key: v.optional(v.string()),
     expiry_date: v.optional(v.string()),
+    required_by: v.optional(v.string()),
+    delivery_location: v.optional(v.string()),
     notes: v.optional(v.string()),
   })
     .index("by_client", ["client_id"])
@@ -105,6 +109,7 @@ export default defineSchema({
     ),
     reviewed_by: v.optional(v.id("profiles")),
     reviewed_at: v.optional(v.number()),
+    supplier_notes: v.optional(v.string()),
   })
     .index("by_rfq", ["rfq_id"])
     .index("by_supplier", ["supplier_id"])
@@ -122,6 +127,26 @@ export default defineSchema({
     final_price_before_vat: v.optional(v.number()),
     final_price_with_vat: v.optional(v.number()),
   }).index("by_quote", ["quote_id"]),
+
+  procurement_attachments: defineTable({
+    rfq_id: v.optional(v.id("rfqs")),
+    quote_id: v.optional(v.id("quotes")),
+    uploaded_by: v.id("profiles"),
+    document_type: v.union(
+      v.literal("SPECIFICATION"),
+      v.literal("PURCHASE_POLICY"),
+      v.literal("SUPPORTING_DOCUMENT"),
+      v.literal("SUPPLIER_QUOTATION"),
+      v.literal("COMMERCIAL_TERMS"),
+      v.literal("OTHER"),
+    ),
+    name: v.string(),
+    url: v.string(),
+    notes: v.optional(v.string()),
+    created_at: v.number(),
+  })
+    .index("by_rfq", ["rfq_id"])
+    .index("by_quote", ["quote_id"]),
 
   notifications: defineTable({
     user_id: v.id("profiles"),

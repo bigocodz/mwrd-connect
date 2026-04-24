@@ -63,7 +63,7 @@ const AdminUserDetail = () => {
         updates.freeze_reason = null;
         updates.frozen_by = null;
       }
-      await updateProfile(updates);
+      await updateProfile(updates as any);
       await logAudit({ action: "UPDATE_PROFILE", target_user_id: userId as any, details: { status, kyc_status: kycStatus } });
       toast.success("Profile updated");
     } catch (err: any) {
