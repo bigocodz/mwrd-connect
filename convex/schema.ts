@@ -141,7 +141,10 @@ export default defineSchema({
       v.literal("OTHER"),
     ),
     name: v.string(),
-    url: v.string(),
+    url: v.optional(v.string()),
+    storage_id: v.optional(v.id("_storage")),
+    content_type: v.optional(v.string()),
+    size: v.optional(v.number()),
     notes: v.optional(v.string()),
     created_at: v.number(),
   })

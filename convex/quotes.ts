@@ -12,9 +12,20 @@ const attachmentInput = v.object({
     v.literal("OTHER"),
   ),
   name: v.string(),
-  url: v.string(),
+  url: v.optional(v.string()),
+  storage_id: v.optional(v.id("_storage")),
+  content_type: v.optional(v.string()),
+  size: v.optional(v.number()),
   notes: v.optional(v.string()),
 });
+
+const resolveAttachments = async (ctx: any, attachments: any[]) =>
+  Promise.all(
+    attachments.map(async (attachment) => {
+      const storageUrl = attachment.storage_id ? await ctx.storage.getUrl(attachment.storage_id) : null;
+      return { ...attachment, url: storageUrl ?? attachment.url ?? "" };
+    }),
+  );
 
 const getQuoteItemsWithDetails = async (ctx: any, quoteId: any) => {
   const items = await ctx.db
@@ -38,10 +49,13 @@ const getQuoteItemsWithDetails = async (ctx: any, quoteId: any) => {
 };
 
 const getQuoteAttachments = async (ctx: any, quoteId: any) =>
-  ctx.db
-    .query("procurement_attachments")
-    .withIndex("by_quote", (q: any) => q.eq("quote_id", quoteId))
-    .collect();
+  resolveAttachments(
+    ctx,
+    await ctx.db
+      .query("procurement_attachments")
+      .withIndex("by_quote", (q: any) => q.eq("quote_id", quoteId))
+      .collect(),
+  );
 
 const calculateQuoteMetrics = (rfqItems: any[], quoteItems: any[]) => {
   const quotedItems = quoteItems.filter((item) => item.is_quoted);
@@ -76,10 +90,13 @@ const buildComparison = async (ctx: any, rfq: any, quotes: any[]) => {
       return { ...item, product };
     }),
   );
-  const rfqAttachments = await ctx.db
-    .query("procurement_attachments")
-    .withIndex("by_rfq", (q: any) => q.eq("rfq_id", rfq._id))
-    .collect();
+  const rfqAttachments = await resolveAttachments(
+    ctx,
+    await ctx.db
+      .query("procurement_attachments")
+      .withIndex("by_rfq", (q: any) => q.eq("rfq_id", rfq._id))
+      .collect(),
+  );
 
   const comparableQuotes = await Promise.all(
     quotes.map(async (quote) => {

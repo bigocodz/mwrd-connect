@@ -12,8 +12,27 @@ const attachmentInput = v.object({
     v.literal("OTHER"),
   ),
   name: v.string(),
-  url: v.string(),
+  url: v.optional(v.string()),
+  storage_id: v.optional(v.id("_storage")),
+  content_type: v.optional(v.string()),
+  size: v.optional(v.number()),
   notes: v.optional(v.string()),
+});
+
+const resolveAttachments = async (ctx: any, attachments: any[]) =>
+  Promise.all(
+    attachments.map(async (attachment) => {
+      const storageUrl = attachment.storage_id ? await ctx.storage.getUrl(attachment.storage_id) : null;
+      return { ...attachment, url: storageUrl ?? attachment.url ?? "" };
+    }),
+  );
+
+export const generateAttachmentUploadUrl = mutation({
+  handler: async (ctx) => {
+    const profile = await getAuthenticatedProfile(ctx);
+    if (!profile) throw new Error("Not authenticated");
+    return ctx.storage.generateUploadUrl();
+  },
 });
 
 export const listMine = query({
@@ -85,7 +104,7 @@ export const getById = query({
       profile.role === "ADMIN"
         ? await quotesQuery.collect()
         : await quotesQuery.filter((q) => q.neq(q.field("status"), "PENDING_ADMIN")).collect();
-    return { ...rfq, items: itemsWithProducts, attachments, quotes_count: quotes.length };
+    return { ...rfq, items: itemsWithProducts, attachments: await resolveAttachments(ctx, attachments), quotes_count: quotes.length };
   },
 });
 
@@ -194,7 +213,7 @@ export const getAssigned = query({
       .withIndex("by_supplier", (q) => q.eq("supplier_id", profile._id))
       .filter((q) => q.eq(q.field("approval_status"), "APPROVED"))
       .collect();
-    return { ...rfq, items: itemsWithProducts, attachments, existingQuote, myProducts };
+    return { ...rfq, items: itemsWithProducts, attachments: await resolveAttachments(ctx, attachments), existingQuote, myProducts };
   },
 });
 

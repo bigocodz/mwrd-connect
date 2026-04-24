@@ -34,6 +34,9 @@ interface RfqAttachmentDraft {
     | "OTHER";
   name: string;
   url: string;
+  storage_id: string | null;
+  content_type: string;
+  size: number | null;
   notes: string;
 }
 
@@ -51,6 +54,9 @@ const emptyAttachment = (): RfqAttachmentDraft => ({
   document_type: "SPECIFICATION",
   name: "",
   url: "",
+  storage_id: null,
+  content_type: "",
+  size: null,
   notes: "",
 });
 
@@ -64,6 +70,7 @@ const ClientCreateRfq = () => {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const createRfq = useMutation(api.rfqs.create);
+  const generateUploadUrl = useMutation(api.rfqs.generateAttachmentUploadUrl);
 
   const productsData = useQuery(api.products.listApproved);
   const loadingProducts = productsData === undefined;
@@ -77,6 +84,7 @@ const ClientCreateRfq = () => {
   const [notes, setNotes] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [attachments, setAttachments] = useState<RfqAttachmentDraft[]>([]);
+  const [uploadingAttachmentKey, setUploadingAttachmentKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const isFrozen = profile?.status === "FROZEN";
@@ -118,6 +126,40 @@ const ClientCreateRfq = () => {
     setAttachments((prev) => prev.filter((attachment) => attachment.key !== key));
   };
 
+  const handleAttachmentUpload = async (key: string, file?: File) => {
+    if (!file) return;
+    setUploadingAttachmentKey(key);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const response = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!response.ok) throw new Error("Upload failed");
+      const { storageId } = await response.json();
+      setAttachments((prev) =>
+        prev.map((attachment) =>
+          attachment.key === key
+            ? {
+                ...attachment,
+                name: attachment.name || file.name,
+                url: "",
+                storage_id: storageId,
+                content_type: file.type,
+                size: file.size,
+              }
+            : attachment,
+        ),
+      );
+      toast.success("Document uploaded");
+    } catch (err: any) {
+      toast.error("Upload error: " + err.message);
+    } finally {
+      setUploadingAttachmentKey(null);
+    }
+  };
+
   const handleSubmit = async () => {
     if (isFrozen) return;
     if (items.length === 0) {
@@ -135,8 +177,8 @@ const ClientCreateRfq = () => {
       }
     }
     for (const attachment of attachments) {
-      if (!attachment.name.trim() || !attachment.url.trim()) {
-        toast.error("Each document link needs a name and URL");
+      if (!attachment.name.trim() || (!attachment.url.trim() && !attachment.storage_id)) {
+        toast.error("Each document needs a name and either a file upload or URL");
         return;
       }
     }
@@ -150,8 +192,12 @@ const ClientCreateRfq = () => {
         expiry_date: expiryDate || undefined,
         required_by: requiredBy || undefined,
         delivery_location: deliveryLocation || undefined,
-        attachments: attachments.map(({ key: _key, notes: attachmentNotes, ...attachment }) => ({
+        attachments: attachments.map(({ key: _key, notes: attachmentNotes, storage_id, url, content_type, size, ...attachment }) => ({
           ...attachment,
+          storage_id: storage_id ? (storage_id as any) : undefined,
+          url: url || undefined,
+          content_type: content_type || undefined,
+          size: size || undefined,
           notes: attachmentNotes || undefined,
         })),
         items: items.map((item) => ({
@@ -397,7 +443,11 @@ const ClientCreateRfq = () => {
                   </div>
                   <div>
                     <Label>URL</Label>
-                    <Input value={attachment.url} onChange={(e) => updateAttachment(attachment.key, { url: e.target.value })} placeholder="https://…" />
+                    <Input
+                      value={attachment.url}
+                      onChange={(e) => updateAttachment(attachment.key, { url: e.target.value, storage_id: null, content_type: "", size: null })}
+                      placeholder="https://…"
+                    />
                   </div>
                   <div className="flex items-end">
                     <Button variant="ghost" size="icon" onClick={() => removeAttachment(attachment.key)}>
@@ -407,6 +457,21 @@ const ClientCreateRfq = () => {
                   <div className="md:col-span-4">
                     <Label>Notes</Label>
                     <Input value={attachment.notes} onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })} placeholder="Optional context for suppliers" />
+                  </div>
+                  <div className="md:col-span-4">
+                    <Label>Upload File</Label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                      disabled={uploadingAttachmentKey === attachment.key}
+                      onChange={(e) => handleAttachmentUpload(attachment.key, e.target.files?.[0])}
+                    />
+                    {attachment.storage_id && (
+                      <p className="mt-1 text-xs text-primary">
+                        Uploaded file ready{attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                      </p>
+                    )}
+                    {uploadingAttachmentKey === attachment.key && <p className="mt-1 text-xs text-muted-foreground">Uploading…</p>}
                   </div>
                 </div>
               ))}
