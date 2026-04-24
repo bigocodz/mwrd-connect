@@ -97,8 +97,8 @@ const AdminDashboard = () => {
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Clock className="w-4 h-4" /> Pending Actions</CardTitle></CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-3">
-            <PendingAction label="Product Approvals" count={stats?.pendingProducts ?? 0} href="/admin/products" loading={loading} />
-            <PendingAction label="Quote Reviews" count={stats?.pendingQuotes ?? 0} href="/admin/quotes" loading={loading} />
+            <PendingAction label="Product Approvals" count={stats?.pendingProducts ?? 0} href="/admin/products/pending" loading={loading} />
+            <PendingAction label="Quote Reviews" count={stats?.pendingQuotes ?? 0} href="/admin/quotes/pending" loading={loading} />
             <PendingAction label="Pending Payouts" count={stats?.pendingPayouts ?? 0} href="/admin/payouts" loading={loading} />
           </div>
         </CardContent>
