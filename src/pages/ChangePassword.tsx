@@ -20,8 +20,8 @@ const ChangePassword = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#c96442]" />
       </div>
     );
   }
@@ -60,21 +60,21 @@ const ChangePassword = () => {
             ? "/supplier/dashboard"
             : "/client/dashboard";
       navigate(target, { replace: true });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update password");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update password");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-3">
-            <ShieldCheck className="w-6 h-6 text-accent" />
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f7e9e1] text-[#c96442] shadow-[0_0_0_1px_#eed1c5]">
+            <ShieldCheck className="h-6 w-6" />
           </div>
-          <CardTitle className="font-display text-2xl">Set your password</CardTitle>
+          <CardTitle>Set your password</CardTitle>
           <CardDescription>
             For security, please replace the temporary password from your welcome email before continuing.
           </CardDescription>

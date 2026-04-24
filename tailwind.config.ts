@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -14,11 +15,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        // MWRD brand: Plus Jakarta Sans is the primary typeface (Latin).
-        // IBM Plex Sans Arabic ships via the RTL rule in index.css.
-        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
-        display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
-        arabic: ["IBM Plex Sans Arabic", "Plus Jakarta Sans", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "Arial", "system-ui", "sans-serif"],
+        display: ["Georgia", "Times New Roman", "serif"],
+        serif: ["Georgia", "Times New Roman", "serif"],
+        arabic: ["IBM Plex Sans Arabic", "Plus Jakarta Sans", "Arial", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -95,5 +95,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 } satisfies Config;

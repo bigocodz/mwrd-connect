@@ -17,12 +17,12 @@ const Unauthorized = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
       <Card className="max-w-md w-full text-center">
         <CardContent className="pt-10 pb-8">
-          <ShieldAlert className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h2 className="font-display text-2xl font-bold text-foreground mb-2">Access Denied</h2>
-          <p className="text-muted-foreground mb-6">You don't have permission to access this page.</p>
+          <ShieldAlert className="mx-auto mb-4 h-16 w-16 text-[#b53333]" />
+          <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">Access Denied</h2>
+          <p className="mb-6 leading-relaxed text-[#5e5d59]">You don't have permission to access this page.</p>
           <Button onClick={goToDashboard}>Go to Dashboard</Button>
         </CardContent>
       </Card>

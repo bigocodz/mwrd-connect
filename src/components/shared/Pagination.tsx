@@ -31,8 +31,8 @@ export const PaginationControls = ({
 }) => {
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-between pt-4">
-      <p className="text-sm text-muted-foreground">
+    <div className="flex items-center justify-between border-t border-[#f0eee6] pt-4">
+      <p className="text-sm text-[#5e5d59]">
         Showing {(page - 1) * ROWS_PER_PAGE + 1}–{Math.min(page * ROWS_PER_PAGE, total)} of {total}
       </p>
       <div className="flex items-center gap-1">
@@ -54,7 +54,7 @@ export const PaginationControls = ({
           }, [])
           .map((p, i) =>
             p === "..." ? (
-              <span key={`dots-${i}`} className="px-1 text-muted-foreground text-sm">…</span>
+              <span key={`dots-${i}`} className="px-1 text-sm text-[#87867f]">…</span>
             ) : (
               <Button
                 key={p}

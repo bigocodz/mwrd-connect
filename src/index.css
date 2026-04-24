@@ -1,100 +1,209 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@plugin "tailwindcss-react-aria-components";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", Arial, system-ui, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-arabic: "IBM Plex Sans Arabic", "Plus Jakarta Sans", Arial, system-ui, sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-navy: hsl(var(--navy));
+  --color-navy-light: hsl(var(--navy-light));
+  --color-navy-dark: hsl(var(--navy-dark));
+  --color-sky: hsl(var(--sky));
+  --color-sky-light: hsl(var(--sky-light));
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --color-bg-primary: hsl(var(--background));
+  --color-bg-secondary: hsl(var(--muted));
+  --color-bg-tertiary: hsl(var(--secondary));
+  --color-bg-active: hsl(var(--primary));
+  --color-bg-brand-primary: hsl(var(--primary));
+  --color-bg-brand-solid: hsl(var(--primary));
+  --color-bg-error-primary: hsl(var(--destructive));
+  --color-bg-warning-primary: #fff6e5;
+  --color-bg-success-primary: #eef4e8;
+
+  --color-text-primary: hsl(var(--foreground));
+  --color-text-secondary: hsl(var(--muted-foreground));
+  --color-text-tertiary: hsl(var(--muted-foreground));
+  --color-text-brand-primary: hsl(var(--primary));
+  --color-text-brand-secondary: hsl(var(--foreground));
+  --color-text-white: hsl(var(--primary-foreground));
+  --color-text-error-primary: hsl(var(--destructive));
+  --color-text-warning-primary: #9d5f2b;
+  --color-text-success-primary: #556b45;
+
+  --color-border-primary: hsl(var(--border));
+  --color-border-secondary: hsl(var(--input));
+  --color-border-brand: hsl(var(--primary));
+  --color-border-error: hsl(var(--destructive));
+
+  --color-brand-25: #fbf3ef;
+  --color-brand-50: #f7e9e1;
+  --color-brand-100: #eed1c5;
+  --color-brand-200: #e5b49f;
+  --color-brand-300: #d99776;
+  --color-brand-400: #cf7b57;
+  --color-brand-500: #c96442;
+  --color-brand-600: #ad5235;
+  --color-brand-700: #8d422d;
+  --color-brand-800: #6f3527;
+  --color-brand-900: #542a20;
+  --color-brand-950: #2e1712;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  --shadow-xs: 0px 0px 0px 1px rgba(209, 207, 197, 0.75);
+  --shadow-sm: 0px 0px 0px 1px rgba(209, 207, 197, 0.85);
+  --shadow-md: 0px 4px 24px rgba(20, 20, 19, 0.05), 0px 0px 0px 1px rgba(232, 230, 220, 0.9);
+  --shadow-lg: 0px 12px 36px rgba(20, 20, 19, 0.08), 0px 0px 0px 1px rgba(232, 230, 220, 0.95);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 
 @layer base {
   :root {
-    /* MWRD brand tokens — see /Users/bigo/Downloads/مورد/Mwrd Guideline.pdf */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%; /* Rich Black #1A1A1A */
+    /* Claude-inspired warm editorial app tokens from DESIGN.md */
+    --background: 53 29% 95%; /* Parchment #f5f4ed */
+    --foreground: 60 3% 8%; /* Anthropic Near Black #141413 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 50 33% 97%; /* Ivory #faf9f5 */
+    --card-foreground: 60 3% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 50 33% 97%;
+    --popover-foreground: 60 3% 8%;
 
-    --primary: 0 0% 10%; /* Rich Black */
-    --primary-foreground: 0 0% 98%;
+    --primary: 60 3% 8%;
+    --primary-foreground: 50 33% 97%;
 
-    --secondary: 38 11% 94%; /* Stone tint */
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 45 18% 89%; /* Warm Sand #e8e6dc */
+    --secondary-foreground: 50 3% 29%; /* Charcoal Warm #4d4c48 */
 
-    --muted: 38 11% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 45 18% 89%;
+    --muted-foreground: 50 3% 36%; /* Olive Gray #5e5d59 */
 
-    --accent: 13 100% 63%; /* Vibrant Carrot #FF6D43 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 15 53% 52%; /* Terracotta #c96442 */
+    --accent-foreground: 50 33% 97%;
 
-    --destructive: 355 80% 62%; /* Lobster Red #EB4F5D */
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 55% 45%; /* Error Crimson #b53333 */
+    --destructive-foreground: 50 33% 97%;
 
-    --border: 38 11% 88%; /* Stone mid */
-    --input: 38 11% 88%;
-    --ring: 13 100% 63%; /* focus ring = Carrot */
+    --border: 45 31% 92%; /* Border Cream #f0eee6 */
+    --input: 45 18% 89%;
+    --ring: 207 82% 57%; /* Focus Blue #3898ec */
 
     --radius: 0.75rem;
 
-    /* Legacy aliases — kept so existing class names keep working, repointed to brand */
-    --navy: 0 0% 10%;
-    --navy-light: 0 0% 20%;
-    --navy-dark: 0 0% 6%;
-    --sky: 13 100% 63%; /* was blue, now Carrot */
-    --sky-light: 195 54% 86%; /* Interactive Cyan #C6E4EE */
+    --navy: 60 3% 8%;
+    --navy-light: 50 3% 36%;
+    --navy-dark: 60 3% 8%;
+    --sky: 15 53% 52%;
+    --sky-light: 15 48% 93%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 15%;
-    --sidebar-primary: 0 0% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 38 11% 94%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 38 11% 88%;
-    --sidebar-ring: 13 100% 63%;
+    --sidebar-background: 50 33% 97%;
+    --sidebar-foreground: 60 3% 8%;
+    --sidebar-primary: 60 3% 8%;
+    --sidebar-primary-foreground: 50 33% 97%;
+    --sidebar-accent: 45 18% 89%;
+    --sidebar-accent-foreground: 50 3% 29%;
+    --sidebar-border: 45 31% 92%;
+    --sidebar-ring: 207 82% 57%;
   }
 
   .dark {
-    --background: 0 0% 6%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --background: 60 3% 8%;
+    --foreground: 50 33% 97%;
+    --card: 60 2% 18%;
+    --card-foreground: 50 33% 97%;
+    --popover: 60 2% 18%;
+    --popover-foreground: 50 33% 97%;
 
-    --primary: 0 0% 95%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 50 33% 97%;
+    --primary-foreground: 60 3% 8%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 60 2% 18%;
+    --secondary-foreground: 50 33% 97%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 60 2% 18%;
+    --muted-foreground: 49 6% 67%;
 
-    --accent: 13 100% 63%; /* Carrot stays vivid on dark */
-    --accent-foreground: 0 0% 10%;
+    --accent: 15 53% 52%;
+    --accent-foreground: 50 33% 97%;
 
-    --destructive: 355 80% 62%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 55% 45%;
+    --destructive-foreground: 50 33% 97%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 13 100% 63%;
+    --border: 60 2% 18%;
+    --input: 60 2% 18%;
+    --ring: 207 82% 57%;
 
-    --navy: 0 0% 95%;
-    --navy-light: 0 0% 80%;
-    --navy-dark: 0 0% 98%;
-    --sky: 13 100% 63%;
-    --sky-light: 195 40% 30%;
+    --navy: 50 33% 97%;
+    --navy-light: 49 6% 67%;
+    --navy-dark: 50 33% 97%;
+    --sky: 15 53% 52%;
+    --sky-light: 15 30% 30%;
 
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 0 0% 95%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 13 100% 63%;
+    --sidebar-background: 60 3% 8%;
+    --sidebar-foreground: 50 33% 97%;
+    --sidebar-primary: 50 33% 97%;
+    --sidebar-primary-foreground: 60 3% 8%;
+    --sidebar-accent: 60 2% 18%;
+    --sidebar-accent-foreground: 50 33% 97%;
+    --sidebar-border: 60 2% 18%;
+    --sidebar-ring: 207 82% 57%;
   }
 }
 
@@ -104,10 +213,18 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    color: #141413;
+    background: #f5f4ed;
   }
   /* Arabic text uses IBM Plex Sans Arabic when direction is RTL */
   [dir="rtl"] body,
   [dir="rtl"] {
     font-family: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', system-ui, sans-serif;
   }
+}
+
+.font-display {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500 !important;
+  letter-spacing: 0;
 }

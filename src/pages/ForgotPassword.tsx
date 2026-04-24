@@ -21,8 +21,8 @@ const ForgotPassword = () => {
     try {
       await signIn("password", { email, flow: "reset" });
       setSent(true);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send reset email");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to send reset email");
     } finally {
       setLoading(false);
     }
@@ -30,12 +30,12 @@ const ForgotPassword = () => {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-10 pb-8">
-            <CheckCircle2 className="w-16 h-16 text-accent mx-auto mb-4" />
-            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Check your email</h2>
-            <p className="text-muted-foreground mb-6">
+            <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-[#c96442]" />
+            <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">Check your email</h2>
+            <p className="mb-6 leading-relaxed text-[#5e5d59]">
               We sent a verification code to <strong>{email}</strong>. Enter it on the next page.
             </p>
             <Button onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}`)}>
@@ -48,14 +48,14 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
       <div className="w-full max-w-md">
-        <Link to="/login" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6">
+        <Link to="/login" className="mb-6 inline-flex items-center gap-1 text-sm text-[#5e5d59] hover:text-[#141413]">
           <ArrowLeft className="w-4 h-4" /> Back to Login
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="font-display text-2xl">Reset Password</CardTitle>
+            <CardTitle>Reset Password</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

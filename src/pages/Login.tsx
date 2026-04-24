@@ -35,25 +35,25 @@ const Login = () => {
     setLoading(true);
     try {
       await signIn("password", { email, password, flow: "signIn" });
-    } catch (err: any) {
-      toast.error(err.message || "Invalid email or password");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Invalid email or password");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
       <div className="w-full max-w-md">
-        <Link to="/" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6">
+        <Link to="/" className="mb-6 inline-flex items-center gap-1 text-sm text-[#5e5d59] hover:text-[#141413]">
           <ArrowLeft className="w-4 h-4" /> {t.getStarted.backHome}
         </Link>
         <Card>
           <CardHeader className="text-center">
-            <div className="w-12 h-12 rounded-lg bg-primary flex items-center justify-center mx-auto mb-2">
-              <span className="text-primary-foreground font-display font-bold text-lg">M</span>
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#141413] text-[#faf9f5] shadow-[0_0_0_1px_#30302e]">
+              <span className="font-display text-xl font-medium">M</span>
             </div>
-            <CardTitle className="font-display text-2xl">{t.nav.login}</CardTitle>
+            <CardTitle>{t.nav.login}</CardTitle>
             <CardDescription>Sign in to your MWRD portal</CardDescription>
           </CardHeader>
           <CardContent>

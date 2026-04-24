@@ -15,7 +15,7 @@ export const TableSkeleton = ({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
 export const CardSkeleton = ({ count = 3 }: { count?: number }) => (
   <div className="grid gap-4 md:grid-cols-3">
     {Array.from({ length: count }).map((_, i) => (
-      <Skeleton key={i} className="h-28 rounded-lg" />
+      <Skeleton key={i} className="h-28 rounded-xl" />
     ))}
   </div>
 );

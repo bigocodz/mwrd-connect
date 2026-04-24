@@ -1,29 +1,46 @@
 import SupplierLayout from "@/components/supplier/SupplierLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
-import { Package } from "lucide-react";
+import { LinkCard, PageHeader, Panel } from "@/components/app/AppSurface";
+import { BankNote01, FileCheck02, Package, Star01 } from "@untitledui/icons";
 
 const SupplierDashboard = () => {
   const { profile } = useAuth();
 
   return (
     <SupplierLayout>
-      <h1 className="font-display text-3xl font-bold text-foreground mb-2">Supplier Dashboard</h1>
-      <p className="text-muted-foreground mb-6">Welcome, {profile?.company_name}.</p>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Link to="/supplier/products">
-          <Card className="hover:border-accent transition-colors cursor-pointer">
-            <CardHeader className="flex flex-row items-center gap-3">
-              <Package className="w-8 h-8 text-accent" />
-              <CardTitle>My Products</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Manage your product listings and submissions</p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+      <PageHeader
+        title="Supplier Dashboard"
+        description={`Welcome${profile?.company_name ? `, ${profile.company_name}` : ""}. Manage your catalog, RFQs, and commercial activity from one workspace.`}
+      />
+
+      <Panel title="Supplier Actions" description="Keep your marketplace readiness and RFQ response work moving.">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <LinkCard
+            title="My Products"
+            description="Manage product listings, prices, lead times, and approval submissions."
+            href="/supplier/products"
+            icon={Package}
+          />
+          <LinkCard
+            title="Assigned RFQs"
+            description="Review client requests assigned to your company and submit quotes."
+            href="/supplier/rfqs"
+            icon={FileCheck02}
+          />
+          <LinkCard
+            title="Payouts"
+            description="Track pending and completed supplier payments from MWRD."
+            href="/supplier/payouts"
+            icon={BankNote01}
+          />
+          <LinkCard
+            title="Reviews"
+            description="See client feedback and service ratings for your performance."
+            href="/supplier/reviews"
+            icon={Star01}
+          />
+        </div>
+      </Panel>
     </SupplierLayout>
   );
 };

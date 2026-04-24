@@ -29,8 +29,8 @@ const ResetPassword = () => {
     try {
       await signIn("password", { email, code, newPassword: password, flow: "reset-verification" });
       setDone(true);
-    } catch (err: any) {
-      toast.error(err.message || "Invalid or expired code");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Invalid or expired code");
     } finally {
       setLoading(false);
     }
@@ -38,12 +38,12 @@ const ResetPassword = () => {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-10 pb-8">
-            <CheckCircle2 className="w-16 h-16 text-accent mx-auto mb-4" />
-            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Password Updated</h2>
-            <p className="text-muted-foreground mb-6">Your password has been reset successfully.</p>
+            <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-[#c96442]" />
+            <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">Password Updated</h2>
+            <p className="mb-6 leading-relaxed text-[#5e5d59]">Your password has been reset successfully.</p>
             <Button asChild><Link to="/login">Sign In</Link></Button>
           </CardContent>
         </Card>
@@ -52,10 +52,10 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <CardTitle className="font-display text-2xl">Set New Password</CardTitle>
+          <CardTitle>Set New Password</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
