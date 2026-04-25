@@ -17,6 +17,7 @@ import type * as clientInvoices from "../clientInvoices.js";
 import type * as contracts from "../contracts.js";
 import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
+import type * as demoSeed from "../demoSeed.js";
 import type * as email from "../email.js";
 import type * as http from "../http.js";
 import type * as kyc from "../kyc.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   contracts: typeof contracts;
   crons: typeof crons;
   dashboard: typeof dashboard;
+  demoSeed: typeof demoSeed;
   email: typeof email;
   http: typeof http;
   kyc: typeof kyc;

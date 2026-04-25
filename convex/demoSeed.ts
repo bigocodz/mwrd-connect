@@ -43,7 +43,7 @@ const price = (cost: number, pct: number) => {
  */
 export const runDemoSeed = internalAction({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<unknown> => {
     for (const acc of Object.values(DEMO_ACCOUNTS)) {
       try {
         await createAccount(ctx, {
@@ -124,7 +124,7 @@ export const populateDemoData = internalMutation({
       subcategory: "Paper & Stationery",
       sku: "PAP-A4-80G",
       brand: "Navigator",
-      images: [],
+      images: ["/demo-products/a4-paper.png"],
       cost_price: 45,
       lead_time_days: 3,
       availability_status: "AVAILABLE",
@@ -142,7 +142,7 @@ export const populateDemoData = internalMutation({
       subcategory: "Printer Supplies",
       sku: "HP-CF217A",
       brand: "HP",
-      images: [],
+      images: ["/demo-products/hp-toner.png"],
       cost_price: 180,
       lead_time_days: 5,
       availability_status: "LIMITED_STOCK",
@@ -160,7 +160,7 @@ export const populateDemoData = internalMutation({
       subcategory: "Desk Accessories",
       sku: "STPL-HD-50",
       brand: "Rapid",
-      images: [],
+      images: ["/demo-products/stapler.png"],
       cost_price: 35,
       lead_time_days: 2,
       availability_status: "AVAILABLE",
@@ -179,7 +179,7 @@ export const populateDemoData = internalMutation({
       subcategory: "Floor Care",
       sku: "CLN-FLOOR-5L",
       brand: "Dettol Pro",
-      images: [],
+      images: ["/demo-products/floor-cleaner.png"],
       cost_price: 28,
       lead_time_days: 2,
       availability_status: "AVAILABLE",
@@ -197,7 +197,7 @@ export const populateDemoData = internalMutation({
       subcategory: "Cleaning Accessories",
       sku: "CLN-MFIB-10PK",
       brand: "Vileda",
-      images: [],
+      images: ["/demo-products/microfiber-cloth.png"],
       cost_price: 22,
       lead_time_days: 2,
       availability_status: "AVAILABLE",
@@ -837,5 +837,33 @@ export const populateDemoData = internalMutation({
         notifications: 4,
       },
     };
+  },
+});
+
+/**
+ * Patches image URLs onto already-seeded products without a full re-seed.
+ * Run: npx convex run demoSeed:patchProductImages
+ */
+export const patchProductImages = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const imageMap: Record<string, string[]> = {
+      "PAP-A4-80G":     ["/demo-products/a4-paper.png"],
+      "HP-CF217A":      ["/demo-products/hp-toner.png"],
+      "STPL-HD-50":     ["/demo-products/stapler.png"],
+      "CLN-FLOOR-5L":   ["/demo-products/floor-cleaner.png"],
+      "CLN-MFIB-10PK":  ["/demo-products/microfiber-cloth.png"],
+    };
+
+    const products = await ctx.db.query("products").collect();
+    let updated = 0;
+    for (const product of products) {
+      const imgs = imageMap[product.sku as string];
+      if (imgs) {
+        await ctx.db.patch(product._id, { images: imgs });
+        updated++;
+      }
+    }
+    return { updated, total: products.length };
   },
 });
