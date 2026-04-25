@@ -15,49 +15,51 @@ import {
 import AdminLayout from "@/components/admin/AdminLayout";
 import { api } from "@cvx/api";
 import { EmptyMessage, MetricCard, PageHeader, Panel, SkeletonLine, type AppIcon } from "@/components/app/AppSurface";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminDashboard = () => {
+  const { tr, lang, dir } = useLanguage();
   const stats = useQuery(api.dashboard.adminStats);
   const loading = stats === undefined;
 
   const fmt = (n: number) =>
-    new Intl.NumberFormat("en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
+    new Intl.NumberFormat(lang === "ar" ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
 
   return (
     <AdminLayout>
       <PageHeader
-        title="Admin Dashboard"
-        description="Monitor revenue, margin, supplier quality, credit utilization, and the operational queues that need attention."
+        title={tr("Admin Dashboard")}
+        description={tr("Monitor revenue, margin, supplier quality, credit utilization, and the operational queues that need attention.")}
       />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={CreditCard01} label="GMV This Month" value={stats ? fmt(stats.monthlyRevenue) : ""} loading={loading} />
+        <MetricCard icon={CreditCard01} label={tr("GMV This Month")} value={stats ? fmt(stats.monthlyRevenue) : ""} loading={loading} />
         <MetricCard
           icon={BarChartSquareUp}
-          label="Margin Collected"
+          label={tr("Margin Collected")}
           value={stats ? fmt(stats.monthlyRevenue - stats.monthlyPayouts) : ""}
           loading={loading}
           tone="success"
         />
-        <MetricCard icon={Users01} label="Active Clients" value={stats ? String(stats.activeClients) : ""} loading={loading} />
-        <MetricCard icon={Users01} label="Active Suppliers" value={stats ? String(stats.activeSuppliers) : ""} loading={loading} />
+        <MetricCard icon={Users01} label={tr("Active Clients")} value={stats ? String(stats.activeClients) : ""} loading={loading} />
+        <MetricCard icon={Users01} label={tr("Active Suppliers")} value={stats ? String(stats.activeSuppliers) : ""} loading={loading} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
-        <Panel title="Top 5 Suppliers by Rating" icon={Star01}>
+        <Panel title={tr("Top 5 Suppliers by Rating")} icon={Star01}>
           {loading ? (
             <TableSkeleton />
           ) : stats && !stats.topSuppliers.length ? (
-            <EmptyMessage>No reviews yet.</EmptyMessage>
+            <EmptyMessage>{tr("No reviews yet.")}</EmptyMessage>
           ) : (
             stats && (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[440px] text-sm">
                   <thead>
                     <tr className="border-b border-border-primary text-start text-xs font-semibold uppercase text-text-tertiary">
-                      <th className="pb-3">Supplier</th>
-                      <th className="pb-3 text-end">Avg Rating</th>
-                      <th className="pb-3 text-end">Reviews</th>
+                      <th className="pb-3">{tr("Supplier")}</th>
+                      <th className="pb-3 text-end">{tr("Avg Rating")}</th>
+                      <th className="pb-3 text-end">{tr("Reviews")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-primary">
@@ -75,21 +77,21 @@ const AdminDashboard = () => {
           )}
         </Panel>
 
-        <Panel title="Highest Credit Utilization" icon={Percent03}>
+        <Panel title={tr("Highest Credit Utilization")} icon={Percent03}>
           {loading ? (
             <TableSkeleton />
           ) : stats && !stats.creditAlerts.length ? (
-            <EmptyMessage>No clients above 80% utilization.</EmptyMessage>
+            <EmptyMessage>{tr("No clients above 80% utilization.")}</EmptyMessage>
           ) : (
             stats && (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px] text-sm">
                   <thead>
                     <tr className="border-b border-border-primary text-start text-xs font-semibold uppercase text-text-tertiary">
-                      <th className="pb-3">Client</th>
-                      <th className="pb-3 text-end">Limit</th>
-                      <th className="pb-3 text-end">Balance</th>
-                      <th className="pb-3 text-end">Utilization</th>
+                      <th className="pb-3">{tr("Client")}</th>
+                      <th className="pb-3 text-end">{tr("Limit")}</th>
+                      <th className="pb-3 text-end">{tr("Balance")}</th>
+                      <th className="pb-3 text-end">{tr("Utilization")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-primary">
@@ -119,24 +121,29 @@ const AdminDashboard = () => {
         </Panel>
       </div>
 
-      <Panel className="mt-6" title="Pending Actions" icon={ClockCheck} description="The queues that usually block client or supplier progress.">
+      <Panel
+        className="mt-6"
+        title={tr("Pending Actions")}
+        icon={ClockCheck}
+        description={tr("The queues that usually block client or supplier progress.")}
+      >
         <div className="grid gap-3 sm:grid-cols-3">
           <PendingAction
-            label="Product Approvals"
+            label={tr("Product Approvals")}
             count={stats?.pendingProducts ?? 0}
             href="/admin/products/pending"
             loading={loading}
             icon={PackageSearch}
           />
           <PendingAction
-            label="Quote Reviews"
+            label={tr("Quote Reviews")}
             count={stats?.pendingQuotes ?? 0}
             href="/admin/quotes/pending"
             loading={loading}
             icon={Receipt}
           />
           <PendingAction
-            label="Pending Payouts"
+            label={tr("Pending Payouts")}
             count={stats?.pendingPayouts ?? 0}
             href="/admin/payouts"
             loading={loading}
@@ -183,7 +190,7 @@ const PendingAction = ({
         {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-text-primary">{count}</p>}
       </div>
     </div>
-    <ArrowRight className="h-4 w-4 shrink-0 text-text-tertiary group-hover:text-brand-700" />
+    <ArrowRight className={`h-4 w-4 shrink-0 text-text-tertiary group-hover:text-brand-700 ${dir === "rtl" ? "rotate-180" : ""}`} />
   </Link>
 );
 

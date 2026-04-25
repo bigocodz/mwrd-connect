@@ -13,10 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search, Loader2, Package, Star, StarOff, Plus, Pin, EyeOff, Eye, Trash2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Tab = "ALL" | "MINE";
 
 const ClientCatalog = () => {
+  const { tr } = useLanguage();
   const productsData = useQuery(api.products.listApproved);
   const myEntriesData = useQuery(api.clientCatalog.listMine);
   const myMeta = useQuery(api.clientCatalog.myProductIds);
@@ -66,9 +68,9 @@ const ClientCatalog = () => {
     setBusy(true);
     try {
       await addProduct({ product_id: productId as any });
-      toast.success("Added to your catalog");
+      toast.success(tr("Added to your catalog"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -78,26 +80,26 @@ const ClientCatalog = () => {
     try {
       await updateEntry({ id: entryId as any, pinned: next });
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
   const toggleHidden = async (entryId: string, next: boolean) => {
     try {
       await updateEntry({ id: entryId as any, hidden: next });
-      toast.success(next ? "Hidden" : "Restored");
+      toast.success(next ? tr("Hidden") : tr("Restored"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
   const handleRemove = async (entryId: string) => {
-    if (!confirm("Remove this product from your catalog?")) return;
+    if (!confirm(tr("Remove this product from your catalog?"))) return;
     try {
       await removeEntry({ id: entryId as any });
-      toast.success("Removed");
+      toast.success(tr("Removed"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
@@ -116,10 +118,10 @@ const ClientCatalog = () => {
         alias: alias.trim() || "",
         notes: notes.trim() || "",
       });
-      toast.success("Saved");
+      toast.success(tr("Saved"));
       setEditEntry(null);
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -146,24 +148,24 @@ const ClientCatalog = () => {
           {entryMeta?.alias && p.name !== entryMeta.alias && (
             <p className="text-xs text-muted-foreground line-clamp-1">{p.name}</p>
           )}
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description || "No description"}</p>
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description || tr("No description")}</p>
           <div className="flex items-center justify-between mt-3">
             <Badge variant="outline" className="text-xs">{p.category}</Badge>
-            <span className="text-xs text-muted-foreground">Lead: {p.lead_time_days} days</span>
+            <span className="text-xs text-muted-foreground">{tr("Lead: {days} days", { days: p.lead_time_days })}</span>
           </div>
           {p.availability_status === "LIMITED_STOCK" && (
             <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2">
-              Limited Stock
+              {tr("Limited Stock")}
             </span>
           )}
           <div className="mt-3 flex items-center justify-end">
             {inMine ? (
               <Badge variant="outline" className="bg-green-100 text-green-800">
-              <Star className="w-3 h-3 me-1 fill-current" /> In your catalog
+              <Star className="w-3 h-3 me-1 fill-current" /> {tr("In your catalog")}
               </Badge>
             ) : (
               <Button size="sm" variant="outline" onClick={() => handleAdd(p._id)} disabled={busy}>
-              <Plus className="w-3 h-3 me-1" /> Add to catalog
+              <Plus className="w-3 h-3 me-1" /> {tr("Add to catalog")}
               </Button>
             )}
           </div>
@@ -200,14 +202,14 @@ const ClientCatalog = () => {
           </div>
           <div className="flex items-center justify-between text-xs">
             <Badge variant="outline">{p.category}</Badge>
-            <span className="text-muted-foreground">Lead: {p.lead_time_days} d</span>
+            <span className="text-muted-foreground">{tr("Lead: {days} d", { days: p.lead_time_days })}</span>
           </div>
           <div className="flex flex-wrap items-center gap-1">
             <Button size="sm" variant="ghost" onClick={() => togglePinned(entry._id, !entry.pinned)}>
               {entry.pinned ? <StarOff className="w-3 h-3 me-1" /> : <Star className="w-3 h-3 me-1" />}
-              {entry.pinned ? "Unpin" : "Pin"}
+              {entry.pinned ? tr("Unpin") : tr("Pin")}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => openEdit(entry)}>Edit</Button>
+            <Button size="sm" variant="ghost" onClick={() => openEdit(entry)}>{tr("Edit")}</Button>
             <Button size="sm" variant="ghost" onClick={() => toggleHidden(entry._id, !entry.hidden)}>
               {entry.hidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
             </Button>
@@ -222,25 +224,25 @@ const ClientCatalog = () => {
 
   return (
     <ClientLayout>
-      <h1 className="font-display text-3xl font-bold text-foreground mb-6">Product Catalog</h1>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-6">{tr("Product Catalog")}</h1>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="ps-9" />
+          <Input placeholder={tr("Search products...")} value={search} onChange={(e) => setSearch(e.target.value)} className="ps-9" />
         </div>
         <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setSubFilter("ALL"); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder={tr("Category")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All Categories</SelectItem>
+            <SelectItem value="ALL">{tr("All Categories")}</SelectItem>
             {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
         {subcategories.length > 0 && (
           <Select value={subFilter} onValueChange={setSubFilter}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Subcategory" /></SelectTrigger>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder={tr("Subcategory")} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Subcategories</SelectItem>
+              <SelectItem value="ALL">{tr("All Subcategories")}</SelectItem>
               {subcategories.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -249,8 +251,8 @@ const ClientCatalog = () => {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>
-          <TabsTrigger value="ALL">All Products</TabsTrigger>
-          <TabsTrigger value="MINE">My Catalog ({myEntries.length})</TabsTrigger>
+          <TabsTrigger value="ALL">{tr("All Products")}</TabsTrigger>
+          <TabsTrigger value="MINE">{tr("My Catalog ({count})", { count: myEntries.length })}</TabsTrigger>
         </TabsList>
         <TabsContent value="ALL" className="mt-4">
           {loading ? (
@@ -258,7 +260,7 @@ const ClientCatalog = () => {
           ) : allFiltered.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>No products found.</p>
+              <p>{tr("No products found.")}</p>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -270,11 +272,11 @@ const ClientCatalog = () => {
           {myEntries.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Star className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>No products in your private catalog yet.</p>
-              <p className="text-sm mt-1">Browse All Products and click "Add to catalog" to curate your own list.</p>
+              <p>{tr("No products in your private catalog yet.")}</p>
+              <p className="text-sm mt-1">{tr("Browse All Products and click Add to catalog to curate your own list.")}</p>
             </div>
           ) : myFiltered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No matches in your catalog.</p>
+            <p className="text-sm text-muted-foreground">{tr("No matches in your catalog.")}</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {myFiltered.map(renderMyCard)}
@@ -285,20 +287,20 @@ const ClientCatalog = () => {
 
       <Dialog open={editEntry !== null} onOpenChange={(o) => !o && setEditEntry(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit catalog entry</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Edit catalog entry")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label>Display alias</Label>
-              <Input value={alias} onChange={(e) => setAlias(e.target.value)} placeholder="Internal name (optional)" />
+              <Label>{tr("Display alias")}</Label>
+              <Input value={alias} onChange={(e) => setAlias(e.target.value)} placeholder={tr("Internal name (optional)")} />
             </div>
             <div>
-              <Label>Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional internal notes" />
+              <Label>{tr("Notes")}</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr("Optional internal notes")} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditEntry(null)}>Cancel</Button>
-            <Button onClick={saveEdit} disabled={busy}>Save</Button>
+            <Button variant="outline" onClick={() => setEditEntry(null)}>{tr("Cancel")}</Button>
+            <Button onClick={saveEdit} disabled={busy}>{tr("Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,14 +14,10 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { t } = useLanguage();
+  const { tr, dir } = useLanguage();
   const { profile, loading: authLoading } = useAuth();
   const { signIn } = useAuthActions();
-
-  const signInHeadline = useMemo(() => {
-    const value = t.nav.login || "Sign In";
-    return value.toLowerCase() === "login" ? "Sign In" : value;
-  }, [t.nav.login]);
+  const signInHeadline = tr("Sign In");
 
   if (!authLoading && profile) {
     const dest =
@@ -41,7 +37,7 @@ const Login = () => {
     try {
       await signIn("password", { email, password, flow: "signIn" });
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Invalid email or password");
+      toast.error(err instanceof Error ? err.message : tr("Invalid email or password"));
     } finally {
       setLoading(false);
     }
@@ -55,7 +51,7 @@ const Login = () => {
             <div className="relative hidden flex-col justify-between p-12 text-[#faf9f5] lg:flex">
               <div className="relative z-10">
                 <p className="max-w-sm text-sm text-[#c9c7be]">
-                  Managed RFQs, verified suppliers, and commercial control across every order.
+                  {tr("Managed RFQs, verified suppliers, and commercial control across every order.")}
                 </p>
               </div>
 
@@ -63,9 +59,9 @@ const Login = () => {
                 <div className="pointer-events-none absolute -left-14 -top-12 h-[420px] w-[420px] rounded-full border border-[#faf9f5]/10" />
                 <div className="pointer-events-none absolute -left-4 -top-2 h-[280px] w-[280px] rounded-full border border-[#faf9f5]/10" />
                 <h2 className="font-display text-[68px] font-semibold leading-[0.95] tracking-tight">
-                  Manage
+                  {tr("Manage")}
                   <br />
-                  your spend
+                  {tr("your spend")}
                 </h2>
               </div>
 
@@ -73,9 +69,9 @@ const Login = () => {
                 <div className="relative h-[340px] w-[220px] rotate-[-11deg] overflow-hidden rounded-[34px] bg-[#0f0f0e] shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
                   <div className="absolute left-1/2 top-4 h-3 w-16 -translate-x-1/2 rounded-full bg-[#1a1a19]" />
                   <div className="px-6 pb-6 pt-12">
-                    <p className="text-xs text-[#c9c7be]">Weekly spend</p>
+                    <p className="text-xs text-[#c9c7be]">{tr("Weekly spend")}</p>
                     <p className="mt-1 text-2xl font-semibold tracking-tight">897.00</p>
-                    <p className="text-xs text-[#87867f]">SAR</p>
+                    <p className="text-xs text-[#87867f]">{tr("SAR")}</p>
 
                     <div className="mt-7 grid grid-cols-7 items-end gap-1">
                       {[9, 12, 10, 18, 16, 20, 14].map((value, index) => (
@@ -89,11 +85,11 @@ const Login = () => {
 
                     <div className="mt-6 grid grid-cols-2 gap-3">
                       <div className="rounded-2xl bg-[#171716] p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-[#87867f]">RFQs</p>
+                        <p className="text-[10px] uppercase tracking-wide text-[#87867f]">{tr("RFQs")}</p>
                         <p className="mt-1 text-sm font-medium">18</p>
                       </div>
                       <div className="rounded-2xl bg-[#171716] p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-[#87867f]">Savings</p>
+                        <p className="text-[10px] uppercase tracking-wide text-[#87867f]">{tr("Savings")}</p>
                         <p className="mt-1 text-sm font-medium">12%</p>
                       </div>
                     </div>
@@ -101,7 +97,7 @@ const Login = () => {
                 </div>
 
                 <div className="hidden max-w-[180px] pb-4 text-xs text-[#c9c7be] xl:block">
-                  Secure access for clients, suppliers, and admins with portal-level controls.
+                  {tr("Secure access for clients, suppliers, and admins with portal-level controls.")}
                 </div>
               </div>
 
@@ -124,7 +120,7 @@ const Login = () => {
                     className="inline-flex items-center gap-2 text-sm text-[#5e5d59] hover:text-[#141413]"
                   >
                     <User className="h-4 w-4" />
-                    Sign Up
+                    {tr("Sign Up")}
                   </Link>
                 </div>
               </div>
@@ -136,20 +132,20 @@ const Login = () => {
 
                 <form onSubmit={handleLogin} className="mt-12 space-y-6">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="sr-only">{t.getStarted.email}</Label>
+                    <Label htmlFor="email" className="sr-only">{tr("Email or Username")}</Label>
                     <Input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      placeholder="Email or Username"
+                      placeholder={tr("Email or Username")}
                       className="h-14 rounded-full border-[#d1cfc5] bg-white px-6 text-base shadow-none focus-visible:ring-[#ff4d2d]"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="sr-only">Password</Label>
+                    <Label htmlFor="password" className="sr-only">{tr("Password")}</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -157,21 +153,21 @@ const Login = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        placeholder="Password"
+                        placeholder={tr("Password")}
                         className="h-14 rounded-full border-[#d1cfc5] bg-white ps-6 pe-14 text-base shadow-none focus-visible:ring-[#ff4d2d]"
                       />
                       <button
                         type="button"
                         className="absolute end-5 top-1/2 -translate-y-1/2 text-[#87867f] transition-colors hover:text-[#141413]"
                         onClick={() => setShowPassword((prev) => !prev)}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? tr("Hide password") : tr("Show password")}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                     <div className="flex justify-start">
                       <Link to="/forgot-password" className="text-sm text-[#c96442] hover:underline">
-                        Forgot password?
+                        {tr("Forgot password?")}
                       </Link>
                     </div>
                   </div>
@@ -186,9 +182,9 @@ const Login = () => {
                     ) : (
                       <>
                         <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-                          <ArrowRight className="h-4 w-4" />
+                          {dir === "rtl" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                         </span>
-                        {t.nav.login}
+                        {tr("Sign In")}
                       </>
                     )}
                   </Button>
@@ -198,8 +194,8 @@ const Login = () => {
                       to="/"
                       className="inline-flex items-center gap-1 text-sm text-[#5e5d59] hover:text-[#141413]"
                     >
-                      <ArrowLeft className="h-4 w-4" />
-                      {t.getStarted.backHome}
+                      {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                      {tr("Back to Home")}
                     </Link>
                   </div>
                 </form>

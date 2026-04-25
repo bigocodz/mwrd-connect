@@ -28,7 +28,7 @@ const toneClasses = {
 
 const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps) => {
   const { profile, signOut } = useAuth();
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang, tr } = useLanguage();
   const location = useLocation();
 
   return (
@@ -39,11 +39,11 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
             <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-xl object-cover" />
             <div className="min-w-0">
               <p className="font-display text-xl font-medium leading-6 text-[#141413]">MWRD</p>
-              <p className="text-xs leading-5 text-[#5e5d59]">Procurement workspace</p>
+              <p className="text-xs leading-5 text-[#5e5d59]">{tr("Procurement workspace")}</p>
             </div>
           </Link>
           <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-medium tracking-[0.12px] ${toneClasses[portalTone]}`}>
-            {portalLabel}
+            {tr(portalLabel)}
           </span>
         </div>
 
@@ -61,7 +61,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                 }`}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{tr(item.label)}</span>
               </Link>
             );
           })}
@@ -73,7 +73,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               {(profile?.company_name || profile?.public_id || "M").slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-[#141413]">{profile?.company_name || "MWRD account"}</p>
+              <p className="truncate text-sm font-medium text-[#141413]">{profile?.company_name || tr("MWRD account")}</p>
               <p className="truncate text-xs text-[#87867f]">{profile?.public_id}</p>
             </div>
           </div>
@@ -83,7 +83,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#5e5d59] transition-colors hover:bg-[#e8e6dc] hover:text-[#141413]"
           >
             <LogOut01 className="h-5 w-5" />
-            Sign out
+            {tr("Sign out")}
           </button>
         </div>
       </aside>
@@ -95,11 +95,11 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               <img src="/logo.png" alt="MWRD" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
               <div className="min-w-0">
                 <p className="truncate font-display text-base font-medium text-[#141413]">MWRD</p>
-                <p className="truncate text-xs text-[#5e5d59]">{portalLabel}</p>
+                <p className="truncate text-xs text-[#5e5d59]">{tr(portalLabel)}</p>
               </div>
             </div>
             <div className="hidden min-w-0 lg:block">
-              <p className="text-sm font-medium text-[#141413]">{profile?.company_name || portalLabel}</p>
+              <p className="text-sm font-medium text-[#141413]">{profile?.company_name || tr(portalLabel)}</p>
               <p className="text-xs text-[#87867f]">{profile?.public_id}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                 type="button"
                 onClick={() => setLang(lang === "en" ? "ar" : "en")}
                 className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f5f4ed] px-3 text-sm font-medium text-[#5e5d59] shadow-[0_0_0_1px_#e8e6dc] transition-colors hover:bg-[#e8e6dc] hover:text-[#141413]"
-                aria-label="Toggle language"
+                aria-label={tr("Toggle language")}
               >
                 <Globe01 className="h-5 w-5" />
                 {lang === "en" ? "عربي" : "EN"}
@@ -127,7 +127,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.label}
+                  {tr(item.label)}
                 </Link>
               );
             })}

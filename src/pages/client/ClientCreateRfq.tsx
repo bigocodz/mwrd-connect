@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { toast } from "sonner";
 import { Plus, Trash2, ShoppingBag, AlertTriangle, Loader2, FileText, Sparkles } from "lucide-react";
 import { getRfqTemplate, rfqTemplates } from "@/data/rfqTemplates";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RfqItemDraft {
   key: string;
@@ -69,6 +70,7 @@ const dateInputFromToday = (days: number) => {
 
 const ClientCreateRfq = () => {
   const { profile } = useAuth();
+  const { tr } = useLanguage();
   const navigate = useNavigate();
   const createRfq = useMutation(api.rfqs.create);
   const generateUploadUrl = useMutation(api.rfqs.generateAttachmentUploadUrl);
@@ -103,11 +105,11 @@ const ClientCreateRfq = () => {
 
   const handleSaveSchedule = async () => {
     if (!scheduleName.trim()) {
-      toast.error("Schedule name required");
+      toast.error(tr("Schedule name required"));
       return;
     }
     if (items.length === 0) {
-      toast.error("Add at least one item");
+      toast.error(tr("Add at least one item"));
       return;
     }
     setSavingSchedule(true);
@@ -134,12 +136,12 @@ const ClientCreateRfq = () => {
           })),
         },
       });
-      toast.success("Schedule saved");
+      toast.success(tr("Schedule saved"));
       setScheduleOpen(false);
       setScheduleName("");
       navigate("/client/schedules");
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setSavingSchedule(false);
     }
@@ -194,7 +196,7 @@ const ClientCreateRfq = () => {
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!response.ok) throw new Error("Upload failed");
+      if (!response.ok) throw new Error(tr("Upload failed"));
       const { storageId } = await response.json();
       setAttachments((prev) =>
         prev.map((attachment) =>
@@ -210,9 +212,9 @@ const ClientCreateRfq = () => {
             : attachment,
         ),
       );
-      toast.success("Document uploaded");
+      toast.success(tr("Document uploaded"));
     } catch (err: any) {
-      toast.error("Upload error: " + err.message);
+      toast.error(`${tr("Upload error:")} ${err.message}`);
     } finally {
       setUploadingAttachmentKey(null);
     }
@@ -221,22 +223,22 @@ const ClientCreateRfq = () => {
   const handleSubmit = async () => {
     if (isFrozen) return;
     if (items.length === 0) {
-      toast.error("Add at least one item");
+      toast.error(tr("Add at least one item"));
       return;
     }
     for (const item of items) {
       if (!item.product_id && !item.custom_item_description.trim()) {
-        toast.error("Each item must have a product or description");
+        toast.error(tr("Each item must have a product or description"));
         return;
       }
       if (item.quantity < 1) {
-        toast.error("Quantity must be at least 1");
+        toast.error(tr("Quantity must be at least 1"));
         return;
       }
     }
     for (const attachment of attachments) {
       if (!attachment.name.trim() || (!attachment.url.trim() && !attachment.storage_id)) {
-        toast.error("Each document needs a name and either a file upload or URL");
+        toast.error(tr("Each document needs a name and either a file upload or URL"));
         return;
       }
     }
@@ -269,10 +271,10 @@ const ClientCreateRfq = () => {
           special_notes: item.special_notes || undefined,
         })),
       });
-      toast.success("RFQ submitted successfully");
+      toast.success(tr("RFQ submitted successfully"));
       navigate("/client/rfqs");
     } catch (err: any) {
-      toast.error("Error creating RFQ: " + err.message);
+      toast.error(`${tr("Error creating RFQ:")} ${err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -290,8 +292,8 @@ const ClientCreateRfq = () => {
     <ClientLayout>
       <div className="max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">New Request for Quote</h1>
-          <p className="text-muted-foreground mt-1">Use a template, attach requirements, and describe exactly what suppliers should quote.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("New Request for Quote")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Use a template, attach requirements, and describe exactly what suppliers should quote.")}</p>
         </div>
 
         {isFrozen && (
@@ -299,7 +301,7 @@ const ClientCreateRfq = () => {
             <CardContent className="flex items-center gap-3 py-4">
               <AlertTriangle className="w-5 h-5 text-destructive" />
               <p className="text-sm text-destructive font-medium">
-                Your account is currently frozen. Please contact MWRD support.
+                {tr("Your account is currently frozen. Please contact MWRD support.")}
               </p>
             </CardContent>
           </Card>
@@ -309,18 +311,18 @@ const ClientCreateRfq = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles className="h-4 w-4 text-primary" />
-              RFQ setup
+              {tr("RFQ setup")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>Template</Label>
+              <Label>{tr("Template")}</Label>
               <Select value={templateKey} onValueChange={applyTemplate}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Start from a template" />
+                  <SelectValue placeholder={tr("Start from a template")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="blank">Blank RFQ</SelectItem>
+                  <SelectItem value="blank">{tr("Blank RFQ")}</SelectItem>
                   {rfqTemplates.map((template) => (
                     <SelectItem key={template.key} value={template.key}>
                       {template.label} ({template.category})
@@ -337,18 +339,22 @@ const ClientCreateRfq = () => {
 
             <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <Label>Category</Label>
-                <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Office Supplies, IT, Facilities…" />
+                <Label>{tr("Category")}</Label>
+                <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder={tr("Office Supplies, IT, Facilities…")} />
               </div>
               <div>
-                <Label>Required By</Label>
+                <Label>{tr("Required By")}</Label>
                 <Input type="date" value={requiredBy} onChange={(e) => setRequiredBy(e.target.value)} />
               </div>
             </div>
 
             <div>
-              <Label>Delivery Location</Label>
-              <Input value={deliveryLocation} onChange={(e) => setDeliveryLocation(e.target.value)} placeholder="Branch, city, warehouse, or delivery instruction" />
+              <Label>{tr("Delivery Location")}</Label>
+              <Input
+                value={deliveryLocation}
+                onChange={(e) => setDeliveryLocation(e.target.value)}
+                placeholder={tr("Branch, city, warehouse, or delivery instruction")}
+              />
             </div>
           </CardContent>
         </Card>
@@ -357,7 +363,7 @@ const ClientCreateRfq = () => {
           {items.map((item, idx) => (
             <Card key={item.key}>
               <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
-                <CardTitle className="text-sm font-medium">Item {idx + 1}</CardTitle>
+                <CardTitle className="text-sm font-medium">{tr("Item {n}", { n: idx + 1 })}</CardTitle>
                 {items.length > 1 && (
                   <Button variant="ghost" size="icon" onClick={() => removeItem(item.key)}>
                     <Trash2 className="w-4 h-4 text-destructive" />
@@ -366,7 +372,7 @@ const ClientCreateRfq = () => {
               </CardHeader>
               <CardContent className="space-y-3 px-4 pb-4">
                 <div>
-                  <Label>Product from Catalog</Label>
+                  <Label>{tr("Product from Catalog")}</Label>
                   <Select
                     value={item.product_id || "custom"}
                     onValueChange={(v) =>
@@ -377,10 +383,10 @@ const ClientCreateRfq = () => {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a product or choose custom…" />
+                      <SelectValue placeholder={tr("Select a product or choose custom…")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="custom">— Custom item (not in catalog)</SelectItem>
+                      <SelectItem value="custom">{tr("— Custom item (not in catalog)")}</SelectItem>
                       {products.map((p) => (
                         <SelectItem key={p._id} value={p._id}>
                           {p.name} ({p.category})
@@ -392,18 +398,18 @@ const ClientCreateRfq = () => {
 
                 {!item.product_id && (
                   <div>
-                    <Label>Custom Item Description</Label>
+                    <Label>{tr("Custom Item Description")}</Label>
                     <Textarea
                       value={item.custom_item_description}
                       onChange={(e) => updateItem(item.key, { custom_item_description: e.target.value })}
-                      placeholder="Describe the item you need…"
+                      placeholder={tr("Describe the item you need…")}
                     />
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Quantity</Label>
+                    <Label>{tr("Quantity")}</Label>
                     <Input
                       type="number"
                       min={1}
@@ -412,27 +418,27 @@ const ClientCreateRfq = () => {
                     />
                   </div>
                   <div>
-                    <Label>Flexibility</Label>
+                    <Label>{tr("Flexibility")}</Label>
                     <Select
                       value={item.flexibility}
                       onValueChange={(v) => updateItem(item.key, { flexibility: v as any })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="EXACT_MATCH">Exact Match</SelectItem>
-                        <SelectItem value="OPEN_TO_EQUIVALENT">Open to Equivalent</SelectItem>
-                        <SelectItem value="OPEN_TO_ALTERNATIVES">Open to Alternatives</SelectItem>
+                        <SelectItem value="EXACT_MATCH">{tr("Exact Match")}</SelectItem>
+                        <SelectItem value="OPEN_TO_EQUIVALENT">{tr("Open to Equivalent")}</SelectItem>
+                        <SelectItem value="OPEN_TO_ALTERNATIVES">{tr("Open to Alternatives")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div>
-                  <Label>Special Notes (optional)</Label>
+                  <Label>{tr("Special Notes (optional)")}</Label>
                   <Input
                     value={item.special_notes}
                     onChange={(e) => updateItem(item.key, { special_notes: e.target.value })}
-                    placeholder="Any specific requirements…"
+                    placeholder={tr("Any specific requirements…")}
                   />
                 </div>
               </CardContent>
@@ -440,14 +446,14 @@ const ClientCreateRfq = () => {
           ))}
 
           <Button variant="outline" className="w-full" onClick={() => setItems([...items, emptyItem()])}>
-            <Plus className="w-4 h-4 me-2" /> Add Another Item
+            <Plus className="w-4 h-4 me-2" /> {tr("Add Another Item")}
           </Button>
         </div>
 
         <Card>
           <CardContent className="space-y-3 pt-4">
             <div>
-              <Label>Expiry Date (optional)</Label>
+              <Label>{tr("Expiry Date (optional)")}</Label>
               <Input
                 type="date"
                 value={expiryDate}
@@ -455,20 +461,20 @@ const ClientCreateRfq = () => {
               />
             </div>
             <div>
-              <Label>Notes (optional)</Label>
+              <Label>{tr("Notes (optional)")}</Label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="General notes for this RFQ…"
+                placeholder={tr("General notes for this RFQ…")}
               />
             </div>
             <div className="grid gap-3 md:grid-cols-3">
               <div>
-                <Label>Cost center (optional)</Label>
+                <Label>{tr("Cost center (optional)")}</Label>
                 <Select value={costCenterId || "__none"} onValueChange={(v) => setCostCenterId(v === "__none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tr("None")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none">None</SelectItem>
+                    <SelectItem value="__none">{tr("None")}</SelectItem>
                     {costCenters.map((cc: any) => (
                       <SelectItem key={cc._id} value={cc._id}>{cc.code} — {cc.name}</SelectItem>
                     ))}
@@ -476,11 +482,11 @@ const ClientCreateRfq = () => {
                 </Select>
               </div>
               <div>
-                <Label>Branch (optional)</Label>
+                <Label>{tr("Branch (optional)")}</Label>
                 <Select value={branchId || "__none"} onValueChange={(v) => setBranchId(v === "__none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tr("None")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none">None</SelectItem>
+                    <SelectItem value="__none">{tr("None")}</SelectItem>
                     {branches.map((b: any) => (
                       <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
                     ))}
@@ -488,11 +494,11 @@ const ClientCreateRfq = () => {
                 </Select>
               </div>
               <div>
-                <Label>Department (optional)</Label>
+                <Label>{tr("Department (optional)")}</Label>
                 <Select value={departmentId || "__none"} onValueChange={(v) => setDepartmentId(v === "__none" ? "" : v)}>
-                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tr("None")} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none">None</SelectItem>
+                    <SelectItem value="__none">{tr("None")}</SelectItem>
                     {departments.map((d: any) => (
                       <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
                     ))}
@@ -502,7 +508,9 @@ const ClientCreateRfq = () => {
             </div>
             {costCenters.length === 0 && branches.length === 0 && departments.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                Set up cost centers, branches, and departments in <span className="font-medium">Account → Organization</span> to tag RFQs.
+                {tr("Set up cost centers, branches, and departments in")}{" "}
+                <span className="font-medium">{tr("Account → Organization")}</span>{" "}
+                {tr("to tag RFQs.")}
               </p>
             )}
           </CardContent>

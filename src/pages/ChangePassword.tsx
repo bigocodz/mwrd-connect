@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ChangePassword = () => {
   const { profile, loading } = useAuth();
   const navigate = useNavigate();
   const changePassword = useAction(api.users.changePassword);
+  const { tr } = useLanguage();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,17 +44,17 @@ const ChangePassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(tr("Password must be at least 8 characters"));
       return;
     }
     if (password !== confirm) {
-      toast.error("Passwords do not match");
+      toast.error(tr("Passwords do not match"));
       return;
     }
     setSubmitting(true);
     try {
       await changePassword({ newPassword: password });
-      toast.success("Password updated");
+      toast.success(tr("Password updated"));
       const target =
         profile.role === "ADMIN"
           ? "/admin/dashboard"
@@ -61,7 +63,7 @@ const ChangePassword = () => {
             : "/client/dashboard";
       navigate(target, { replace: true });
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to update password");
+      toast.error(err instanceof Error ? err.message : tr("Failed to update password"));
     } finally {
       setSubmitting(false);
     }
@@ -74,15 +76,15 @@ const ChangePassword = () => {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f7e9e1] text-[#c96442] shadow-[0_0_0_1px_#eed1c5]">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <CardTitle>Set your password</CardTitle>
+          <CardTitle>{tr("Set your password")}</CardTitle>
           <CardDescription>
-            For security, please replace the temporary password from your welcome email before continuing.
+            {tr("For security, please replace the temporary password from your welcome email before continuing.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
+              <Label htmlFor="password">{tr("New password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -94,7 +96,7 @@ const ChangePassword = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm">Confirm password</Label>
+              <Label htmlFor="confirm">{tr("Confirm password")}</Label>
               <Input
                 id="confirm"
                 type="password"
@@ -106,7 +108,7 @@ const ChangePassword = () => {
             </div>
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
-              Update password
+              {tr("Update password")}
             </Button>
           </form>
         </CardContent>

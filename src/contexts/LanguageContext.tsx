@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
+import { arStrings } from "@/i18n/ar";
 
 type Lang = "en" | "ar";
 
@@ -227,6 +228,7 @@ type LanguageContextType = {
   lang: Lang;
   setLang: (lang: Lang) => void;
   t: Translations;
+  tr: (key: string, vars?: Record<string, string | number>) => string;
   dir: "ltr" | "rtl";
 };
 
@@ -253,6 +255,15 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const t = useMemo(() => translations[lang], [lang]);
   const dir = lang === "ar" ? "rtl" : "ltr";
 
+  const tr = useMemo(() => {
+    const table = lang === "ar" ? arStrings : undefined;
+    return (key: string, vars?: Record<string, string | number>) => {
+      const template = table?.[key] ?? key;
+      if (!vars) return template;
+      return template.replace(/\{(\w+)\}/g, (_match, k: string) => (k in vars ? String(vars[k]) : `{${k}}`));
+    };
+  }, [lang]);
+
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.lang = lang;
@@ -262,7 +273,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [lang, dir]);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t, dir }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, tr, dir }}>
       {children}
     </LanguageContext.Provider>
   );

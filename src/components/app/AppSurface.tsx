@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode, SVGProps } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type AppIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number; color?: string }>;
 
@@ -102,13 +103,25 @@ export const LinkCard = ({ title, description, href, icon: Icon, meta }: LinkCar
     <span className="min-w-0 flex-1">
       <span className="flex items-center justify-between gap-3">
         <span className="font-display text-[1.3rem] font-medium leading-tight text-[#141413]">{title}</span>
-        <ArrowRight className="h-4 w-4 shrink-0 text-[#87867f] transition-transform group-hover:translate-x-0.5 group-hover:text-[#c96442]" />
+        <DirectionalArrow />
       </span>
       <span className="mt-2 block text-[15px] leading-relaxed text-[#5e5d59]">{description}</span>
       {meta && <span className="mt-3 block text-sm font-medium text-[#141413]">{meta}</span>}
     </span>
   </Link>
 );
+
+const DirectionalArrow = () => {
+  const { dir } = useLanguage();
+  return (
+    <ArrowRight
+      className={cn(
+        "h-4 w-4 shrink-0 text-[#87867f] transition-transform group-hover:text-[#c96442]",
+        dir === "rtl" ? "rotate-180 group-hover:-translate-x-0.5" : "group-hover:translate-x-0.5",
+      )}
+    />
+  );
+};
 
 type SkeletonLineProps = {
   className?: string;

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, XCircle, Snowflake, AlertTriangle, ShieldOff } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusConfig: Record<string, { icon: React.ReactNode; title: string; desc: string; color: string }> = {
   PENDING: {
@@ -39,6 +40,7 @@ const statusConfig: Record<string, { icon: React.ReactNode; title: string; desc:
 
 const AccountStatus = () => {
   const { profile, loading, signOut } = useAuth();
+  const { tr } = useLanguage();
 
   if (loading) return null;
 
@@ -53,13 +55,13 @@ const AccountStatus = () => {
       <Card className="max-w-md w-full text-center">
         <CardContent className="pt-10 pb-8">
           <div className={`mx-auto mb-4 ${config.color}`}>{config.icon}</div>
-          <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">{config.title}</h2>
-          <p className="mb-2 leading-relaxed text-[#5e5d59]">{config.desc}</p>
+          <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">{tr(config.title)}</h2>
+          <p className="mb-2 leading-relaxed text-[#5e5d59]">{tr(config.desc)}</p>
           {profile.status === "FROZEN" && profile.freeze_reason && (
-            <p className="mb-4 text-sm text-[#5e5d59]">Reason: {profile.freeze_reason}</p>
+            <p className="mb-4 text-sm text-[#5e5d59]">{tr("Reason:")} {profile.freeze_reason}</p>
           )}
           <div className="mt-6">
-            <Button variant="outline" onClick={signOut}>Sign Out</Button>
+            <Button variant="outline" onClick={signOut}>{tr("Sign out")}</Button>
           </div>
         </CardContent>
       </Card>
