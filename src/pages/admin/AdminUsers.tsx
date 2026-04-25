@@ -61,18 +61,18 @@ const AdminUsers = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-3xl font-bold text-foreground">User Management</h1>
         <Button asChild>
-          <Link to="/admin/users/create"><Plus className="w-4 h-4 mr-1.5" /> Create User</Link>
+          <Link to="/admin/users/create"><Plus className="w-4 h-4 me-1.5" /> Create User</Link>
         </Button>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search by ID or company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="ps-9"
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>

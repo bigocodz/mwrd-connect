@@ -107,11 +107,11 @@ const Login = () => {
 
               <div className="pointer-events-none absolute inset-0 opacity-70">
                 <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-[#faf9f5]/5 blur-3xl" />
-                <div className="absolute bottom-0 right-0 h-80 w-80 rounded-full bg-[#faf9f5]/5 blur-3xl" />
+                <div className="absolute bottom-0 end-0 h-80 w-80 rounded-full bg-[#faf9f5]/5 blur-3xl" />
               </div>
             </div>
 
-            <div className="bg-white px-6 py-10 sm:px-10 sm:py-12 lg:rounded-l-[84px] lg:px-14 lg:py-14">
+            <div className="bg-white px-6 py-10 sm:px-10 sm:py-12 lg:rounded-s-[84px] lg:px-14 lg:py-14">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-2xl object-cover" />
@@ -158,11 +158,11 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         placeholder="Password"
-                        className="h-14 rounded-full border-[#d1cfc5] bg-white px-6 pr-14 text-base shadow-none focus-visible:ring-[#ff4d2d]"
+                        className="h-14 rounded-full border-[#d1cfc5] bg-white ps-6 pe-14 text-base shadow-none focus-visible:ring-[#ff4d2d]"
                       />
                       <button
                         type="button"
-                        className="absolute right-5 top-1/2 -translate-y-1/2 text-[#87867f] transition-colors hover:text-[#141413]"
+                        className="absolute end-5 top-1/2 -translate-y-1/2 text-[#87867f] transition-colors hover:text-[#141413]"
                         onClick={() => setShowPassword((prev) => !prev)}
                         aria-label={showPassword ? "Hide password" : "Show password"}
                       >

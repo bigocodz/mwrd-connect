@@ -440,7 +440,7 @@ const ClientCreateRfq = () => {
           ))}
 
           <Button variant="outline" className="w-full" onClick={() => setItems([...items, emptyItem()])}>
-            <Plus className="w-4 h-4 mr-2" /> Add Another Item
+            <Plus className="w-4 h-4 me-2" /> Add Another Item
           </Button>
         </div>
 
@@ -518,7 +518,7 @@ const ClientCreateRfq = () => {
               <p className="mt-1 text-sm text-muted-foreground">Add links to specs, purchase policies, drawings, or other files.</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setAttachments([...attachments, emptyAttachment()])}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 me-2" />
               Add
             </Button>
           </CardHeader>
@@ -589,7 +589,7 @@ const ClientCreateRfq = () => {
             Save as schedule
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || isFrozen}>
-            <ShoppingBag className="w-4 h-4 mr-2" />
+            <ShoppingBag className="w-4 h-4 me-2" />
             {submitting ? "Submitting…" : "Submit RFQ"}
           </Button>
         </div>

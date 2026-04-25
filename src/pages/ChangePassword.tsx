@@ -105,7 +105,7 @@ const ChangePassword = () => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
               Update password
             </Button>
           </form>

@@ -212,7 +212,7 @@ const ClientOrganization = () => {
                 <CardDescription>Track spend by code (e.g. project, GL account).</CardDescription>
               </div>
               <Button size="sm" onClick={() => openNew("cost_center")}>
-                <Plus className="w-4 h-4 mr-2" /> New cost center
+                <Plus className="w-4 h-4 me-2" /> New cost center
               </Button>
             </div>
           </CardHeader>
@@ -233,7 +233,7 @@ const ClientOrganization = () => {
                       <TableCell className="font-mono text-sm">{cc.code}</TableCell>
                       <TableCell className="font-medium">{cc.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{cc.notes ?? "—"}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <Button variant="ghost" size="sm" onClick={() => openEdit("cost_center", cc)}>Edit</Button>
                         <Button variant="ghost" size="sm" onClick={() => handleArchive("cost_center", cc._id)}>
                           <Trash01 className="w-4 h-4" />
@@ -255,7 +255,7 @@ const ClientOrganization = () => {
                 <CardDescription>Physical locations and delivery sites.</CardDescription>
               </div>
               <Button size="sm" onClick={() => openNew("branch")}>
-                <Plus className="w-4 h-4 mr-2" /> New branch
+                <Plus className="w-4 h-4 me-2" /> New branch
               </Button>
             </div>
           </CardHeader>
@@ -276,7 +276,7 @@ const ClientOrganization = () => {
                       <TableCell className="font-medium">{b.name}</TableCell>
                       <TableCell className="text-sm">{b.location ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{b.notes ?? "—"}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <Button variant="ghost" size="sm" onClick={() => openEdit("branch", b)}>Edit</Button>
                         <Button variant="ghost" size="sm" onClick={() => handleArchive("branch", b._id)}>
                           <Trash01 className="w-4 h-4" />
@@ -298,7 +298,7 @@ const ClientOrganization = () => {
                 <CardDescription>Functional teams (HR, IT, Operations, …).</CardDescription>
               </div>
               <Button size="sm" onClick={() => openNew("department")}>
-                <Plus className="w-4 h-4 mr-2" /> New department
+                <Plus className="w-4 h-4 me-2" /> New department
               </Button>
             </div>
           </CardHeader>
@@ -317,7 +317,7 @@ const ClientOrganization = () => {
                     <TableRow key={d._id}>
                       <TableCell className="font-medium">{d.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{d.notes ?? "—"}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <Button variant="ghost" size="sm" onClick={() => openEdit("department", d)}>Edit</Button>
                         <Button variant="ghost" size="sm" onClick={() => handleArchive("department", d._id)}>
                           <Trash01 className="w-4 h-4" />
@@ -341,7 +341,7 @@ const ClientOrganization = () => {
                 </CardDescription>
               </div>
               <Button size="sm" onClick={() => setRuleDraft(emptyRule())}>
-                <Plus className="w-4 h-4 mr-2" /> New rule
+                <Plus className="w-4 h-4 me-2" /> New rule
               </Button>
             </div>
           </CardHeader>
@@ -365,27 +365,29 @@ const ClientOrganization = () => {
                         ≥ {formatSAR(rule.min_amount)}
                         {rule.max_amount != null ? ` · ≤ ${formatSAR(rule.max_amount)}` : ""}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground space-x-1">
-                        {rule.category && <Badge variant="outline">cat: {rule.category}</Badge>}
-                        {rule.cost_center_id && (
-                          <Badge variant="outline">cc: {costCenters.find((c: any) => c._id === rule.cost_center_id)?.code ?? "?"}</Badge>
-                        )}
-                        {rule.branch_id && (
-                          <Badge variant="outline">br: {branches.find((b: any) => b._id === rule.branch_id)?.name ?? "?"}</Badge>
-                        )}
-                        {rule.department_id && (
-                          <Badge variant="outline">dept: {departments.find((d: any) => d._id === rule.department_id)?.name ?? "?"}</Badge>
-                        )}
-                        {!rule.category && !rule.cost_center_id && !rule.branch_id && !rule.department_id && (
-                          <span>Any</span>
-                        )}
+                      <TableCell className="text-xs text-muted-foreground">
+                        <div className="flex flex-wrap gap-1">
+                          {rule.category && <Badge variant="outline">cat: {rule.category}</Badge>}
+                          {rule.cost_center_id && (
+                            <Badge variant="outline">cc: {costCenters.find((c: any) => c._id === rule.cost_center_id)?.code ?? "?"}</Badge>
+                          )}
+                          {rule.branch_id && (
+                            <Badge variant="outline">br: {branches.find((b: any) => b._id === rule.branch_id)?.name ?? "?"}</Badge>
+                          )}
+                          {rule.department_id && (
+                            <Badge variant="outline">dept: {departments.find((d: any) => d._id === rule.department_id)?.name ?? "?"}</Badge>
+                          )}
+                          {!rule.category && !rule.cost_center_id && !rule.branch_id && !rule.department_id && (
+                            <span>Any</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={rule.enabled ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}>
                           {rule.enabled ? "Enabled" : "Disabled"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <Button
                           variant="ghost"
                           size="sm"

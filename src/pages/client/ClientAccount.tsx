@@ -102,7 +102,7 @@ const ClientAccount = () => {
                       <TableRow key={p._id}>
                         <TableCell className="text-sm">{new Date(p._creationTime).toLocaleDateString()}</TableCell>
                         <TableCell className="font-medium">
-                          {formatSAR(Number(p.amount))} <VatBadge className="ml-1" />
+                          {formatSAR(Number(p.amount))} <VatBadge className="ms-1" />
                         </TableCell>
                         <TableCell className="text-xs">{p.payment_method.replace(/_/g, " ")}</TableCell>
                         <TableCell className="text-xs font-mono">{p.bank_reference || "—"}</TableCell>

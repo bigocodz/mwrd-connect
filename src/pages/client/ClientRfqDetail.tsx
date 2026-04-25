@@ -74,7 +74,7 @@ const ClientRfqDetail = () => {
           {(rfqData.quotes_count ?? 0) > 0 && (
             <Button asChild>
               <Link to={`/client/rfqs/${rfqId}/compare`}>
-                <GitCompare className="mr-2 h-4 w-4" />
+                <GitCompare className="me-2 h-4 w-4" />
                 Compare Quotes
               </Link>
             </Button>
@@ -137,7 +137,7 @@ const ClientRfqDetail = () => {
                   </div>
                   <Button variant="outline" size="sm" asChild>
                     <a href={attachment.url} target="_blank" rel="noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <ExternalLink className="me-2 h-4 w-4" />
                       Open
                     </a>
                   </Button>

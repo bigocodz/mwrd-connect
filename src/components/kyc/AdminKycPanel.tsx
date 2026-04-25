@@ -84,12 +84,12 @@ export const AdminKycPanel = ({ profileId }: { profileId: string }) => {
                     <div className="flex gap-1">
                       {doc.status !== "APPROVED" && (
                         <Button size="sm" onClick={() => wrap("Approved", () => approve({ id: doc._id }))} disabled={busy}>
-                          <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                          <CheckCircle className="w-3 h-3 me-1" /> Approve
                         </Button>
                       )}
                       {doc.status !== "REJECTED" && (
                         <Button size="sm" variant="destructive" onClick={() => { setRejectId(doc._id); setReason(""); }} disabled={busy}>
-                          <XCircle className="w-3 h-3 mr-1" /> Reject
+                          <XCircle className="w-3 h-3 me-1" /> Reject
                         </Button>
                       )}
                     </div>

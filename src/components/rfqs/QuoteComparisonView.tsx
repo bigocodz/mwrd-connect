@@ -102,7 +102,7 @@ export const QuoteComparisonView = ({ comparison, mode, backHref }: QuoteCompari
                         <p className="mt-1 font-mono text-xs text-muted-foreground">{quote._id.slice(0, 8)}…</p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        {isBest && <Badge><Trophy className="mr-1 h-3 w-3" /> Best</Badge>}
+                        {isBest && <Badge><Trophy className="me-1 h-3 w-3" /> Best</Badge>}
                         <Badge variant="outline">Score {quote.score}</Badge>
                       </div>
                     </div>
@@ -133,9 +133,9 @@ export const QuoteComparisonView = ({ comparison, mode, backHref }: QuoteCompari
                         {quote.attachments.map((attachment: any) => (
                           <Button key={attachment._id} variant="outline" size="sm" asChild>
                             <a href={attachment.url} target="_blank" rel="noreferrer">
-                              <FileText className="mr-2 h-4 w-4" />
+                              <FileText className="me-2 h-4 w-4" />
                               {attachment.name}
-                              <ExternalLink className="ml-2 h-3 w-3" />
+                              <ExternalLink className="ms-2 h-3 w-3" />
                             </a>
                           </Button>
                         ))}
@@ -214,9 +214,9 @@ export const QuoteComparisonView = ({ comparison, mode, backHref }: QuoteCompari
             {attachments.map((attachment: any) => (
               <Button key={attachment._id} variant="outline" size="sm" asChild>
                 <a href={attachment.url} target="_blank" rel="noreferrer">
-                  <FileText className="mr-2 h-4 w-4" />
+                  <FileText className="me-2 h-4 w-4" />
                   {documentLabel[attachment.document_type] || attachment.document_type}: {attachment.name}
-                  <ExternalLink className="ml-2 h-3 w-3" />
+                  <ExternalLink className="ms-2 h-3 w-3" />
                 </a>
               </Button>
             ))}

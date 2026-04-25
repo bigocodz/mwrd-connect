@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 
 type Lang = "en" | "ar";
 
@@ -232,16 +232,38 @@ type LanguageContextType = {
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
+const STORAGE_KEY = "mwrd_lang";
+
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLang] = useState<Lang>("en");
-  const t = translations[lang];
+  const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window === "undefined") return "en";
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    return stored === "ar" ? "ar" : "en";
+  });
+
+  const setLang = (next: Lang) => {
+    setLangState(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // Ignore persistence errors (private mode, storage denied).
+    }
+  };
+
+  const t = useMemo(() => translations[lang], [lang]);
   const dir = lang === "ar" ? "rtl" : "ltr";
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = dir;
+    document.documentElement.dataset.lang = lang;
+    document.body.dir = dir;
+  }, [lang, dir]);
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t, dir }}>
-      <div dir={dir} className={lang === "ar" ? "font-sans" : ""}>
-        {children}
-      </div>
+      {children}
     </LanguageContext.Provider>
   );
 };

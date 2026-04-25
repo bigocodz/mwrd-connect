@@ -149,7 +149,7 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
     <div className="flex flex-wrap gap-2">
       {role === "SUPPLIER" && order.status === "PENDING_CONFIRMATION" && (
         <Button onClick={() => wrap("Order confirmed", () => confirmBySupplier({ id: order._id }))} disabled={busy}>
-          <CheckCircle className="w-4 h-4 mr-2" /> Confirm Order
+          <CheckCircle className="w-4 h-4 me-2" /> Confirm Order
         </Button>
       )}
       {role === "SUPPLIER" && order.status === "CONFIRMED" && (
@@ -159,7 +159,7 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
       )}
       {role === "SUPPLIER" && (order.status === "PREPARING" || order.status === "CONFIRMED") && (
         <Button onClick={() => setTrackingDialog("DISPATCH")} disabled={busy}>
-          <Truck01 className="w-4 h-4 mr-2" /> Dispatch with tracking
+          <Truck01 className="w-4 h-4 me-2" /> Dispatch with tracking
         </Button>
       )}
       {role === "SUPPLIER" && order.status === "DISPATCHED" && (
@@ -185,13 +185,13 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
             }}
           />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={busy}>
-            <Upload01 className="w-4 h-4 mr-2" /> {order.pod_storage_id ? "Replace POD" : "Upload POD"}
+            <Upload01 className="w-4 h-4 me-2" /> {order.pod_storage_id ? "Replace POD" : "Upload POD"}
           </Button>
         </>
       )}
       {role === "CLIENT" && order.status === "DELIVERED" && (
         <Button onClick={() => wrap("Order completed", () => confirmByClient({ id: order._id }))} disabled={busy}>
-          <CheckCircle className="w-4 h-4 mr-2" /> Confirm Receipt
+          <CheckCircle className="w-4 h-4 me-2" /> Confirm Receipt
         </Button>
       )}
       {role === "CLIENT" &&
@@ -207,11 +207,11 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
         </Button>
       )}
       <Button variant="outline" size="sm" onClick={() => setNoteOpen(true)} disabled={busy}>
-        <MessageSquare01 className="w-4 h-4 mr-2" /> Add Note
+        <MessageSquare01 className="w-4 h-4 me-2" /> Add Note
       </Button>
       {canCancel && (
         <Button variant="destructive" size="sm" onClick={() => setCancelOpen(true)} disabled={busy}>
-          <XCircle className="w-4 h-4 mr-2" /> Cancel Order
+          <XCircle className="w-4 h-4 me-2" /> Cancel Order
         </Button>
       )}
 
@@ -479,7 +479,7 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
           <p className="text-xs text-muted-foreground uppercase">Supplier</p>
           <p className="font-medium">{order.supplier_public_id}</p>
           {order.supplier_company_name && <p className="text-sm text-muted-foreground">{order.supplier_company_name}</p>}
-          <p className="text-xs text-muted-foreground uppercase pt-2">Total <VatBadge className="ml-1" /></p>
+          <p className="text-xs text-muted-foreground uppercase pt-2">Total <VatBadge className="ms-1" /></p>
           <p className="text-xl font-bold text-primary">{formatSAR(order.total_with_vat)}</p>
         </CardContent></Card>
       </div>
@@ -494,7 +494,7 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
               <TableHead>Item</TableHead>
               <TableHead>Qty</TableHead>
               <TableHead>Lead Time</TableHead>
-              <TableHead>Unit Price <VatBadge className="ml-1" /></TableHead>
+              <TableHead>Unit Price <VatBadge className="ms-1" /></TableHead>
               <TableHead>Subtotal</TableHead>
             </TableRow>
           </TableHeader>

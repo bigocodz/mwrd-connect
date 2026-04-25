@@ -208,7 +208,7 @@ const SupplierProductForm = () => {
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading || !category}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
               {isEdit ? "Resubmit for Review" : "Submit for Review"}
             </Button>
           </form>

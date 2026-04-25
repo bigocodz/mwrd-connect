@@ -107,10 +107,10 @@ const SupplierProducts = () => {
             </SelectContent>
           </Select>
           <Button variant="outline" asChild>
-            <Link to="/supplier/products/bulk"><Upload className="w-4 h-4 mr-1.5" /> Bulk Import</Link>
+            <Link to="/supplier/products/bulk"><Upload className="w-4 h-4 me-1.5" /> Bulk Import</Link>
           </Button>
           <Button asChild>
-            <Link to="/supplier/products/add"><Plus className="w-4 h-4 mr-1.5" /> Add Product</Link>
+            <Link to="/supplier/products/add"><Plus className="w-4 h-4 me-1.5" /> Add Product</Link>
           </Button>
         </div>
       </div>
@@ -150,8 +150,8 @@ const SupplierProducts = () => {
                   <TableHead>Category</TableHead>
                   <TableHead>Approval</TableHead>
                   <TableHead>Availability</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead className="text-right">Your Price (SAR)</TableHead>
+                  <TableHead className="text-end">Stock</TableHead>
+                  <TableHead className="text-end">Your Price (SAR)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -166,7 +166,7 @@ const SupplierProducts = () => {
                     <TableCell>
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[p.availability_status]}`}>{p.availability_status.replace("_", " ")}</span>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-end">
                       {p.stock_quantity != null ? (
                         <button type="button" className="font-mono text-sm hover:underline" onClick={() => openStockDialog(p)}>
                           {p.stock_quantity}
@@ -178,7 +178,7 @@ const SupplierProducts = () => {
                         <Button variant="ghost" size="sm" onClick={() => openStockDialog(p)}>Set stock</Button>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-mono cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{formatSAR(Number(p.cost_price))}</TableCell>
+                    <TableCell className="text-end font-mono cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{formatSAR(Number(p.cost_price))}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

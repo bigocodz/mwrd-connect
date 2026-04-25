@@ -97,10 +97,10 @@ const AdminPendingProducts = () => {
                   </div>
                   <div className="flex md:flex-col gap-2 flex-shrink-0">
                     <Button size="sm" onClick={() => handleApprove(p._id)} disabled={acting}>
-                      <Check className="w-4 h-4 mr-1" /> Approve
+                      <Check className="w-4 h-4 me-1" /> Approve
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => { setRejectId(p._id); setRejectOpen(true); }} disabled={acting}>
-                      <X className="w-4 h-4 mr-1" /> Reject
+                      <X className="w-4 h-4 me-1" /> Reject
                     </Button>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ const AdminPendingProducts = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleReject} disabled={acting || !rejectReason.trim()}>
-              {acting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              {acting ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
               Reject
             </Button>
           </DialogFooter>

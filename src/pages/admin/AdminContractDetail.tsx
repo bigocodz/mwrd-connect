@@ -249,7 +249,7 @@ const AdminContractDetail = () => {
             <div className="flex items-center justify-between">
               <CardTitle>Contracted line items ({contract.lines.length})</CardTitle>
               <Button size="sm" onClick={() => setEditing(emptyLine())}>
-                <Plus className="w-4 h-4 mr-2" /> Add line
+                <Plus className="w-4 h-4 me-2" /> Add line
               </Button>
             </div>
           </CardHeader>
@@ -262,8 +262,8 @@ const AdminContractDetail = () => {
                   <TableRow>
                     <TableHead>Product</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Unit price</TableHead>
-                    <TableHead className="text-right">Min qty</TableHead>
+                    <TableHead className="text-end">Unit price</TableHead>
+                    <TableHead className="text-end">Min qty</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -277,9 +277,9 @@ const AdminContractDetail = () => {
                         <div>{line.description}</div>
                         {line.notes && <div className="text-xs text-muted-foreground">{line.notes}</div>}
                       </TableCell>
-                      <TableCell className="text-right font-medium">{formatSAR(line.unit_price)}</TableCell>
-                      <TableCell className="text-right">{line.min_quantity ?? "—"}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end font-medium">{formatSAR(line.unit_price)}</TableCell>
+                      <TableCell className="text-end">{line.min_quantity ?? "—"}</TableCell>
+                      <TableCell className="text-end">
                         <Button size="sm" variant="ghost" onClick={() => setEditing({
                           id: line._id,
                           product_id: line.product_id,

@@ -30,12 +30,12 @@ const ClientRfqs = () => {
             <h1 className="text-2xl font-display font-bold text-foreground">My RFQs</h1>
             <p className="text-muted-foreground mt-1">Track your Requests for Quote.</p>
           </div>
-          <Button asChild><Link to="/client/rfq/new"><Plus className="w-4 h-4 mr-2" /> New RFQ</Link></Button>
+          <Button asChild><Link to="/client/rfq/new"><Plus className="w-4 h-4 me-2" /> New RFQ</Link></Button>
         </div>
 
         {loading ? <TableSkeleton rows={5} cols={5} /> : rfqs.length === 0 ? (
           <EmptyState icon="rfqs" title="No RFQs yet" description="Create your first request to get started!" action={
-            <Button asChild><Link to="/client/rfq/new"><Plus className="w-4 h-4 mr-2" /> New RFQ</Link></Button>
+            <Button asChild><Link to="/client/rfq/new"><Plus className="w-4 h-4 me-2" /> New RFQ</Link></Button>
           } />
         ) : (
           <>
@@ -67,7 +67,7 @@ const ClientRfqs = () => {
                         {(rfq.quotes_count ?? 0) > 0 && (
                           <Button variant="outline" size="sm" asChild>
                             <Link to={`/client/rfqs/${rfq._id}/compare`}>
-                              <GitCompare className="mr-2 h-4 w-4" />
+                              <GitCompare className="me-2 h-4 w-4" />
                               Compare
                             </Link>
                           </Button>

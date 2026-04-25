@@ -183,7 +183,7 @@ const SupplierProductsBulk = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleTemplate}>
-              <Download01 className="w-4 h-4 mr-2" /> Download template
+              <Download01 className="w-4 h-4 me-2" /> Download template
             </Button>
             <Button variant="ghost" asChild>
               <Link to="/supplier/products">Back to products</Link>
@@ -207,7 +207,7 @@ const SupplierProductsBulk = () => {
               />
               <div className="flex items-center gap-3">
                 <Button onClick={() => fileRef.current?.click()} disabled={busy}>
-                  <Upload01 className="w-4 h-4 mr-2" /> Select CSV
+                  <Upload01 className="w-4 h-4 me-2" /> Select CSV
                 </Button>
                 {fileName && <span className="text-sm text-muted-foreground">{fileName}</span>}
               </div>

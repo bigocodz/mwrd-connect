@@ -118,7 +118,7 @@ const ReconcileDialog = ({
                       <TableHead>Invoice #</TableHead>
                       <TableHead>Issued</TableHead>
                       <TableHead>Due</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-end">Amount</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -134,7 +134,7 @@ const ReconcileDialog = ({
                         <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
                         <TableCell className="text-sm">{inv.issue_date}</TableCell>
                         <TableCell className="text-sm">{inv.due_date}</TableCell>
-                        <TableCell className="text-right font-medium">{formatSAR(inv.total_amount)}</TableCell>
+                        <TableCell className="text-end font-medium">{formatSAR(inv.total_amount)}</TableCell>
                         <TableCell><Badge variant="outline">{inv.status}</Badge></TableCell>
                       </TableRow>
                     ))}
@@ -238,7 +238,7 @@ const AdminPayments = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Client</TableHead>
-                  <TableHead>Amount <VatBadge className="ml-1" /></TableHead>
+                  <TableHead>Amount <VatBadge className="ms-1" /></TableHead>
                   <TableHead>Method</TableHead>
                   <TableHead>Bank Ref.</TableHead>
                   <TableHead>Status</TableHead>
@@ -262,16 +262,16 @@ const AdminPayments = () => {
                       {p.status === "PENDING" && (
                         <div className="flex gap-1">
                           <Button variant="default" size="sm" onClick={() => confirmPayment(p._id)} disabled={acting}>
-                            <CheckCircle className="w-3 h-3 mr-1" /> Confirm
+                            <CheckCircle className="w-3 h-3 me-1" /> Confirm
                           </Button>
                           <Button variant="destructive" size="sm" onClick={() => { setDiscPaymentId(p._id); setDiscDialog(true); }}>
-                            <AlertTriangle className="w-3 h-3 mr-1" /> Flag
+                            <AlertTriangle className="w-3 h-3 me-1" /> Flag
                           </Button>
                         </div>
                       )}
                       {p.status === "PAID" && (
                         <Button variant="outline" size="sm" onClick={() => setReconcilePayment(p)}>
-                          <LinkIcon className="w-3 h-3 mr-1" /> Reconcile
+                          <LinkIcon className="w-3 h-3 me-1" /> Reconcile
                         </Button>
                       )}
                       {p.status === "DISCREPANCY" && <span className="text-xs text-destructive">{p.notes}</span>}

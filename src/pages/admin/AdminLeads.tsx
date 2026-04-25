@@ -96,8 +96,8 @@ const AdminLeads = () => {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search by name, company, email or phone…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search by name, company, email or phone…" value={search} onChange={(e) => setSearch(e.target.value)} className="ps-9" />
           </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="sm:w-44"><SelectValue /></SelectTrigger>
@@ -135,7 +135,7 @@ const AdminLeads = () => {
                     <TableHead>Type</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="text-end">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -160,7 +160,7 @@ const AdminLeads = () => {
                       <TableCell>
                         <Badge variant="secondary" className={statusColors[l.status]}>{l.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openLead(l); }}>View</Button>
                       </TableCell>
                     </TableRow>
@@ -258,7 +258,7 @@ const AdminLeads = () => {
                         </SelectContent>
                       </Select>
                       <Button size="sm" onClick={handleApproveAndCreate} disabled={approving}>
-                        {approving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <UserPlus className="w-4 h-4 mr-1.5" />}
+                        {approving ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <UserPlus className="w-4 h-4 me-1.5" />}
                         Approve & email credentials
                       </Button>
                     </div>

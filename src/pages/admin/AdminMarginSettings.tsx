@@ -133,7 +133,7 @@ const AdminMarginSettings = () => {
               <CardDescription>Override the global margin for specific product categories.</CardDescription>
             </div>
             <Button size="sm" onClick={() => openCategoryDialog()}>
-              <Plus className="w-4 h-4 mr-1" /> Add Category
+              <Plus className="w-4 h-4 me-1" /> Add Category
             </Button>
           </CardHeader>
           <CardContent>

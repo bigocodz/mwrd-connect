@@ -137,7 +137,7 @@ const AdminClientInvoices = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" disabled={!filtered.length} onClick={exportCsv}>
-              <Download01 className="w-4 h-4 mr-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> Export CSV
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
@@ -150,7 +150,7 @@ const AdminClientInvoices = () => {
               </SelectContent>
             </Select>
             <Button onClick={() => { setOrderId(""); setIssueDate(todayISO()); setDueDate(offsetISO(30)); setNotes(""); setCreateOpen(true); }}>
-              <Plus className="w-4 h-4 mr-2" /> Issue invoice
+              <Plus className="w-4 h-4 me-2" /> Issue invoice
             </Button>
           </div>
         </div>
@@ -219,13 +219,13 @@ const AdminClientInvoices = () => {
                             onClick={() => wrap("Reminder sent", () => sendReminder({ id: inv._id }))}
                             disabled={busy}
                           >
-                            <Bell01 className="w-3 h-3 mr-1" /> Remind
+                            <Bell01 className="w-3 h-3 me-1" /> Remind
                           </Button>
                         )}
                         {inv.status === "PENDING_PAYMENT" && (
                           <>
                             <Button size="sm" onClick={() => { setPaidId(inv._id); setPaidRef(""); }} disabled={busy}>
-                              <CheckCircle className="w-3 h-3 mr-1" /> Paid
+                              <CheckCircle className="w-3 h-3 me-1" /> Paid
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => wrap("Marked overdue", () => markOverdue({ id: inv._id }))} disabled={busy}>
                               Overdue
@@ -234,12 +234,12 @@ const AdminClientInvoices = () => {
                         )}
                         {inv.status === "OVERDUE" && (
                           <Button size="sm" onClick={() => { setPaidId(inv._id); setPaidRef(""); }} disabled={busy}>
-                            <CheckCircle className="w-3 h-3 mr-1" /> Paid
+                            <CheckCircle className="w-3 h-3 me-1" /> Paid
                           </Button>
                         )}
                         {inv.status !== "PAID" && inv.status !== "VOID" && (
                           <Button size="sm" variant="destructive" onClick={() => { setVoidId(inv._id); setVoidReason(""); }} disabled={busy}>
-                            <XCircle className="w-3 h-3 mr-1" /> Void
+                            <XCircle className="w-3 h-3 me-1" /> Void
                           </Button>
                         )}
                       </div>

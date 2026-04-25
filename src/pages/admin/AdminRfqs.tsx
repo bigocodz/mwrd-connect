@@ -77,7 +77,7 @@ const AdminRfqs = () => {
                     <TableCell>{(rfq as any).attachments_count ?? 0}</TableCell>
                     <TableCell>{(rfq as any).quotes_count ?? 0}</TableCell>
                     <TableCell className="text-sm">{new Date(rfq._creationTime).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-end">
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/admin/rfqs/${rfq._id}/quotes`}>Compare</Link>
                       </Button>

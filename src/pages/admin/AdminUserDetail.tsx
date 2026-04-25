@@ -143,11 +143,11 @@ const AdminUserDetail = () => {
         <div className="flex gap-2">
           {profile.status === "FROZEN" ? (
             <Button variant="outline" onClick={handleUnfreeze} disabled={saving}>
-              <Sun className="w-4 h-4 mr-1.5" /> Unfreeze
+              <Sun className="w-4 h-4 me-1.5" /> Unfreeze
             </Button>
           ) : (
             <Button variant="destructive" onClick={() => setFreezeOpen(true)}>
-              <Snowflake className="w-4 h-4 mr-1.5" /> Freeze Account
+              <Snowflake className="w-4 h-4 me-1.5" /> Freeze Account
             </Button>
           )}
         </div>
@@ -241,7 +241,7 @@ const AdminUserDetail = () => {
 
       <div className="mt-6">
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <Save className="w-4 h-4 me-1.5" />}
           Save Changes
         </Button>
       </div>
@@ -284,7 +284,7 @@ const AdminUserDetail = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setFreezeOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleFreeze} disabled={freezing || !freezeReason.trim()}>
-              {freezing ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Snowflake className="w-4 h-4 mr-1.5" />}
+              {freezing ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <Snowflake className="w-4 h-4 me-1.5" />}
               Freeze Account
             </Button>
           </DialogFooter>

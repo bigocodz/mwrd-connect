@@ -126,7 +126,7 @@ const SupplierKyc = () => {
             </Badge>
           </div>
           <Button onClick={() => { reset(); setOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> Upload Document
+            <Plus className="w-4 h-4 me-2" /> Upload Document
           </Button>
         </div>
 
@@ -219,7 +219,7 @@ const SupplierKyc = () => {
               />
               <div className="flex items-center gap-2">
                 <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
-                  <Upload01 className="w-4 h-4 mr-2" /> {uploadedFileName ? "Replace file" : "Upload file"}
+                  <Upload01 className="w-4 h-4 me-2" /> {uploadedFileName ? "Replace file" : "Upload file"}
                 </Button>
                 {uploadedFileName && <span className="text-sm text-muted-foreground">{uploadedFileName}</span>}
               </div>

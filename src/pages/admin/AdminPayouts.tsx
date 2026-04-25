@@ -99,7 +99,7 @@ const AdminPayouts = () => {
                 <SelectItem value="PAID">Paid</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => { resetForm(); setRecordDialog(true); }}><Plus className="w-4 h-4 mr-2" /> Record Payout</Button>
+            <Button onClick={() => { resetForm(); setRecordDialog(true); }}><Plus className="w-4 h-4 me-2" /> Record Payout</Button>
           </div>
         </div>
 
@@ -138,7 +138,7 @@ const AdminPayouts = () => {
                     <TableCell>
                       {p.status === "PENDING" && (
                         <Button size="sm" onClick={() => markAsPaid(p._id)} disabled={acting}>
-                          <CheckCircle className="w-3 h-3 mr-1" /> Mark Paid
+                          <CheckCircle className="w-3 h-3 me-1" /> Mark Paid
                         </Button>
                       )}
                     </TableCell>

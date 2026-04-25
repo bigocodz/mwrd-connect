@@ -196,7 +196,7 @@ const AdminQuoteReview = () => {
                   </div>
                   <Button variant="outline" size="sm" asChild>
                     <a href={attachment.url} target="_blank" rel="noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <ExternalLink className="me-2 h-4 w-4" />
                       Open
                     </a>
                   </Button>
@@ -285,7 +285,7 @@ const AdminQuoteReview = () => {
                       Contracted price for this product: <span className="font-medium">{formatSAR(contractMatch.price)}</span>
                       <span className="text-muted-foreground"> · {contractMatch.contract_name}</span>
                       {Math.abs((item.cost_price ?? 0) - contractMatch.price) > 0.01 && (
-                        <span className="ml-2 text-amber-700">
+                        <span className="ms-2 text-amber-700">
                           Supplier quoted {formatSAR(item.cost_price ?? 0)} ({(((item.cost_price ?? 0) - contractMatch.price) >= 0 ? "+" : "")}{((((item.cost_price ?? 0) - contractMatch.price) / contractMatch.price) * 100).toFixed(1)}%)
                         </span>
                       )}
@@ -344,7 +344,7 @@ const AdminQuoteReview = () => {
               </div>
               <div className="flex justify-end">
                 <Button variant="outline" onClick={handleRequestSupplierRevision} disabled={requestingRevision}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <MessageSquare className="me-2 h-4 w-4" />
                   {requestingRevision ? "Sending…" : "Send Revision Request"}
                 </Button>
               </div>
@@ -359,7 +359,7 @@ const AdminQuoteReview = () => {
               <p className="text-2xl font-bold text-primary">{formatSAR(totalWithVat)}</p>
             </div>
             <Button onClick={handleSendToClient} disabled={sending || !canSendToClient} size="lg">
-              <Send className="w-4 h-4 mr-2" />
+              <Send className="w-4 h-4 me-2" />
               {quoteData.status === "SUPPLIER_REVISION_REQUESTED" ? "Waiting for Supplier" : sending ? "Sending…" : "Send to Client"}
             </Button>
           </CardContent>

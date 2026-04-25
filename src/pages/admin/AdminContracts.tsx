@@ -101,7 +101,7 @@ const AdminContracts = () => {
             <p className="text-muted-foreground mt-1">Negotiated pricing and commercial terms with suppliers (optionally per client).</p>
           </div>
           <Button onClick={() => { setDraft(empty()); setOpen(true); }}>
-            <Plus className="w-4 h-4 mr-2" /> New contract
+            <Plus className="w-4 h-4 me-2" /> New contract
           </Button>
         </div>
 

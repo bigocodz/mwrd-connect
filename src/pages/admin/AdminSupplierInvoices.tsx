@@ -97,7 +97,7 @@ const AdminSupplierInvoices = () => {
                 downloadCsv(`mwrd-supplier-invoices-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
               }}
             >
-              <Download01 className="w-4 h-4 mr-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> Export CSV
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
@@ -161,10 +161,10 @@ const AdminSupplierInvoices = () => {
                         {inv.status === "SUBMITTED" && (
                           <>
                             <Button size="sm" onClick={() => wrap("Approved", () => approve({ id: inv._id }))} disabled={busy}>
-                              <CheckCircle className="w-3 h-3 mr-1" /> Approve
+                              <CheckCircle className="w-3 h-3 me-1" /> Approve
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => { setRejectId(inv._id); setRejectReason(""); }} disabled={busy}>
-                              <XCircle className="w-3 h-3 mr-1" /> Reject
+                              <XCircle className="w-3 h-3 me-1" /> Reject
                             </Button>
                           </>
                         )}

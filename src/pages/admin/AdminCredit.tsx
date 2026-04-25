@@ -111,10 +111,10 @@ const AdminCredit = () => {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="outline" size="sm" onClick={() => { setEditClient(c); setEditCreditLimit(String(c.credit_limit || 0)); setEditDialog(true); }}>
-                        <Pencil className="w-3 h-3 mr-1" /> Limit
+                        <Pencil className="w-3 h-3 me-1" /> Limit
                       </Button>
                       <Button variant="secondary" size="sm" onClick={() => { setAdjustClient(c); setAdjustDialog(true); }}>
-                        <DollarSign className="w-3 h-3 mr-1" /> Adjust
+                        <DollarSign className="w-3 h-3 me-1" /> Adjust
                       </Button>
                     </div>
                   </TableCell>

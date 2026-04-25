@@ -86,7 +86,7 @@ const AdminCreateUser = () => {
               <p className="text-xs text-muted-foreground">Requires 8+ characters with uppercase, lowercase, and a number. The user should change this after first login.</p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
               Create User
             </Button>
           </form>

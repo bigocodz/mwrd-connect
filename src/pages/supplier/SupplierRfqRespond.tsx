@@ -267,7 +267,7 @@ const SupplierRfqRespond = () => {
                   </div>
                   <Button variant="outline" size="sm" asChild>
                     <a href={attachment.url} target="_blank" rel="noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <ExternalLink className="me-2 h-4 w-4" />
                       Open
                     </a>
                   </Button>
@@ -383,7 +383,7 @@ const SupplierRfqRespond = () => {
               <p className="mt-1 text-sm text-muted-foreground">Attach quotation PDFs, technical sheets, or delivery terms for admin review.</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setAttachments([...attachments, emptyAttachment()])}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="me-2 h-4 w-4" />
               Add
             </Button>
           </CardHeader>
@@ -453,7 +453,7 @@ const SupplierRfqRespond = () => {
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate("/supplier/rfqs")}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={submitting || (!!existingQuote && !isRevision)}>
-            <Send className="w-4 h-4 mr-2" />
+            <Send className="w-4 h-4 me-2" />
             {submitting ? "Submitting…" : isRevision ? "Submit Revision" : "Submit Quote"}
           </Button>
         </div>

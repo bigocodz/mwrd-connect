@@ -115,7 +115,7 @@ const ClientSchedules = () => {
                       disabled={busy === s._id}
                     />
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-end">
                     <Button size="sm" variant="ghost" onClick={() => handleRunNow(s._id)} disabled={busy === s._id}>
                       Run now
                     </Button>

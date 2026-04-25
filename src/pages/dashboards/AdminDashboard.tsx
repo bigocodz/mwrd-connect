@@ -54,18 +54,18 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[440px] text-sm">
                   <thead>
-                    <tr className="border-b border-border-primary text-left text-xs font-semibold uppercase text-text-tertiary">
+                    <tr className="border-b border-border-primary text-start text-xs font-semibold uppercase text-text-tertiary">
                       <th className="pb-3">Supplier</th>
-                      <th className="pb-3 text-right">Avg Rating</th>
-                      <th className="pb-3 text-right">Reviews</th>
+                      <th className="pb-3 text-end">Avg Rating</th>
+                      <th className="pb-3 text-end">Reviews</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-primary">
                     {stats.topSuppliers.map((supplier) => (
                       <tr key={supplier.id}>
                         <td className="py-3 font-medium text-text-primary">{supplier.company_name}</td>
-                        <td className="py-3 text-right text-text-primary">{supplier.avg_rating.toFixed(1)}</td>
-                        <td className="py-3 text-right text-text-secondary">{supplier.review_count}</td>
+                        <td className="py-3 text-end text-text-primary">{supplier.avg_rating.toFixed(1)}</td>
+                        <td className="py-3 text-end text-text-secondary">{supplier.review_count}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -85,20 +85,20 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px] text-sm">
                   <thead>
-                    <tr className="border-b border-border-primary text-left text-xs font-semibold uppercase text-text-tertiary">
+                    <tr className="border-b border-border-primary text-start text-xs font-semibold uppercase text-text-tertiary">
                       <th className="pb-3">Client</th>
-                      <th className="pb-3 text-right">Limit</th>
-                      <th className="pb-3 text-right">Balance</th>
-                      <th className="pb-3 text-right">Utilization</th>
+                      <th className="pb-3 text-end">Limit</th>
+                      <th className="pb-3 text-end">Balance</th>
+                      <th className="pb-3 text-end">Utilization</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-primary">
                     {stats.creditAlerts.map((client) => (
                       <tr key={client.id}>
                         <td className="py-3 font-medium text-text-primary">{client.company_name}</td>
-                        <td className="py-3 text-right text-text-secondary">{fmt(client.credit_limit)}</td>
-                        <td className="py-3 text-right text-text-secondary">{fmt(client.current_balance)}</td>
-                        <td className="py-3 text-right">
+                        <td className="py-3 text-end text-text-secondary">{fmt(client.credit_limit)}</td>
+                        <td className="py-3 text-end text-text-secondary">{fmt(client.current_balance)}</td>
+                        <td className="py-3 text-end">
                           <span
                             className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                               client.utilization > 90

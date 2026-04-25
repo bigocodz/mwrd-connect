@@ -159,11 +159,11 @@ const ClientCatalog = () => {
           <div className="mt-3 flex items-center justify-end">
             {inMine ? (
               <Badge variant="outline" className="bg-green-100 text-green-800">
-                <Star className="w-3 h-3 mr-1 fill-current" /> In your catalog
+              <Star className="w-3 h-3 me-1 fill-current" /> In your catalog
               </Badge>
             ) : (
               <Button size="sm" variant="outline" onClick={() => handleAdd(p._id)} disabled={busy}>
-                <Plus className="w-3 h-3 mr-1" /> Add to catalog
+              <Plus className="w-3 h-3 me-1" /> Add to catalog
               </Button>
             )}
           </div>
@@ -204,7 +204,7 @@ const ClientCatalog = () => {
           </div>
           <div className="flex flex-wrap items-center gap-1">
             <Button size="sm" variant="ghost" onClick={() => togglePinned(entry._id, !entry.pinned)}>
-              {entry.pinned ? <StarOff className="w-3 h-3 mr-1" /> : <Star className="w-3 h-3 mr-1" />}
+              {entry.pinned ? <StarOff className="w-3 h-3 me-1" /> : <Star className="w-3 h-3 me-1" />}
               {entry.pinned ? "Unpin" : "Pin"}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => openEdit(entry)}>Edit</Button>
@@ -226,8 +226,8 @@ const ClientCatalog = () => {
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="ps-9" />
         </div>
         <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setSubFilter("ALL"); }}>
           <SelectTrigger className="w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>

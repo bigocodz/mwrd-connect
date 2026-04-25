@@ -87,7 +87,7 @@ const AdminOrders = () => {
                 downloadCsv(`mwrd-orders-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
               }}
             >
-              <Download01 className="w-4 h-4 mr-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> Export CSV
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>

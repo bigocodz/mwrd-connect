@@ -122,7 +122,7 @@ const AdminLifecycle = () => {
                 downloadCsv(`mwrd-lifecycle-${windowDays}d-${new Date().toISOString().slice(0, 10)}.csv`, rows);
               }}
             >
-              <Download01 className="w-4 h-4 mr-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> Export CSV
             </Button>
             <Select value={String(windowDays)} onValueChange={(v) => setWindowDays(Number(v))}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -260,14 +260,14 @@ const AdminLifecycle = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8e6dc] text-left text-xs font-semibold uppercase text-[#87867f]">
+                    <tr className="border-b border-[#e8e6dc] text-start text-xs font-semibold uppercase text-[#87867f]">
                       <th className="pb-3">Supplier</th>
-                      <th className="pb-3 text-right">Assigned</th>
-                      <th className="pb-3 text-right">Quoted</th>
-                      <th className="pb-3 text-right">Response rate</th>
-                      <th className="pb-3 text-right">Wins</th>
-                      <th className="pb-3 text-right">Win rate</th>
-                      <th className="pb-3 text-right">Avg response</th>
+                      <th className="pb-3 text-end">Assigned</th>
+                      <th className="pb-3 text-end">Quoted</th>
+                      <th className="pb-3 text-end">Response rate</th>
+                      <th className="pb-3 text-end">Wins</th>
+                      <th className="pb-3 text-end">Win rate</th>
+                      <th className="pb-3 text-end">Avg response</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -282,12 +282,12 @@ const AdminLifecycle = () => {
                             <div className="text-xs text-[#87867f]">{s.company_name}</div>
                           )}
                         </td>
-                        <td className="py-3 text-right">{s.assigned}</td>
-                        <td className="py-3 text-right">{s.quoted}</td>
-                        <td className="py-3 text-right">{fmtPct(s.response_rate)}</td>
-                        <td className="py-3 text-right">{s.wins}</td>
-                        <td className="py-3 text-right">{fmtPct(s.win_rate)}</td>
-                        <td className="py-3 text-right">{fmtHours(s.avg_response_hours)}</td>
+                        <td className="py-3 text-end">{s.assigned}</td>
+                        <td className="py-3 text-end">{s.quoted}</td>
+                        <td className="py-3 text-end">{fmtPct(s.response_rate)}</td>
+                        <td className="py-3 text-end">{s.wins}</td>
+                        <td className="py-3 text-end">{fmtPct(s.win_rate)}</td>
+                        <td className="py-3 text-end">{fmtHours(s.avg_response_hours)}</td>
                       </tr>
                     ))}
                   </tbody>

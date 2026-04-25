@@ -167,7 +167,7 @@ const ClientQuotes = () => {
                   <TableHead>Item</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Lead Time</TableHead>
-                  <TableHead>Price <VatBadge className="ml-1" /></TableHead>
+                  <TableHead>Price <VatBadge className="ms-1" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,7 +179,7 @@ const ClientQuotes = () => {
                       ) : (
                         <span className="text-muted-foreground line-through">
                           {item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || "Item"}
-                          <Badge variant="destructive" className="ml-2 text-xs">Unavailable</Badge>
+                          <Badge variant="destructive" className="ms-2 text-xs">Unavailable</Badge>
                         </span>
                       )}
                     </TableCell>
@@ -194,7 +194,7 @@ const ClientQuotes = () => {
             </Table>
           </div>
           {quoteItems.length > 0 && (
-            <div className="text-right border-t pt-3">
+            <div className="text-end border-t pt-3">
               <p className="text-sm text-muted-foreground flex items-center justify-end gap-2">Total <VatBadge /></p>
               <p className="text-xl font-bold text-primary">
                 {formatSAR(
@@ -231,14 +231,14 @@ const ClientQuotes = () => {
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="destructive" onClick={() => handleAction("REJECTED")} disabled={acting}>
-                  <XCircle className="w-4 h-4 mr-2" /> Reject
-                </Button>
-                <Button variant="outline" onClick={handleRevisionRequest} disabled={acting}>
-                  <MessageSquare className="w-4 h-4 mr-2" /> Request Revision
-                </Button>
-                <Button onClick={() => handleAction("ACCEPTED")} disabled={acting}>
-                  <CheckCircle className="w-4 h-4 mr-2" /> Accept Quote
-                </Button>
+                <XCircle className="w-4 h-4 me-2" /> Reject
+              </Button>
+              <Button variant="outline" onClick={handleRevisionRequest} disabled={acting}>
+                  <MessageSquare className="w-4 h-4 me-2" /> Request Revision
+              </Button>
+              <Button onClick={() => handleAction("ACCEPTED")} disabled={acting}>
+                <CheckCircle className="w-4 h-4 me-2" /> Accept Quote
+              </Button>
               </DialogFooter>
             </>
           )}

@@ -1,8 +1,9 @@
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut01 } from "@untitledui/icons";
+import { Globe01, LogOut01 } from "@untitledui/icons";
 import { useAuth } from "@/hooks/useAuth";
 import NotificationBell from "@/components/NotificationBell";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type ShellIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number; color?: string }>;
 
@@ -27,11 +28,12 @@ const toneClasses = {
 
 const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps) => {
   const { profile, signOut } = useAuth();
+  const { lang, setLang } = useLanguage();
   const location = useLocation();
 
   return (
     <div className="min-h-screen bg-[#f5f4ed] text-[#141413] lg:flex">
-      <aside className="hidden w-72 shrink-0 bg-[#faf9f5] shadow-[inset_-1px_0_0_#e8e6dc] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+      <aside className="hidden w-72 shrink-0 bg-[#faf9f5] border-e border-[#e8e6dc] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <div className="border-b border-[#f0eee6] px-5 py-5">
           <Link to={navItems[0]?.href ?? "/"} className="flex items-center gap-3">
             <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-xl object-cover" />
@@ -100,7 +102,18 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               <p className="text-sm font-medium text-[#141413]">{profile?.company_name || portalLabel}</p>
               <p className="text-xs text-[#87867f]">{profile?.public_id}</p>
             </div>
-            <NotificationBell />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLang(lang === "en" ? "ar" : "en")}
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f5f4ed] px-3 text-sm font-medium text-[#5e5d59] shadow-[0_0_0_1px_#e8e6dc] transition-colors hover:bg-[#e8e6dc] hover:text-[#141413]"
+                aria-label="Toggle language"
+              >
+                <Globe01 className="h-5 w-5" />
+                {lang === "en" ? "عربي" : "EN"}
+              </button>
+              <NotificationBell />
+            </div>
           </div>
           <nav className="flex gap-2 overflow-x-auto border-t border-[#f0eee6] px-4 py-2 lg:hidden">
             {navItems.map((item) => {

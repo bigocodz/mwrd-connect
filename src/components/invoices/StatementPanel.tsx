@@ -75,7 +75,7 @@ export const StatementPanel = ({
         <div className="flex items-center justify-between flex-wrap gap-3">
           <CardTitle>Statement of account</CardTitle>
           <Button onClick={handleExport} disabled={!data || loading} variant="outline">
-            <Download01 className="w-4 h-4 mr-2" /> Export CSV
+            <Download01 className="w-4 h-4 me-2" /> Export CSV
           </Button>
         </div>
       </CardHeader>
@@ -126,8 +126,8 @@ export const StatementPanel = ({
                     <TableHead>Type</TableHead>
                     <TableHead>Reference</TableHead>
                     <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Debit</TableHead>
-                    <TableHead className="text-right">Credit</TableHead>
+                    <TableHead className="text-end">Debit</TableHead>
+                    <TableHead className="text-end">Credit</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -137,10 +137,10 @@ export const StatementPanel = ({
                       <TableCell className="text-xs uppercase">{line.type}</TableCell>
                       <TableCell className="font-mono text-xs">{line.reference}</TableCell>
                       <TableCell className="text-sm">{line.description}</TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-end font-medium">
                         {line.debit ? formatSAR(line.debit) : "—"}
                       </TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-end font-medium">
                         {line.credit ? formatSAR(line.credit) : "—"}
                       </TableCell>
                     </TableRow>

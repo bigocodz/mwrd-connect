@@ -84,10 +84,10 @@ const AdminApprovals = () => {
         {r.status === "PENDING" && (
           <>
             <Button size="sm" onClick={() => handleApprove(r._id)} disabled={busy}>
-              <CheckCircle className="w-3 h-3 mr-1" /> Approve
+              <CheckCircle className="w-3 h-3 me-1" /> Approve
             </Button>
             <Button size="sm" variant="destructive" onClick={() => { setActiveReject(r); setNote(""); }} disabled={busy}>
-              <XCircle className="w-3 h-3 mr-1" /> Reject
+              <XCircle className="w-3 h-3 me-1" /> Reject
             </Button>
           </>
         )}
