@@ -9,6 +9,7 @@ import { TableSkeleton, CardSkeleton } from "@/components/shared/LoadingSkeleton
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { formatSAR } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusColor: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-800",
@@ -16,6 +17,18 @@ const statusColor: Record<string, string> = {
 };
 
 const SupplierPayouts = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
+  const enumLabel = (value?: string) => {
+    if (!value) return "";
+    if (lang === "ar") return tr(value);
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const payoutsData = useQuery(api.payouts.listMine);
   const loading = payoutsData === undefined;
   const payouts = payoutsData ?? [];
@@ -30,29 +43,29 @@ const SupplierPayouts = () => {
 
   const PayoutTable = ({ items, pag, emptyMsg }: { items: any[]; pag: any; emptyMsg: string }) =>
     items.length === 0 ? (
-      <EmptyState icon="payouts" title={emptyMsg} />
+      <EmptyState icon="payouts" title={tr(emptyMsg)} />
     ) : (
       <>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Bank Ref.</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Paid At</TableHead>
+              <TableHead>{tr("Date")}</TableHead>
+              <TableHead>{tr("Amount")}</TableHead>
+              <TableHead>{tr("Method")}</TableHead>
+              <TableHead>{tr("Bank Ref.")}</TableHead>
+              <TableHead>{tr("Status")}</TableHead>
+              <TableHead>{tr("Paid At")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pag.paginated.map((p: any) => (
               <TableRow key={p._id}>
-                <TableCell className="text-sm">{new Date(p._creationTime).toLocaleDateString()}</TableCell>
+                <TableCell className="text-sm">{new Date(p._creationTime).toLocaleDateString(locale)}</TableCell>
                 <TableCell className="font-medium">{formatSAR(Number(p.amount))}</TableCell>
-                <TableCell className="text-xs">{p.payment_method.replace(/_/g, " ")}</TableCell>
+                <TableCell className="text-xs">{enumLabel(p.payment_method)}</TableCell>
                 <TableCell className="text-xs font-mono">{p.bank_reference || "—"}</TableCell>
-                <TableCell><Badge variant="outline" className={statusColor[p.status] || ""}>{p.status}</Badge></TableCell>
-                <TableCell className="text-sm">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</TableCell>
+                <TableCell><Badge variant="outline" className={statusColor[p.status] || ""}>{enumLabel(p.status)}</Badge></TableCell>
+                <TableCell className="text-sm">{p.paid_at ? new Date(p.paid_at).toLocaleDateString(locale) : "—"}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -65,8 +78,8 @@ const SupplierPayouts = () => {
     <SupplierLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">My Payouts</h1>
-          <p className="text-muted-foreground mt-1">Track your payments from MWRD.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("My Payouts")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Track your payments from MWRD.")}</p>
         </div>
 
         {loading ? <CardSkeleton count={2} /> : (
@@ -78,9 +91,9 @@ const SupplierPayouts = () => {
                     <Banknote className="w-5 h-5 text-yellow-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Pending Payouts</p>
+                    <p className="text-sm text-muted-foreground">{tr("Pending Payouts")}</p>
                     <p className="text-xl font-bold text-foreground">{formatSAR(totalPending)}</p>
-                    <p className="text-xs text-muted-foreground">{pending.length} payout(s)</p>
+                    <p className="text-xs text-muted-foreground">{tr("{count} payouts", { count: fmtNumber(pending.length) })}</p>
                   </div>
                 </div>
               </CardContent>
@@ -92,9 +105,9 @@ const SupplierPayouts = () => {
                     <Banknote className="w-5 h-5 text-green-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Paid</p>
+                    <p className="text-sm text-muted-foreground">{tr("Total Paid")}</p>
                     <p className="text-xl font-bold text-foreground">{formatSAR(totalPaid)}</p>
-                    <p className="text-xs text-muted-foreground">{paid.length} payout(s)</p>
+                    <p className="text-xs text-muted-foreground">{tr("{count} payouts", { count: fmtNumber(paid.length) })}</p>
                   </div>
                 </div>
               </CardContent>
@@ -103,14 +116,14 @@ const SupplierPayouts = () => {
         )}
 
         <Card>
-          <CardHeader><CardTitle>Pending Payouts</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("Pending Payouts")}</CardTitle></CardHeader>
           <CardContent>
             {loading ? <TableSkeleton rows={3} cols={6} /> : <PayoutTable items={pending} pag={pendingPag} emptyMsg="No pending payouts" />}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Completed Payouts</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("Completed Payouts")}</CardTitle></CardHeader>
           <CardContent>
             {loading ? <TableSkeleton rows={3} cols={6} /> : <PayoutTable items={paid} pag={paidPag} emptyMsg="No completed payouts yet" />}
           </CardContent>

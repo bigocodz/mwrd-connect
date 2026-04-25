@@ -15,6 +15,7 @@ import { formatSAR } from "@/components/shared/VatBadge";
 import { DISPUTE_BADGE_COLOR, DISPUTE_LABEL, ORDER_STATUS_COLOR, ORDER_STATUS_LABEL } from "@/components/orders/orderStatus";
 import { downloadCsv } from "@/lib/csv";
 import { Download01 } from "@untitledui/icons";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const STATUS_OPTIONS = [
   "ALL",
@@ -29,6 +30,8 @@ const STATUS_OPTIONS = [
 ];
 
 const AdminOrders = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const ordersData = useQuery(api.orders.listAll);
   const loading = ordersData === undefined;
   const orders = ordersData ?? [];
@@ -46,8 +49,8 @@ const AdminOrders = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Orders</h1>
-            <p className="text-muted-foreground mt-1">Lifecycle of every accepted-quote order.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Orders")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Lifecycle of every accepted-quote order.")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -87,14 +90,18 @@ const AdminOrders = () => {
                 downloadCsv(`mwrd-orders-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
               }}
             >
-              <Download01 className="w-4 h-4 me-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> {tr("Export CSV")}
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {s === "ALL" ? "All statuses" : s === "DISPUTED" ? "Disputed" : ORDER_STATUS_LABEL[s] ?? s}
+                    {s === "ALL"
+                      ? tr("All statuses")
+                      : s === "DISPUTED"
+                      ? tr("Disputed")
+                      : tr(ORDER_STATUS_LABEL[s] ?? s)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -104,19 +111,23 @@ const AdminOrders = () => {
 
         {loading ? <TableSkeleton rows={5} cols={7} /> : filtered.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="quotes" title="No orders" description="Orders are created when clients accept a quote." />
+            <EmptyState
+              icon="quotes"
+              title={tr("No orders")}
+              description={tr("Orders are created when clients accept a quote.")}
+            />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>{tr("Order")}</TableHead>
+                  <TableHead>{tr("Client")}</TableHead>
+                  <TableHead>{tr("Supplier")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Total")}</TableHead>
+                  <TableHead>{tr("Created")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -129,20 +140,20 @@ const AdminOrders = () => {
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <Badge variant="outline" className={ORDER_STATUS_COLOR[order.status] || ""}>
-                          {ORDER_STATUS_LABEL[order.status] ?? order.status}
+                          {tr(ORDER_STATUS_LABEL[order.status] ?? order.status)}
                         </Badge>
                         {order.dispute_status && (
                           <Badge variant="outline" className={DISPUTE_BADGE_COLOR[order.dispute_status] || ""}>
-                            {DISPUTE_LABEL[order.dispute_status] ?? order.dispute_status}
+                            {tr(DISPUTE_LABEL[order.dispute_status] ?? order.dispute_status)}
                           </Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{formatSAR(order.total_with_vat)}</TableCell>
-                    <TableCell className="text-sm">{new Date(order._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-sm">{new Date(order._creationTime).toLocaleDateString(locale)}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/admin/orders/${order._id}`}>View</Link>
+                        <Link to={`/admin/orders/${order._id}`}>{tr("View")}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

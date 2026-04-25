@@ -17,6 +17,7 @@ import { Plus } from "@untitledui/icons";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CONTRACT_STATUS_COLOR, CONTRACT_STATUS_LABEL } from "@/components/contracts/contractStatus";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Draft = {
   name: string;
@@ -45,6 +46,7 @@ const empty = (): Draft => ({
 });
 
 const AdminContracts = () => {
+  const { tr } = useLanguage();
   const contracts = useQuery(api.contracts.listAll) ?? [];
   const suppliers = useQuery(api.users.listSuppliers) ?? [];
   const clients = useQuery(api.users.listClients) ?? [];
@@ -57,9 +59,9 @@ const AdminContracts = () => {
   const [busy, setBusy] = useState(false);
 
   const handleCreate = async () => {
-    if (!draft.name.trim()) { toast.error("Name required"); return; }
-    if (!draft.supplier_id) { toast.error("Pick a supplier"); return; }
-    if (!draft.start_date) { toast.error("Start date required"); return; }
+    if (!draft.name.trim()) { toast.error(tr("Name required")); return; }
+    if (!draft.supplier_id) { toast.error(tr("Pick a supplier")); return; }
+    if (!draft.start_date) { toast.error(tr("Start date required")); return; }
     setBusy(true);
     try {
       await create({
@@ -73,11 +75,11 @@ const AdminContracts = () => {
         terms: draft.terms.trim() || undefined,
         notes: draft.notes.trim() || undefined,
       });
-      toast.success("Contract created");
+      toast.success(tr("Contract created"));
       setOpen(false);
       setDraft(empty());
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -86,9 +88,9 @@ const AdminContracts = () => {
   const updateStatus = async (id: string, status: "DRAFT" | "ACTIVE" | "EXPIRED" | "TERMINATED", reason?: string) => {
     try {
       await setStatus({ id: id as any, status, reason });
-      toast.success(`Marked ${status.toLowerCase()}`);
+      toast.success(tr("Marked {status}", { status: tr(CONTRACT_STATUS_LABEL[status] ?? status) }));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
@@ -97,28 +99,32 @@ const AdminContracts = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Contracts</h1>
-            <p className="text-muted-foreground mt-1">Negotiated pricing and commercial terms with suppliers (optionally per client).</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Contracts")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Negotiated pricing and commercial terms with suppliers (optionally per client).")}</p>
           </div>
           <Button onClick={() => { setDraft(empty()); setOpen(true); }}>
-            <Plus className="w-4 h-4 me-2" /> New contract
+            <Plus className="w-4 h-4 me-2" /> {tr("New contract")}
           </Button>
         </div>
 
         {loading ? <TableSkeleton rows={4} cols={7} /> : contracts.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="audit" title="No contracts yet" description="Create one to lock in pricing or terms with a supplier." />
+            <EmptyState
+              icon="audit"
+              title={tr("No contracts yet")}
+              description={tr("Create one to lock in pricing or terms with a supplier.")}
+            />
           </CardContent></Card>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Client scope</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Dates</TableHead>
-                <TableHead>Lines</TableHead>
+                <TableHead>{tr("Name")}</TableHead>
+                <TableHead>{tr("Supplier")}</TableHead>
+                <TableHead>{tr("Client scope")}</TableHead>
+                <TableHead>{tr("Status")}</TableHead>
+                <TableHead>{tr("Dates")}</TableHead>
+                <TableHead>{tr("Lines")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -135,11 +141,11 @@ const AdminContracts = () => {
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {c.client_id ? (c.client_public_id || "—") : <span className="text-muted-foreground">All clients</span>}
+                    {c.client_id ? (c.client_public_id || "—") : <span className="text-muted-foreground">{tr("All clients")}</span>}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={CONTRACT_STATUS_COLOR[c.status] || ""}>
-                      {CONTRACT_STATUS_LABEL[c.status] ?? c.status}
+                      {tr(CONTRACT_STATUS_LABEL[c.status] ?? c.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm">{c.start_date}{c.end_date ? ` → ${c.end_date}` : ""}</TableCell>
@@ -147,21 +153,21 @@ const AdminContracts = () => {
                   <TableCell>
                     <div className="flex gap-1">
                       {c.status === "DRAFT" && (
-                        <Button size="sm" onClick={() => updateStatus(c._id, "ACTIVE")}>Activate</Button>
+                        <Button size="sm" onClick={() => updateStatus(c._id, "ACTIVE")}>{tr("Activate")}</Button>
                       )}
                       {c.status === "ACTIVE" && (
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(c._id, "EXPIRED")}>Expire</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(c._id, "EXPIRED")}>{tr("Expire")}</Button>
                       )}
                       {(c.status === "DRAFT" || c.status === "ACTIVE") && (
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => {
-                            const reason = prompt("Reason for termination?") || undefined;
+                            const reason = prompt(tr("Reason for termination?")) || undefined;
                             if (reason !== undefined) updateStatus(c._id, "TERMINATED", reason);
                           }}
                         >
-                          Terminate
+                          {tr("Terminate")}
                         </Button>
                       )}
                     </div>
@@ -175,17 +181,17 @@ const AdminContracts = () => {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New contract</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("New contract")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label>Name</Label>
-              <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Annual Office Supplies — Pilot" />
+              <Label>{tr("Name")}</Label>
+              <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder={tr("Annual Office Supplies — Pilot")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Supplier</Label>
+                <Label>{tr("Supplier")}</Label>
                 <Select value={draft.supplier_id} onValueChange={(v) => setDraft({ ...draft, supplier_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Pick supplier" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tr("Pick supplier")} /></SelectTrigger>
                   <SelectContent>
                     {suppliers.map((s: any) => (
                       <SelectItem key={s._id} value={s._id}>{s.public_id} — {s.company_name ?? "—"}</SelectItem>
@@ -194,11 +200,11 @@ const AdminContracts = () => {
                 </Select>
               </div>
               <div>
-                <Label>Client (optional)</Label>
+                <Label>{tr("Client (optional)")}</Label>
                 <Select value={draft.client_id || "__any"} onValueChange={(v) => setDraft({ ...draft, client_id: v === "__any" ? "" : v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__any">All clients</SelectItem>
+                    <SelectItem value="__any">{tr("All clients")}</SelectItem>
                     {clients.map((c: any) => (
                       <SelectItem key={c._id} value={c._id}>{c.public_id} — {c.company_name ?? "—"}</SelectItem>
                     ))}
@@ -208,21 +214,21 @@ const AdminContracts = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Start date</Label>
+                <Label>{tr("Start date")}</Label>
                 <Input type="date" value={draft.start_date} onChange={(e) => setDraft({ ...draft, start_date: e.target.value })} />
               </div>
               <div>
-                <Label>End date (optional)</Label>
+                <Label>{tr("End date (optional)")}</Label>
                 <Input type="date" value={draft.end_date} onChange={(e) => setDraft({ ...draft, end_date: e.target.value })} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Payment terms</Label>
-                <Input value={draft.payment_terms} onChange={(e) => setDraft({ ...draft, payment_terms: e.target.value })} placeholder="Net 30" />
+                <Label>{tr("Payment terms")}</Label>
+                <Input value={draft.payment_terms} onChange={(e) => setDraft({ ...draft, payment_terms: e.target.value })} placeholder={tr("Net 30")} />
               </div>
               <div>
-                <Label>Discount %</Label>
+                <Label>{tr("Discount %")}</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -234,17 +240,17 @@ const AdminContracts = () => {
               </div>
             </div>
             <div>
-              <Label>Terms (free text)</Label>
+              <Label>{tr("Terms (free text)")}</Label>
               <Textarea value={draft.terms} onChange={(e) => setDraft({ ...draft, terms: e.target.value })} />
             </div>
             <div>
-              <Label>Internal notes</Label>
+              <Label>{tr("Internal notes")}</Label>
               <Textarea value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={busy}>Create</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{tr("Cancel")}</Button>
+            <Button onClick={handleCreate} disabled={busy}>{tr("Create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

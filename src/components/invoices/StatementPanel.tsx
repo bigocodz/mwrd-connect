@@ -10,6 +10,7 @@ import { Download01 } from "@untitledui/icons";
 import { downloadCsv } from "@/lib/csv";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Mode = "MY" | "ADMIN";
 
@@ -26,6 +27,17 @@ export const StatementPanel = ({
   mode: Mode;
   clientId?: string;
 }) => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+
+  const enumLabel = (value: string) => {
+    if (lang === "ar") return tr(value);
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const [from, setFrom] = useState(offsetISO(-90));
   const [to, setTo] = useState(offsetISO(0));
 
@@ -73,20 +85,20 @@ export const StatementPanel = ({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <CardTitle>Statement of account</CardTitle>
+          <CardTitle>{tr("Statement of account")}</CardTitle>
           <Button onClick={handleExport} disabled={!data || loading} variant="outline">
-            <Download01 className="w-4 h-4 me-2" /> Export CSV
+            <Download01 className="w-4 h-4 me-2" /> {tr("Export CSV")}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3 max-w-md">
           <div>
-            <Label>From</Label>
+            <Label>{tr("From")}</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
           <div>
-            <Label>To</Label>
+            <Label>{tr("To")}</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
         </div>
@@ -94,47 +106,47 @@ export const StatementPanel = ({
         {loading ? (
           <TableSkeleton rows={4} cols={5} />
         ) : !data ? (
-          <p className="text-sm text-muted-foreground">No data.</p>
+          <p className="text-sm text-muted-foreground">{tr("No data.")}</p>
         ) : (
           <>
             <div className="grid gap-3 md:grid-cols-4">
               <div>
-                <p className="text-xs uppercase text-muted-foreground">Issued</p>
+                <p className="text-xs uppercase text-muted-foreground">{tr("Issued total")}</p>
                 <p className="text-lg font-medium">{formatSAR(data.totals.issued)}</p>
               </div>
               <div>
-                <p className="text-xs uppercase text-muted-foreground">Outstanding</p>
+                <p className="text-xs uppercase text-muted-foreground">{tr("Outstanding")}</p>
                 <p className="text-lg font-medium">{formatSAR(data.totals.outstanding_invoices)}</p>
               </div>
               <div>
-                <p className="text-xs uppercase text-muted-foreground">Payments received</p>
+                <p className="text-xs uppercase text-muted-foreground">{tr("Payments received")}</p>
                 <p className="text-lg font-medium">{formatSAR(data.totals.payments_received)}</p>
               </div>
               <div>
-                <p className="text-xs uppercase text-muted-foreground">Net balance</p>
+                <p className="text-xs uppercase text-muted-foreground">{tr("Net balance")}</p>
                 <p className="text-lg font-medium">{formatSAR(data.totals.net_balance)}</p>
               </div>
             </div>
 
             {data.lines.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No activity in this period.</p>
+              <p className="text-sm text-muted-foreground">{tr("No activity in this period.")}</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-end">Debit</TableHead>
-                    <TableHead className="text-end">Credit</TableHead>
+                    <TableHead>{tr("Date")}</TableHead>
+                    <TableHead>{tr("Type")}</TableHead>
+                    <TableHead>{tr("Reference")}</TableHead>
+                    <TableHead>{tr("Description")}</TableHead>
+                    <TableHead className="text-end">{tr("Debit")}</TableHead>
+                    <TableHead className="text-end">{tr("Credit (accounting)")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.lines.map((line: any, idx: number) => (
                     <TableRow key={idx}>
-                      <TableCell className="text-sm">{new Date(line.timestamp).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-xs uppercase">{line.type}</TableCell>
+                      <TableCell className="text-sm">{new Date(line.timestamp).toLocaleDateString(locale)}</TableCell>
+                      <TableCell className="text-xs uppercase">{enumLabel(line.type)}</TableCell>
                       <TableCell className="font-mono text-xs">{line.reference}</TableCell>
                       <TableCell className="text-sm">{line.description}</TableCell>
                       <TableCell className="text-end font-medium">

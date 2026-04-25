@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, ExternalLink, FileText, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, FileText, Plus, Send, Trash2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const flexLabel: Record<string, string> = {
   EXACT_MATCH: "Exact Match",
@@ -61,6 +62,18 @@ const documentLabel: Record<string, string> = {
 };
 
 const SupplierRfqRespond = () => {
+  const { tr, lang, dir } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
+  const enumLabel = (value?: string) => {
+    if (!value) return "";
+    if (lang === "ar") return tr(value);
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const { rfqId } = useParams();
   const navigate = useNavigate();
   const submitQuote = useMutation(api.quotes.submit);
@@ -118,7 +131,7 @@ const SupplierRfqRespond = () => {
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!response.ok) throw new Error("Upload failed");
+      if (!response.ok) throw new Error(tr("Upload failed"));
       const { storageId } = await response.json();
       setAttachments((prev) =>
         prev.map((attachment) =>
@@ -134,9 +147,9 @@ const SupplierRfqRespond = () => {
             : attachment,
         ),
       );
-      toast.success("Document uploaded");
+      toast.success(tr("Document uploaded"));
     } catch (err: any) {
-      toast.error("Upload error: " + err.message);
+      toast.error(`${tr("Upload error:")} ${err.message}`);
     } finally {
       setUploadingAttachmentKey(null);
     }
@@ -146,7 +159,7 @@ const SupplierRfqRespond = () => {
     if (!rfqId) return;
     for (const attachment of attachments) {
       if (!attachment.name.trim() || (!attachment.url.trim() && !attachment.storage_id)) {
-        toast.error("Each quote document needs a name and either a file upload or URL");
+        toast.error(tr("Each quote document needs a name and either a file upload or URL"));
         return;
       }
     }
@@ -174,25 +187,25 @@ const SupplierRfqRespond = () => {
       };
       if (isRevision && existingQuote?._id) {
         await reviseQuote({ quote_id: existingQuote._id as any, ...payload });
-        toast.success("Revised quote submitted for MWRD review");
+        toast.success(tr("Revised quote submitted for MWRD review"));
       } else {
         await submitQuote({ rfq_id: rfqId as any, ...payload });
-        toast.success("Quote submitted for admin review");
+        toast.success(tr("Quote submitted for admin review"));
       }
       navigate("/supplier/rfqs");
     } catch (err: any) {
-      toast.error("Error submitting quote: " + err.message);
+      toast.error(tr("Error submitting quote: {message}", { message: err.message }));
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return <SupplierLayout><div className="text-muted-foreground text-center py-20">Loading…</div></SupplierLayout>;
+    return <SupplierLayout><div className="text-muted-foreground text-center py-20">{tr("Loading…")}</div></SupplierLayout>;
   }
 
   if (!rfqData) {
-    return <SupplierLayout><div className="text-muted-foreground text-center py-20">RFQ not found or not assigned.</div></SupplierLayout>;
+    return <SupplierLayout><div className="text-muted-foreground text-center py-20">{tr("RFQ not found or not assigned.")}</div></SupplierLayout>;
   }
 
   const rfqItems = rfqData.items ?? [];
@@ -205,12 +218,17 @@ const SupplierRfqRespond = () => {
       <div className="max-w-3xl space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/supplier/rfqs")}>
-            <ArrowLeft className="w-4 h-4" />
+            {dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
           </Button>
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">{isRevision ? "Revise Quote" : "Respond to RFQ"}</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">
+              {isRevision ? tr("Revise Quote") : tr("Respond to RFQ")}
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              RFQ <span className="font-mono">{rfqId?.slice(0, 8)}</span> — {isRevision ? "Update pricing, documents, or terms requested by MWRD" : "Provide pricing for each item"}
+              {tr("RFQ")} <span className="font-mono">{rfqId?.slice(0, 8)}</span> —{" "}
+              {isRevision
+                ? tr("Update pricing, documents, or terms requested by MWRD")
+                : tr("Provide pricing for each item")}
             </p>
           </div>
         </div>
@@ -218,31 +236,31 @@ const SupplierRfqRespond = () => {
         {existingQuote && !isRevision && (
           <Card className="border-amber-200 bg-amber-50">
             <CardContent className="py-4 text-sm text-amber-900">
-              This RFQ already has a quote with status <span className="font-medium">{existingQuote.status.replace(/_/g, " ")}</span>.
+              {tr("This RFQ already has a quote with status {status}.", { status: enumLabel(existingQuote.status) })}
             </CardContent>
           </Card>
         )}
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Request context</CardTitle>
+            <CardTitle className="text-base">{tr("Request context")}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 text-sm md:grid-cols-3">
             <div>
-              <p className="text-muted-foreground">Category</p>
+              <p className="text-muted-foreground">{tr("Category")}</p>
               <p className="font-medium">{rfqData.category || "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Required by</p>
-              <p className="font-medium">{rfqData.required_by ? new Date(rfqData.required_by).toLocaleDateString() : "—"}</p>
+              <p className="text-muted-foreground">{tr("Required by")}</p>
+              <p className="font-medium">{rfqData.required_by ? new Date(rfqData.required_by).toLocaleDateString(locale) : "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Delivery</p>
+              <p className="text-muted-foreground">{tr("Delivery")}</p>
               <p className="font-medium">{rfqData.delivery_location || "—"}</p>
             </div>
             {rfqData.notes && (
               <div className="md:col-span-3">
-                <p className="text-muted-foreground">Client notes</p>
+                <p className="text-muted-foreground">{tr("Client notes")}</p>
                 <p className="font-medium">{rfqData.notes}</p>
               </div>
             )}
@@ -254,21 +272,21 @@ const SupplierRfqRespond = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="h-4 w-4 text-primary" />
-                Client documents
+                {tr("Client documents")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {requestAttachments.map((attachment: any) => (
                 <div key={attachment._id} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
                   <div>
-                    <Badge variant="secondary" className="mb-2">{documentLabel[attachment.document_type] || attachment.document_type}</Badge>
+                    <Badge variant="secondary" className="mb-2">{tr(documentLabel[attachment.document_type] || attachment.document_type)}</Badge>
                     <p className="font-medium">{attachment.name}</p>
                     {attachment.notes && <p className="text-sm text-muted-foreground">{attachment.notes}</p>}
                   </div>
                   <Button variant="outline" size="sm" asChild>
                     <a href={attachment.url} target="_blank" rel="noreferrer">
                       <ExternalLink className="me-2 h-4 w-4" />
-                      Open
+                      {tr("Open")}
                     </a>
                   </Button>
                 </div>
@@ -280,14 +298,14 @@ const SupplierRfqRespond = () => {
         {revisionEvents.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Revision history</CardTitle>
+              <CardTitle className="text-base">{tr("Revision history")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {revisionEvents.map((event: any) => (
                 <div key={event._id} className="rounded-lg border border-border p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <Badge variant="secondary">{event.actor_role}</Badge>
-                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</span>
+                    <Badge variant="secondary">{enumLabel(event.actor_role)}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString(locale)}</span>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{event.message}</p>
                 </div>
@@ -305,16 +323,16 @@ const SupplierRfqRespond = () => {
               <CardHeader className="py-3 px-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm">
-                    Item {idx + 1}: {item.product?.name || item.custom_item_description || "Custom Item"}
+                    {tr("Item {n}", { n: fmtNumber(idx + 1) })}: {item.product?.name || item.custom_item_description || tr("Custom Item")}
                   </CardTitle>
                   <Badge variant="secondary" className="text-xs">
-                    {flexLabel[item.flexibility] || item.flexibility}
+                    {tr(flexLabel[item.flexibility] || item.flexibility)}
                   </Badge>
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-                  <span>Qty: {item.quantity}</span>
-                  {item.product?.category && <span>Category: {item.product.category}</span>}
-                  {item.special_notes && <span>Notes: {item.special_notes}</span>}
+                  <span>{tr("Qty")}: {fmtNumber(item.quantity)}</span>
+                  {item.product?.category && <span>{tr("Category")}: {item.product.category}</span>}
+                  {item.special_notes && <span>{tr("Notes")}: {item.special_notes}</span>}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 px-4 pb-4">
@@ -324,7 +342,7 @@ const SupplierRfqRespond = () => {
                     onCheckedChange={(v) => updateResponse(item._id, { is_quoted: v })}
                   />
                   <Label className="text-sm">
-                    {resp.is_quoted ? "Available — provide pricing" : "Unavailable"}
+                    {resp.is_quoted ? tr("Available — provide pricing") : tr("Unavailable")}
                   </Label>
                 </div>
 
@@ -332,7 +350,7 @@ const SupplierRfqRespond = () => {
                   <>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label>Your Price (SAR)</Label>
+                        <Label>{tr("Your Price (SAR)")}</Label>
                         <Input
                           type="number"
                           min={0}
@@ -342,7 +360,7 @@ const SupplierRfqRespond = () => {
                         />
                       </div>
                       <div>
-                        <Label>Lead Time (days)</Label>
+                        <Label>{tr("Lead Time (days)")}</Label>
                         <Input
                           type="number"
                           min={1}
@@ -352,23 +370,23 @@ const SupplierRfqRespond = () => {
                       </div>
                     </div>
 
-                    {(item.flexibility === "OPEN_TO_EQUIVALENT" || item.flexibility === "OPEN_TO_ALTERNATIVES") && (
-                      <div>
-                        <Label>Offer Alternative Product (optional)</Label>
+                      {(item.flexibility === "OPEN_TO_EQUIVALENT" || item.flexibility === "OPEN_TO_ALTERNATIVES") && (
+                        <div>
+                        <Label>{tr("Offer Alternative Product (optional)")}</Label>
                         <Select
                           value={resp.alternative_product_id || "none"}
                           onValueChange={(v) => updateResponse(item._id, { alternative_product_id: v === "none" ? null : v })}
                         >
-                          <SelectTrigger><SelectValue placeholder="No alternative" /></SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder={tr("No alternative")} /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">No alternative</SelectItem>
+                            <SelectItem value="none">{tr("No alternative")}</SelectItem>
                             {myProducts.map((p: any) => (
                               <SelectItem key={p._id} value={p._id}>{p.name} ({p.category})</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                    )}
+                        </div>
+                      )}
                   </>
                 )}
               </CardContent>
@@ -379,42 +397,42 @@ const SupplierRfqRespond = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-base">Commercial notes and documents</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">Attach quotation PDFs, technical sheets, or delivery terms for admin review.</p>
+              <CardTitle className="text-base">{tr("Commercial notes and documents")}</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">{tr("Attach quotation PDFs, technical sheets, or delivery terms for admin review.")}</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setAttachments([...attachments, emptyAttachment()])}>
               <Plus className="me-2 h-4 w-4" />
-              Add
+              {tr("Add")}
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <Label>Supplier Notes</Label>
-              <Textarea value={supplierNotes} onChange={(e) => setSupplierNotes(e.target.value)} placeholder="Warranty, delivery schedule, substitutions, or payment notes…" />
+              <Label>{tr("Supplier Notes")}</Label>
+              <Textarea value={supplierNotes} onChange={(e) => setSupplierNotes(e.target.value)} placeholder={tr("Warranty, delivery schedule, substitutions, or payment notes…")} />
             </div>
             {attachments.map((attachment) => (
               <div key={attachment.key} className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[180px_1fr_1fr_auto]">
                 <div>
-                  <Label>Type</Label>
+                  <Label>{tr("Type")}</Label>
                   <Select
                     value={attachment.document_type}
                     onValueChange={(v) => updateAttachment(attachment.key, { document_type: v as QuoteAttachmentDraft["document_type"] })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="SUPPLIER_QUOTATION">Supplier Quotation</SelectItem>
-                      <SelectItem value="COMMERCIAL_TERMS">Commercial Terms</SelectItem>
-                      <SelectItem value="SUPPORTING_DOCUMENT">Supporting Document</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
+                      <SelectItem value="SUPPLIER_QUOTATION">{tr("Supplier Quotation")}</SelectItem>
+                      <SelectItem value="COMMERCIAL_TERMS">{tr("Commercial Terms")}</SelectItem>
+                      <SelectItem value="SUPPORTING_DOCUMENT">{tr("Supporting Document")}</SelectItem>
+                      <SelectItem value="OTHER">{tr("Other")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Name</Label>
-                  <Input value={attachment.name} onChange={(e) => updateAttachment(attachment.key, { name: e.target.value })} placeholder="Document name" />
+                  <Label>{tr("Name")}</Label>
+                  <Input value={attachment.name} onChange={(e) => updateAttachment(attachment.key, { name: e.target.value })} placeholder={tr("Document name")} />
                 </div>
                 <div>
-                  <Label>URL</Label>
+                  <Label>{tr("URL")}</Label>
                   <Input
                     value={attachment.url}
                     onChange={(e) => updateAttachment(attachment.key, { url: e.target.value, storage_id: null, content_type: "", size: null })}
@@ -427,11 +445,11 @@ const SupplierRfqRespond = () => {
                   </Button>
                 </div>
                 <div className="md:col-span-4">
-                  <Label>Notes</Label>
-                  <Input value={attachment.notes} onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })} placeholder="Optional context for MWRD" />
+                  <Label>{tr("Notes")}</Label>
+                  <Input value={attachment.notes} onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })} placeholder={tr("Optional context for MWRD")} />
                 </div>
                 <div className="md:col-span-4">
-                  <Label>Upload File</Label>
+                  <Label>{tr("Upload File")}</Label>
                   <Input
                     type="file"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -440,10 +458,10 @@ const SupplierRfqRespond = () => {
                   />
                   {attachment.storage_id && (
                     <p className="mt-1 text-xs text-primary">
-                      Uploaded file ready{attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                      {tr("Uploaded file ready")}{attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(2)} MB` : ""}
                     </p>
                   )}
-                  {uploadingAttachmentKey === attachment.key && <p className="mt-1 text-xs text-muted-foreground">Uploading…</p>}
+                  {uploadingAttachmentKey === attachment.key && <p className="mt-1 text-xs text-muted-foreground">{tr("Uploading…")}</p>}
                 </div>
               </div>
             ))}
@@ -451,10 +469,10 @@ const SupplierRfqRespond = () => {
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate("/supplier/rfqs")}>Cancel</Button>
+          <Button variant="outline" onClick={() => navigate("/supplier/rfqs")}>{tr("Cancel")}</Button>
           <Button onClick={handleSubmit} disabled={submitting || (!!existingQuote && !isRevision)}>
             <Send className="w-4 h-4 me-2" />
-            {submitting ? "Submitting…" : isRevision ? "Submit Revision" : "Submit Quote"}
+            {submitting ? tr("Submitting…") : isRevision ? tr("Submit Revision") : tr("Submit Quote")}
           </Button>
         </div>
       </div>

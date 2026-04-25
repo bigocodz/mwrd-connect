@@ -18,6 +18,7 @@ import { Trash01 } from "@untitledui/icons";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { CONTRACT_STATUS_COLOR, CONTRACT_STATUS_LABEL } from "@/components/contracts/contractStatus";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type LineDraft = {
   id?: string;
@@ -36,6 +37,7 @@ const emptyLine = (): LineDraft => ({
 });
 
 const AdminContractDetail = () => {
+  const { tr } = useLanguage();
   const { contractId } = useParams<{ contractId: string }>();
   const data = useQuery(api.contracts.getById, contractId ? { id: contractId as any } : "skip");
   const products = useQuery(api.products.listApprovedWithSupplier) ?? [];
@@ -92,9 +94,9 @@ const AdminContractDetail = () => {
         terms: draft.terms || undefined,
         notes: draft.notes || undefined,
       });
-      toast.success("Saved");
+      toast.success(tr("Saved"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -102,9 +104,9 @@ const AdminContractDetail = () => {
 
   const submitLine = async () => {
     if (!editing || !contract) return;
-    if (!editing.description.trim()) { toast.error("Description required"); return; }
+    if (!editing.description.trim()) { toast.error(tr("Description required")); return; }
     const price = parseFloat(editing.unit_price);
-    if (!Number.isFinite(price) || price < 0) { toast.error("Unit price must be ≥ 0"); return; }
+    if (!Number.isFinite(price) || price < 0) { toast.error(tr("Unit price must be ≥ 0")); return; }
     const minQty = editing.min_quantity ? parseInt(editing.min_quantity, 10) : undefined;
     setBusy(true);
     try {
@@ -127,27 +129,27 @@ const AdminContractDetail = () => {
           notes: editing.notes.trim() || undefined,
         });
       }
-      toast.success("Line saved");
+      toast.success(tr("Line saved"));
       setEditing(null);
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
   };
 
   const handleDeleteLine = async (id: string) => {
-    if (!confirm("Remove this line item?")) return;
+    if (!confirm(tr("Remove this line item?"))) return;
     try {
       await removeLine({ id: id as any });
-      toast.success("Removed");
+      toast.success(tr("Removed"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
   if (loading) return <AdminLayout><TableSkeleton rows={4} cols={4} /></AdminLayout>;
-  if (!contract) return <AdminLayout><p className="text-muted-foreground">Contract not found.</p></AdminLayout>;
+  if (!contract) return <AdminLayout><p className="text-muted-foreground">{tr("Contract not found.")}</p></AdminLayout>;
 
   const productNameById = new Map<string, string>(
     (products as any[]).map((p) => [p._id, p.name]),
@@ -157,7 +159,7 @@ const AdminContractDetail = () => {
     <AdminLayout>
       <div className="space-y-6">
         <Link to="/admin/contracts" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4" /> All contracts
+          <ArrowLeft className="w-4 h-4" /> {tr("All contracts")}
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -165,79 +167,79 @@ const AdminContractDetail = () => {
             <h1 className="text-2xl font-display font-bold text-foreground">{contract.name}</h1>
             <div className="mt-2 flex flex-wrap gap-2 text-sm">
               <Badge variant="outline" className={CONTRACT_STATUS_COLOR[contract.status] || ""}>
-                {CONTRACT_STATUS_LABEL[contract.status] ?? contract.status}
+                {tr(CONTRACT_STATUS_LABEL[contract.status] ?? contract.status)}
               </Badge>
-              <span className="text-muted-foreground">Supplier:</span> <span className="font-medium">{contract.supplier_public_id}</span>
-              <span className="text-muted-foreground">Client:</span>{" "}
-              <span className="font-medium">{contract.client_public_id ?? "All clients"}</span>
+              <span className="text-muted-foreground">{tr("Supplier")}:</span> <span className="font-medium">{contract.supplier_public_id}</span>
+              <span className="text-muted-foreground">{tr("Client")}:</span>{" "}
+              <span className="font-medium">{contract.client_public_id ?? tr("All clients")}</span>
             </div>
           </div>
           <div className="flex gap-2">
             {contract.status === "DRAFT" && (
-              <Button onClick={() => setStatus({ id: contract._id, status: "ACTIVE" }).then(() => toast.success("Activated"))}>
-                Activate
+              <Button onClick={() => setStatus({ id: contract._id, status: "ACTIVE" }).then(() => toast.success(tr("Activated")))}>
+                {tr("Activate")}
               </Button>
             )}
             {contract.status === "ACTIVE" && (
-              <Button variant="outline" onClick={() => setStatus({ id: contract._id, status: "EXPIRED" }).then(() => toast.success("Expired"))}>
-                Mark expired
+              <Button variant="outline" onClick={() => setStatus({ id: contract._id, status: "EXPIRED" }).then(() => toast.success(tr("Expired")))}>
+                {tr("Mark expired")}
               </Button>
             )}
             {(contract.status === "DRAFT" || contract.status === "ACTIVE") && (
               <Button
                 variant="destructive"
                 onClick={() => {
-                  const reason = prompt("Reason for termination?") || undefined;
+                  const reason = prompt(tr("Reason for termination?")) || undefined;
                   if (reason !== undefined) {
-                    setStatus({ id: contract._id, status: "TERMINATED", reason }).then(() => toast.success("Terminated"));
+                    setStatus({ id: contract._id, status: "TERMINATED", reason }).then(() => toast.success(tr("Terminated")));
                   }
                 }}
               >
-                Terminate
+                {tr("Terminate")}
               </Button>
             )}
           </div>
         </div>
 
         <Card>
-          <CardHeader><CardTitle>Details</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("Details")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {draft && (
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Name</Label>
+                    <Label>{tr("Name")}</Label>
                     <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Discount %</Label>
+                    <Label>{tr("Discount %")}</Label>
                     <Input type="number" step="0.01" min="0" max="100" value={draft.discount_percent} onChange={(e) => setDraft({ ...draft, discount_percent: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Start date</Label>
+                    <Label>{tr("Start date")}</Label>
                     <Input type="date" value={draft.start_date} onChange={(e) => setDraft({ ...draft, start_date: e.target.value })} />
                   </div>
                   <div>
-                    <Label>End date</Label>
+                    <Label>{tr("End date")}</Label>
                     <Input type="date" value={draft.end_date} onChange={(e) => setDraft({ ...draft, end_date: e.target.value })} />
                   </div>
                 </div>
                 <div>
-                  <Label>Payment terms</Label>
-                  <Input value={draft.payment_terms} onChange={(e) => setDraft({ ...draft, payment_terms: e.target.value })} placeholder="Net 30" />
+                  <Label>{tr("Payment terms")}</Label>
+                  <Input value={draft.payment_terms} onChange={(e) => setDraft({ ...draft, payment_terms: e.target.value })} placeholder={tr("Net 30")} />
                 </div>
                 <div>
-                  <Label>Terms (free text)</Label>
+                  <Label>{tr("Terms (free text)")}</Label>
                   <Textarea value={draft.terms} onChange={(e) => setDraft({ ...draft, terms: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Internal notes</Label>
+                  <Label>{tr("Internal notes")}</Label>
                   <Textarea value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} />
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={saveContract} disabled={busy}>Save details</Button>
+                  <Button onClick={saveContract} disabled={busy}>{tr("Save details")}</Button>
                 </div>
               </>
             )}
@@ -247,23 +249,23 @@ const AdminContractDetail = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Contracted line items ({contract.lines.length})</CardTitle>
+              <CardTitle>{tr("Contracted line items ({count})", { count: contract.lines.length })}</CardTitle>
               <Button size="sm" onClick={() => setEditing(emptyLine())}>
-                <Plus className="w-4 h-4 me-2" /> Add line
+                <Plus className="w-4 h-4 me-2" /> {tr("Add line")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             {contract.lines.length === 0 ? (
-              <p className="text-sm text-muted-foreground p-6">No lines yet. Add at least one to surface contracted pricing on quotes.</p>
+              <p className="text-sm text-muted-foreground p-6">{tr("No lines yet. Add at least one to surface contracted pricing on quotes.")}</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-end">Unit price</TableHead>
-                    <TableHead className="text-end">Min qty</TableHead>
+                    <TableHead>{tr("Product")}</TableHead>
+                    <TableHead>{tr("Description")}</TableHead>
+                    <TableHead className="text-end">{tr("Unit price")}</TableHead>
+                    <TableHead className="text-end">{tr("Min qty")}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -271,7 +273,9 @@ const AdminContractDetail = () => {
                   {contract.lines.map((line: any) => (
                     <TableRow key={line._id}>
                       <TableCell className="text-sm">
-                        {line.product_id ? productNameById.get(line.product_id) ?? <span className="text-muted-foreground">Unknown product</span> : <span className="text-muted-foreground">Generic</span>}
+                        {line.product_id
+                          ? productNameById.get(line.product_id) ?? <span className="text-muted-foreground">{tr("Unknown product")}</span>
+                          : <span className="text-muted-foreground">{tr("Generic")}</span>}
                       </TableCell>
                       <TableCell>
                         <div>{line.description}</div>
@@ -288,7 +292,7 @@ const AdminContractDetail = () => {
                           min_quantity: line.min_quantity != null ? String(line.min_quantity) : "",
                           notes: line.notes ?? "",
                         })}>
-                          Edit
+                          {tr("Edit")}
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => handleDeleteLine(line._id)}>
                           <Trash01 className="w-4 h-4" />
@@ -305,47 +309,47 @@ const AdminContractDetail = () => {
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editing?.id ? "Edit line" : "Add line"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing?.id ? tr("Edit line") : tr("Add line")}</DialogTitle></DialogHeader>
           {editing && (
             <div className="space-y-3 py-2">
               <div>
-                <Label>Product (optional)</Label>
+                <Label>{tr("Product (optional)")}</Label>
                 <Select value={editing.product_id ?? "__none"} onValueChange={(v) => setEditing({ ...editing, product_id: v === "__none" ? undefined : v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none">Generic / no specific product</SelectItem>
+                    <SelectItem value="__none">{tr("Generic / no specific product")}</SelectItem>
                     {supplierProducts.map((p: any) => (
                       <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 {supplierProducts.length === 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">This supplier has no approved products yet — line will be generic.</p>
+                  <p className="text-xs text-muted-foreground mt-1">{tr("This supplier has no approved products yet — line will be generic.")}</p>
                 )}
               </div>
               <div>
-                <Label>Description</Label>
+                <Label>{tr("Description")}</Label>
                 <Input value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Unit price (SAR)</Label>
+                  <Label>{tr("Unit price (SAR)")}</Label>
                   <Input type="number" step="0.01" min="0" value={editing.unit_price} onChange={(e) => setEditing({ ...editing, unit_price: e.target.value })} />
                 </div>
                 <div>
-                  <Label>Min quantity (optional)</Label>
+                  <Label>{tr("Min quantity (optional)")}</Label>
                   <Input type="number" min="0" step="1" value={editing.min_quantity} onChange={(e) => setEditing({ ...editing, min_quantity: e.target.value })} />
                 </div>
               </div>
               <div>
-                <Label>Notes</Label>
+                <Label>{tr("Notes")}</Label>
                 <Textarea value={editing.notes} onChange={(e) => setEditing({ ...editing, notes: e.target.value })} />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={submitLine} disabled={busy}>Save line</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>{tr("Cancel")}</Button>
+            <Button onClick={submitLine} disabled={busy}>{tr("Save line")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

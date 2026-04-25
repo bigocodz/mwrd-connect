@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusColor: Record<string, string> = {
   OPEN: "bg-blue-100 text-blue-800",
@@ -26,6 +27,20 @@ const quoteStatusLabel: Record<string, string> = {
 };
 
 const SupplierRfqs = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+
+  const enumLabel = (value?: string) => {
+    if (!value) return "";
+    if (lang === "ar") return tr(value);
+    const mapped = quoteStatusLabel[value];
+    if (mapped) return mapped;
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const assignmentsData = useQuery(api.rfqs.listAssigned);
   const loading = assignmentsData === undefined;
   const assignments = (assignmentsData ?? []).filter(Boolean);
@@ -35,22 +50,22 @@ const SupplierRfqs = () => {
     <SupplierLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Assigned RFQs</h1>
-          <p className="text-muted-foreground mt-1">Respond to client requests with your pricing.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Assigned RFQs")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Respond to client requests with your pricing.")}</p>
         </div>
 
         {loading ? <TableSkeleton rows={5} cols={5} /> : assignments.length === 0 ? (
-          <EmptyState icon="rfqs" title="No RFQs assigned yet" description="When a client requests your products, they will appear here." />
+          <EmptyState icon="rfqs" title={tr("No RFQs assigned yet")} description={tr("When a client requests your products, they will appear here.")} />
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>RFQ</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Assigned</TableHead>
+                  <TableHead>{tr("RFQ")}</TableHead>
+                  <TableHead>{tr("Client")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Items")}</TableHead>
+                  <TableHead>{tr("Assigned")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -59,18 +74,24 @@ const SupplierRfqs = () => {
                   <TableRow key={a._id}>
                     <TableCell className="font-mono text-xs">{a.rfq_id.slice(0, 8)}…</TableCell>
                     <TableCell className="font-medium">{a.rfq?.client_public_id}</TableCell>
-                    <TableCell><Badge variant="outline" className={statusColor[a.rfq?.status] || ""}>{a.rfq?.status}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={statusColor[a.rfq?.status] || ""}>
+                        {lang === "ar" ? tr(a.rfq?.status) : a.rfq?.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{a.rfq?.items_count}</TableCell>
-                    <TableCell className="text-sm">{a.assigned_at ? new Date(a.assigned_at).toLocaleDateString() : new Date(a._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-sm">
+                      {(a.assigned_at ? new Date(a.assigned_at) : new Date(a._creationTime)).toLocaleDateString(locale)}
+                    </TableCell>
                     <TableCell>
                       {a.existing_quote_status === "SUPPLIER_REVISION_REQUESTED" ? (
-                        <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>Revise</Link></Button>
+                        <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>{tr("Revise")}</Link></Button>
                       ) : a.has_quote ? (
-                        <Badge variant="secondary">{quoteStatusLabel[a.existing_quote_status] || "Quoted"}</Badge>
+                        <Badge variant="secondary">{enumLabel(a.existing_quote_status) || tr("Quoted")}</Badge>
                       ) : a.rfq?.status === "OPEN" ? (
-                        <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>Respond</Link></Button>
+                        <Button variant="default" size="sm" asChild><Link to={`/supplier/rfqs/${a.rfq_id}/respond`}>{tr("Respond")}</Link></Button>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Closed</span>
+                        <span className="text-xs text-muted-foreground">{tr("Closed")}</span>
                       )}
                     </TableCell>
                   </TableRow>

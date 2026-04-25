@@ -22,6 +22,8 @@ import {
   CLIENT_INVOICE_STATUS_COLOR,
   CLIENT_INVOICE_STATUS_LABEL,
 } from "@/components/invoices/clientInvoiceStatus";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { ORDER_STATUS_LABEL } from "@/components/orders/orderStatus";
 
 const STATUS_FILTERS = ["ALL", "PENDING_PAYMENT", "OVERDUE", "PAID", "VOID"];
 
@@ -33,6 +35,8 @@ const offsetISO = (days: number) => {
 };
 
 const AdminClientInvoices = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const invoicesData = useQuery(api.clientInvoices.listAll);
   const eligibleOrders = useQuery(api.clientInvoices.listOrdersAvailableForInvoice) ?? [];
   const createForOrder = useMutation(api.clientInvoices.createForOrder);
@@ -62,7 +66,7 @@ const AdminClientInvoices = () => {
 
   const handleCreate = async () => {
     if (!orderId) {
-      toast.error("Pick an order");
+      toast.error(tr("Pick an order"));
       return;
     }
     setBusy(true);
@@ -73,11 +77,11 @@ const AdminClientInvoices = () => {
         due_date: dueDate,
         notes: notes.trim() || undefined,
       });
-      toast.success("Invoice issued");
+      toast.success(tr("Invoice issued"));
       setCreateOpen(false);
       setOrderId(""); setNotes("");
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -89,7 +93,7 @@ const AdminClientInvoices = () => {
       await fn();
       toast.success(label);
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -132,46 +136,46 @@ const AdminClientInvoices = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Client Invoices</h1>
-            <p className="text-muted-foreground mt-1">Issue invoices from completed orders, track payment, manage voids.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Client Invoices")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Issue invoices from completed orders, track payment, manage voids.")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" disabled={!filtered.length} onClick={exportCsv}>
-              <Download01 className="w-4 h-4 me-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> {tr("Export CSV")}
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STATUS_FILTERS.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {s === "ALL" ? "All statuses" : CLIENT_INVOICE_STATUS_LABEL[s] ?? s}
+                    {s === "ALL" ? tr("All statuses") : tr(CLIENT_INVOICE_STATUS_LABEL[s] ?? s)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Button onClick={() => { setOrderId(""); setIssueDate(todayISO()); setDueDate(offsetISO(30)); setNotes(""); setCreateOpen(true); }}>
-              <Plus className="w-4 h-4 me-2" /> Issue invoice
+              <Plus className="w-4 h-4 me-2" /> {tr("Issue invoice")}
             </Button>
           </div>
         </div>
 
         {loading ? <TableSkeleton rows={5} cols={9} /> : filtered.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="payments" title="No invoices" description="Issue one from a delivered or completed order." />
+            <EmptyState icon="payments" title={tr("No invoices")} description={tr("Issue one from a delivered or completed order.")} />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Issued</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Paid</TableHead>
+                  <TableHead>{tr("Invoice #")}</TableHead>
+                  <TableHead>{tr("Client")}</TableHead>
+                  <TableHead>{tr("Order")}</TableHead>
+                  <TableHead>{tr("Issued")}</TableHead>
+                  <TableHead>{tr("Due")}</TableHead>
+                  <TableHead>{tr("Total")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Paid")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -191,21 +195,21 @@ const AdminClientInvoices = () => {
                     <TableCell className="font-medium">{formatSAR(inv.total_amount)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={CLIENT_INVOICE_STATUS_COLOR[inv.status] || ""}>
-                        {CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status}
+                        {tr(CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status)}
                       </Badge>
                       {inv.status === "VOID" && inv.void_reason && (
                         <p className="text-xs text-muted-foreground mt-1 max-w-xs truncate" title={inv.void_reason}>{inv.void_reason}</p>
                       )}
                     </TableCell>
                     <TableCell className="text-xs">
-                      {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}
+                      {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString(locale) : "—"}
                       {inv.paid_reference && <div className="text-muted-foreground font-mono">{inv.paid_reference}</div>}
                       {inv.matched_payment_id && (
-                        <div className="text-muted-foreground">Reconciled</div>
+                        <div className="text-muted-foreground">{tr("Reconciled")}</div>
                       )}
                       {inv.last_reminder_at && (
                         <div className="text-muted-foreground mt-1">
-                          Reminded {new Date(inv.last_reminder_at).toLocaleDateString()}
+                          {tr("Reminded")} {new Date(inv.last_reminder_at).toLocaleDateString(locale)}
                           {inv.reminder_count != null && ` (${inv.reminder_count}×)`}
                         </div>
                       )}
@@ -216,30 +220,30 @@ const AdminClientInvoices = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => wrap("Reminder sent", () => sendReminder({ id: inv._id }))}
+                            onClick={() => wrap(tr("Reminder sent"), () => sendReminder({ id: inv._id }))}
                             disabled={busy}
                           >
-                            <Bell01 className="w-3 h-3 me-1" /> Remind
+                            <Bell01 className="w-3 h-3 me-1" /> {tr("Remind")}
                           </Button>
                         )}
                         {inv.status === "PENDING_PAYMENT" && (
                           <>
                             <Button size="sm" onClick={() => { setPaidId(inv._id); setPaidRef(""); }} disabled={busy}>
-                              <CheckCircle className="w-3 h-3 me-1" /> Paid
+                              <CheckCircle className="w-3 h-3 me-1" /> {tr("Paid")}
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => wrap("Marked overdue", () => markOverdue({ id: inv._id }))} disabled={busy}>
-                              Overdue
+                            <Button size="sm" variant="outline" onClick={() => wrap(tr("Marked overdue"), () => markOverdue({ id: inv._id }))} disabled={busy}>
+                              {tr("Overdue")}
                             </Button>
                           </>
                         )}
                         {inv.status === "OVERDUE" && (
                           <Button size="sm" onClick={() => { setPaidId(inv._id); setPaidRef(""); }} disabled={busy}>
-                            <CheckCircle className="w-3 h-3 me-1" /> Paid
+                            <CheckCircle className="w-3 h-3 me-1" /> {tr("Paid")}
                           </Button>
                         )}
                         {inv.status !== "PAID" && inv.status !== "VOID" && (
                           <Button size="sm" variant="destructive" onClick={() => { setVoidId(inv._id); setVoidReason(""); }} disabled={busy}>
-                            <XCircle className="w-3 h-3 me-1" /> Void
+                            <XCircle className="w-3 h-3 me-1" /> {tr("Void")}
                           </Button>
                         )}
                       </div>
@@ -255,67 +259,67 @@ const AdminClientInvoices = () => {
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Issue invoice</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Issue invoice")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label>Order</Label>
+              <Label>{tr("Order")}</Label>
               <Select value={orderId} onValueChange={setOrderId}>
-                <SelectTrigger><SelectValue placeholder={eligibleOrders.length === 0 ? "No eligible orders" : "Select an order…"} /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={eligibleOrders.length === 0 ? tr("No eligible orders") : tr("Select an order…")} /></SelectTrigger>
                 <SelectContent>
                   {eligibleOrders.map((o: any) => (
                     <SelectItem key={o._id} value={o._id}>
-                      {o.client_public_id} — {formatSAR(o.total_with_vat ?? 0)} — {o.status}
+                      {o.client_public_id} — {formatSAR(o.total_with_vat ?? 0)} — {tr(ORDER_STATUS_LABEL[o.status] ?? o.status)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {eligibleOrders.length === 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Only delivered or completed orders without an active invoice are eligible.
+                  {tr("Only delivered or completed orders without an active invoice are eligible.")}
                 </p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Issue date</Label>
+                <Label>{tr("Issue date")}</Label>
                 <Input type="date" value={issueDate} onChange={(e) => setIssueDate(e.target.value)} />
               </div>
               <div>
-                <Label>Due date</Label>
+                <Label>{tr("Due date")}</Label>
                 <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </div>
             </div>
             <div>
-              <Label>Notes</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes for the client." />
+              <Label>{tr("Notes")}</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr("Optional notes for the client.")} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={busy || !orderId}>Issue</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>{tr("Cancel")}</Button>
+            <Button onClick={handleCreate} disabled={busy || !orderId}>{tr("Issue")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={paidId !== null} onOpenChange={(o) => !o && setPaidId(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Mark invoice paid</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Mark invoice paid")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Payment reference (optional)</Label>
-            <Input value={paidRef} onChange={(e) => setPaidRef(e.target.value)} placeholder="Bank transfer / receipt #" />
+            <Label>{tr("Payment reference (optional)")}</Label>
+            <Input value={paidRef} onChange={(e) => setPaidRef(e.target.value)} placeholder={tr("Bank transfer / receipt #")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaidId(null)}>Close</Button>
+            <Button variant="outline" onClick={() => setPaidId(null)}>{tr("Close")}</Button>
             <Button
               disabled={busy}
               onClick={async () => {
                 if (!paidId) return;
-                await wrap("Marked paid", () => markPaid({ id: paidId as any, reference: paidRef.trim() || undefined }));
+                await wrap(tr("Marked paid"), () => markPaid({ id: paidId as any, reference: paidRef.trim() || undefined }));
                 setPaidId(null);
                 setPaidRef("");
               }}
             >
-              Confirm
+              {tr("Confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -323,24 +327,24 @@ const AdminClientInvoices = () => {
 
       <Dialog open={voidId !== null} onOpenChange={(o) => !o && setVoidId(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Void invoice</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Void invoice")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Reason</Label>
-            <Textarea value={voidReason} onChange={(e) => setVoidReason(e.target.value)} placeholder="Why is this being voided?" />
+            <Label>{tr("Reason")}</Label>
+            <Textarea value={voidReason} onChange={(e) => setVoidReason(e.target.value)} placeholder={tr("Why is this being voided?")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setVoidId(null)}>Close</Button>
+            <Button variant="outline" onClick={() => setVoidId(null)}>{tr("Close")}</Button>
             <Button
               variant="destructive"
               disabled={busy || !voidReason.trim()}
               onClick={async () => {
                 if (!voidId) return;
-                await wrap("Voided", () => voidInvoice({ id: voidId as any, reason: voidReason.trim() }));
+                await wrap(tr("Voided"), () => voidInvoice({ id: voidId as any, reason: voidReason.trim() }));
                 setVoidId(null);
                 setVoidReason("");
               }}
             >
-              Confirm void
+              {tr("Confirm void")}
             </Button>
           </DialogFooter>
         </DialogContent>

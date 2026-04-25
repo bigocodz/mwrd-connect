@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusColor: Record<string, string> = {
   OPEN: "bg-blue-100 text-blue-800",
@@ -18,6 +19,8 @@ const statusColor: Record<string, string> = {
 };
 
 const AdminRfqs = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const rfqsData = useQuery(api.rfqs.listAll);
@@ -32,16 +35,16 @@ const AdminRfqs = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">All RFQs</h1>
-            <p className="text-muted-foreground mt-1">Review all client requests for quotes.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("All RFQs")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Review all client requests for quotes.")}</p>
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
-              <SelectItem value="OPEN">Open</SelectItem>
-              <SelectItem value="QUOTED">Quoted</SelectItem>
-              <SelectItem value="CLOSED">Closed</SelectItem>
+              <SelectItem value="ALL">{tr("All statuses")}</SelectItem>
+              <SelectItem value="OPEN">{tr("OPEN")}</SelectItem>
+              <SelectItem value="QUOTED">{tr("QUOTED")}</SelectItem>
+              <SelectItem value="CLOSED">{tr("CLOSED")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -49,19 +52,19 @@ const AdminRfqs = () => {
         {loading ? (
           <TableSkeleton rows={5} cols={5} />
         ) : filtered.length === 0 ? (
-          <EmptyState icon="rfqs" title="No RFQs found" />
+          <EmptyState icon="rfqs" title={tr("No RFQs found")} />
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>RFQ ID</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Docs</TableHead>
-                  <TableHead>Quotes</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>{tr("RFQ ID")}</TableHead>
+                  <TableHead>{tr("Client")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Items")}</TableHead>
+                  <TableHead>{tr("Docs")}</TableHead>
+                  <TableHead>{tr("Quotes")}</TableHead>
+                  <TableHead>{tr("Created")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -71,15 +74,15 @@ const AdminRfqs = () => {
                     <TableCell className="font-mono text-xs">{rfq._id.slice(0, 8)}…</TableCell>
                     <TableCell className="font-medium">{(rfq as any).client_public_id}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={statusColor[rfq.status] || ""}>{rfq.status}</Badge>
+                      <Badge variant="outline" className={statusColor[rfq.status] || ""}>{tr(rfq.status)}</Badge>
                     </TableCell>
                     <TableCell>{(rfq as any).items_count}</TableCell>
                     <TableCell>{(rfq as any).attachments_count ?? 0}</TableCell>
                     <TableCell>{(rfq as any).quotes_count ?? 0}</TableCell>
-                    <TableCell className="text-sm">{new Date(rfq._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-sm">{new Date(rfq._creationTime).toLocaleDateString(locale)}</TableCell>
                     <TableCell className="text-end">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/admin/rfqs/${rfq._id}/quotes`}>Compare</Link>
+                        <Link to={`/admin/rfqs/${rfq._id}/quotes`}>{tr("Compare")}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

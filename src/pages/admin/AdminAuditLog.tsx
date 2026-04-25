@@ -11,8 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminAuditLog = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const logsData = useQuery(api.auditLog.listAll);
   const loading = logsData === undefined;
   const allLogs = logsData ?? [];
@@ -38,28 +41,28 @@ const AdminAuditLog = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Audit Log</h1>
-          <p className="text-muted-foreground mt-1">Read-only log of all admin actions.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Audit Log")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Read-only log of all admin actions.")}</p>
         </div>
 
         <div className="flex flex-wrap gap-3 items-end">
           <div>
-            <Label className="text-xs">Action</Label>
+            <Label className="text-xs">{tr("Action")}</Label>
             <Select value={actionFilter} onValueChange={setActionFilter}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All Actions</SelectItem>
+                <SelectItem value="ALL">{tr("All Actions")}</SelectItem>
                 {actions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
-          <div><Label className="text-xs">From</Label><Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" /></div>
-          <div><Label className="text-xs">To</Label><Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" /></div>
+          <div><Label className="text-xs">{tr("From")}</Label><Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" /></div>
+          <div><Label className="text-xs">{tr("To")}</Label><Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" /></div>
         </div>
 
         {loading ? <TableSkeleton rows={8} cols={5} /> : logs.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="audit" title="No audit logs found" description="Admin actions will be recorded here." />
+            <EmptyState icon="audit" title={tr("No audit logs found")} description={tr("Admin actions will be recorded here.")} />
           </CardContent></Card>
         ) : (
           <>
@@ -67,17 +70,17 @@ const AdminAuditLog = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Admin</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Target</TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead>{tr("Timestamp")}</TableHead>
+                    <TableHead>{tr("Admin")}</TableHead>
+                    <TableHead>{tr("Action")}</TableHead>
+                    <TableHead>{tr("Target")}</TableHead>
+                    <TableHead>{tr("Details")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginated.map((log: any) => (
                     <TableRow key={log._id}>
-                      <TableCell className="text-xs whitespace-nowrap">{new Date(log._creationTime).toLocaleString()}</TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{new Date(log._creationTime).toLocaleString(locale)}</TableCell>
                       <TableCell className="font-medium text-sm">{log.admin_public_id || log.admin_id?.slice(0, 8)}</TableCell>
                       <TableCell><Badge variant="outline" className="text-xs font-mono">{log.action}</Badge></TableCell>
                       <TableCell className="text-xs">

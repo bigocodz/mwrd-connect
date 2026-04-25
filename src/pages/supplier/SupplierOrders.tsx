@@ -11,8 +11,11 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { ORDER_STATUS_COLOR, ORDER_STATUS_LABEL } from "@/components/orders/orderStatus";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SupplierOrders = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const ordersData = useQuery(api.orders.listMineSupplier);
   const loading = ordersData === undefined;
   const orders = ordersData ?? [];
@@ -22,24 +25,24 @@ const SupplierOrders = () => {
     <SupplierLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Orders</h1>
-          <p className="text-muted-foreground mt-1">Confirm new orders and track fulfillment.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Orders")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Confirm new orders and track fulfillment.")}</p>
         </div>
 
         {loading ? <TableSkeleton rows={5} cols={6} /> : orders.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="quotes" title="No orders yet" description="Confirmed quotes will create orders here." />
+            <EmptyState icon="quotes" title={tr("No orders yet")} description={tr("Confirmed quotes will create orders here.")} />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>{tr("Order")}</TableHead>
+                  <TableHead>{tr("Client")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Total")}</TableHead>
+                  <TableHead>{tr("Created")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -55,14 +58,14 @@ const SupplierOrders = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={ORDER_STATUS_COLOR[order.status] || ""}>
-                        {ORDER_STATUS_LABEL[order.status] ?? order.status}
+                        {tr(ORDER_STATUS_LABEL[order.status] ?? order.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">{formatSAR(order.total_with_vat)}</TableCell>
-                    <TableCell className="text-sm">{new Date(order._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-sm">{new Date(order._creationTime).toLocaleDateString(locale)}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/supplier/orders/${order._id}`}>View</Link>
+                        <Link to={`/supplier/orders/${order._id}`}>{tr("View")}</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

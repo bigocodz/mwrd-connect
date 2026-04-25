@@ -17,13 +17,21 @@ import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { formatSAR } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusColor: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-800",
   PAID: "bg-green-100 text-green-800",
 };
 
+const paymentMethodLabel: Record<string, string> = {
+  BANK_TRANSFER: "Bank transfer",
+  CHECK: "Check",
+};
+
 const AdminPayouts = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const createPayout = useMutation(api.payouts.create);
   const markPaid = useMutation(api.payouts.markPaid);
 
@@ -56,11 +64,11 @@ const AdminPayouts = () => {
         bank_reference: formBankRef || undefined,
         notes: formNotes || undefined,
       });
-      toast.success("Payout recorded");
+      toast.success(tr("Payout recorded"));
       setRecordDialog(false);
       resetForm();
     } catch (err: any) {
-      toast.error("Error: " + err.message);
+      toast.error(tr("Error: ") + err.message);
     } finally {
       setActing(false);
     }
@@ -70,9 +78,9 @@ const AdminPayouts = () => {
     setActing(true);
     try {
       await markPaid({ id: payoutId as any });
-      toast.success("Payout marked as paid");
+      toast.success(tr("Payout marked as paid"));
     } catch (err: any) {
-      toast.error("Error: " + err.message);
+      toast.error(tr("Error: ") + err.message);
     } finally {
       setActing(false);
     }
@@ -87,39 +95,41 @@ const AdminPayouts = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Supplier Payouts</h1>
-            <p className="text-muted-foreground mt-1">Record and track payments to suppliers.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Supplier Payouts")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Record and track payments to suppliers.")}</p>
           </div>
           <div className="flex gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="PAID">Paid</SelectItem>
+                <SelectItem value="ALL">{tr("All")}</SelectItem>
+                <SelectItem value="PENDING">{tr("PENDING")}</SelectItem>
+                <SelectItem value="PAID">{tr("PAID")}</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => { resetForm(); setRecordDialog(true); }}><Plus className="w-4 h-4 me-2" /> Record Payout</Button>
+            <Button onClick={() => { resetForm(); setRecordDialog(true); }}>
+              <Plus className="w-4 h-4 me-2" /> {tr("Record Payout")}
+            </Button>
           </div>
         </div>
 
         {loading ? <TableSkeleton rows={5} cols={8} /> : filtered.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="payouts" title="No payouts found" description="Record your first supplier payout." />
+            <EmptyState icon="payouts" title={tr("No payouts found")} description={tr("Record your first supplier payout.")} />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Bank Ref.</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Paid At</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{tr("Supplier")}</TableHead>
+                  <TableHead>{tr("Amount")}</TableHead>
+                  <TableHead>{tr("Method")}</TableHead>
+                  <TableHead>{tr("Bank Ref.")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Paid At")}</TableHead>
+                  <TableHead>{tr("Created")}</TableHead>
+                  <TableHead>{tr("Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -130,15 +140,15 @@ const AdminPayouts = () => {
                       <div className="text-xs text-muted-foreground">{p.supplier_company_name}</div>
                     </TableCell>
                     <TableCell className="font-medium">{formatSAR(Number(p.amount))}</TableCell>
-                    <TableCell className="text-xs">{p.payment_method.replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-xs">{tr(paymentMethodLabel[p.payment_method] ?? p.payment_method)}</TableCell>
                     <TableCell className="text-xs font-mono">{p.bank_reference || "—"}</TableCell>
-                    <TableCell><Badge variant="outline" className={statusColor[p.status] || ""}>{p.status}</Badge></TableCell>
-                    <TableCell className="text-sm">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—"}</TableCell>
-                    <TableCell className="text-sm">{new Date(p._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell><Badge variant="outline" className={statusColor[p.status] || ""}>{tr(p.status)}</Badge></TableCell>
+                    <TableCell className="text-sm">{p.paid_at ? new Date(p.paid_at).toLocaleDateString(locale) : "—"}</TableCell>
+                    <TableCell className="text-sm">{new Date(p._creationTime).toLocaleDateString(locale)}</TableCell>
                     <TableCell>
                       {p.status === "PENDING" && (
                         <Button size="sm" onClick={() => markAsPaid(p._id)} disabled={acting}>
-                          <CheckCircle className="w-3 h-3 me-1" /> Mark Paid
+                          <CheckCircle className="w-3 h-3 me-1" /> {tr("Mark Paid")}
                         </Button>
                       )}
                     </TableCell>
@@ -153,36 +163,36 @@ const AdminPayouts = () => {
 
       <Dialog open={recordDialog} onOpenChange={setRecordDialog}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Record Supplier Payout</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Record Supplier Payout")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label>Supplier</Label>
+              <Label>{tr("Supplier")}</Label>
               <Select value={formSupplierId} onValueChange={setFormSupplierId}>
-                <SelectTrigger><SelectValue placeholder="Select supplier…" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={tr("Select supplier…")} /></SelectTrigger>
                 <SelectContent>
                   {suppliers.map((s) => (
-                    <SelectItem key={s._id} value={s._id}>{s.public_id} — {s.company_name || "No name"}</SelectItem>
+                    <SelectItem key={s._id} value={s._id}>{s.public_id} — {s.company_name || tr("No name")}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Amount (SAR)</Label><Input type="number" min={0} step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} /></div>
+            <div><Label>{tr("Amount (SAR)")}</Label><Input type="number" min={0} step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} /></div>
             <div>
-              <Label>Payment Method</Label>
+              <Label>{tr("Payment Method")}</Label>
               <Select value={formMethod} onValueChange={(v) => setFormMethod(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                  <SelectItem value="CHECK">Check</SelectItem>
+                  <SelectItem value="BANK_TRANSFER">{tr("Bank transfer")}</SelectItem>
+                  <SelectItem value="CHECK">{tr("Check")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Bank Reference (optional)</Label><Input value={formBankRef} onChange={(e) => setFormBankRef(e.target.value)} placeholder="Reference number…" /></div>
-            <div><Label>Notes (optional)</Label><Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Additional notes…" /></div>
+            <div><Label>{tr("Bank Reference (optional)")}</Label><Input value={formBankRef} onChange={(e) => setFormBankRef(e.target.value)} placeholder={tr("Reference number…")} /></div>
+            <div><Label>{tr("Notes (optional)")}</Label><Textarea value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={tr("Additional notes…")} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRecordDialog(false)}>Cancel</Button>
-            <Button onClick={recordPayout} disabled={acting || !formSupplierId || !formAmount}>Record Payout</Button>
+            <Button variant="outline" onClick={() => setRecordDialog(false)}>{tr("Cancel")}</Button>
+            <Button onClick={recordPayout} disabled={acting || !formSupplierId || !formAmount}>{tr("Record Payout")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

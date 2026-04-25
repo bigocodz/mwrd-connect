@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ExternalLink, GitCompare } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, GitCompare } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const flexLabel: Record<string, string> = {
   EXACT_MATCH: "Exact Match",
@@ -24,20 +25,21 @@ const documentLabel: Record<string, string> = {
 };
 
 const ClientRfqDetail = () => {
+  const { tr, lang, dir } = useLanguage();
   const { rfqId } = useParams();
   const rfqData = useQuery(api.rfqs.getById, rfqId ? { id: rfqId as any } : "skip");
   const loading = rfqData === undefined;
 
   if (loading) {
-    return <ClientLayout><div className="text-muted-foreground text-center py-20">Loading…</div></ClientLayout>;
+    return <ClientLayout><div className="text-muted-foreground text-center py-20">{tr("Loading…")}</div></ClientLayout>;
   }
 
   if (!rfqData) {
     return (
       <ClientLayout>
         <div className="text-center py-20">
-          <p className="text-muted-foreground">RFQ not found.</p>
-          <Button variant="link" asChild><Link to="/client/rfqs">Back to RFQs</Link></Button>
+          <p className="text-muted-foreground">{tr("RFQ not found.")}</p>
+          <Button variant="link" asChild><Link to="/client/rfqs">{tr("Back to RFQs")}</Link></Button>
         </div>
       </ClientLayout>
     );
@@ -52,20 +54,20 @@ const ClientRfqDetail = () => {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild>
-              <Link to="/client/rfqs"><ArrowLeft className="w-4 h-4" /></Link>
+              <Link to="/client/rfqs">{dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}</Link>
             </Button>
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">
                 RFQ <span className="font-mono text-base text-muted-foreground">{rfqId?.slice(0, 8)}</span>
               </h1>
               <div className="flex flex-wrap items-center gap-3 mt-1">
-                <Badge variant="outline">{rfqData.status}</Badge>
+                <Badge variant="outline">{tr(rfqData.status)}</Badge>
                 <span className="text-sm text-muted-foreground">
-                  Created {new Date(rfqData._creationTime).toLocaleDateString()}
+                  {tr("Created")} {new Date(rfqData._creationTime).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-SA")}
                 </span>
                 {rfqData.expiry_date && (
                   <span className="text-sm text-muted-foreground">
-                    Expires {new Date(rfqData.expiry_date).toLocaleDateString()}
+                    {tr("Expires")} {new Date(rfqData.expiry_date).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-SA")}
                   </span>
                 )}
               </div>
@@ -75,43 +77,43 @@ const ClientRfqDetail = () => {
             <Button asChild>
               <Link to={`/client/rfqs/${rfqId}/compare`}>
                 <GitCompare className="me-2 h-4 w-4" />
-                Compare Quotes
+                {tr("Compare Quotes")}
               </Link>
             </Button>
           )}
         </div>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">RFQ controls</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{tr("RFQ controls")}</CardTitle></CardHeader>
           <CardContent className="grid gap-3 text-sm md:grid-cols-4">
             <div>
-              <p className="text-muted-foreground">Category</p>
+              <p className="text-muted-foreground">{tr("Category")}</p>
               <p className="font-medium">{rfqData.category || "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Required by</p>
-              <p className="font-medium">{rfqData.required_by ? new Date(rfqData.required_by).toLocaleDateString() : "—"}</p>
+              <p className="text-muted-foreground">{tr("Required by")}</p>
+              <p className="font-medium">{rfqData.required_by ? new Date(rfqData.required_by).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-SA") : "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Delivery</p>
+              <p className="text-muted-foreground">{tr("Delivery")}</p>
               <p className="font-medium">{rfqData.delivery_location || "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Quote options</p>
+              <p className="text-muted-foreground">{tr("Quote options")}</p>
               <p className="font-medium">{rfqData.quotes_count ?? 0}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Cost center</p>
+              <p className="text-muted-foreground">{tr("Cost center")}</p>
               <p className="font-medium">
                 {rfqData.cost_center ? `${rfqData.cost_center.code} — ${rfqData.cost_center.name}` : "—"}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground">Branch</p>
+              <p className="text-muted-foreground">{tr("Branch")}</p>
               <p className="font-medium">{rfqData.branch?.name ?? "—"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">Department</p>
+              <p className="text-muted-foreground">{tr("Department")}</p>
               <p className="font-medium">{rfqData.department?.name ?? "—"}</p>
             </div>
           </CardContent>
@@ -119,26 +121,26 @@ const ClientRfqDetail = () => {
 
         {rfqData.notes && (
           <Card>
-            <CardHeader><CardTitle className="text-sm">Notes</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{tr("Notes")}</CardTitle></CardHeader>
             <CardContent><p className="text-sm text-muted-foreground">{rfqData.notes}</p></CardContent>
           </Card>
         )}
 
         {attachments.length > 0 && (
           <Card>
-            <CardHeader><CardTitle>Documents ({attachments.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("Documents ({count})", { count: attachments.length })}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {attachments.map((attachment: any) => (
                 <div key={attachment._id} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
                   <div>
-                    <Badge variant="secondary" className="mb-2">{documentLabel[attachment.document_type] || attachment.document_type}</Badge>
+                    <Badge variant="secondary" className="mb-2">{tr(documentLabel[attachment.document_type] || attachment.document_type)}</Badge>
                     <p className="font-medium">{attachment.name}</p>
                     {attachment.notes && <p className="text-sm text-muted-foreground">{attachment.notes}</p>}
                   </div>
                   <Button variant="outline" size="sm" asChild>
                     <a href={attachment.url} target="_blank" rel="noreferrer">
                       <ExternalLink className="me-2 h-4 w-4" />
-                      Open
+                      {tr("Open")}
                     </a>
                   </Button>
                 </div>
@@ -148,15 +150,15 @@ const ClientRfqDetail = () => {
         )}
 
         <Card>
-          <CardHeader><CardTitle>Items ({items.length})</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("Items ({count})", { count: items.length })}</CardTitle></CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product / Description</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Flexibility</TableHead>
-                  <TableHead>Notes</TableHead>
+                  <TableHead>{tr("Product / Description")}</TableHead>
+                  <TableHead>{tr("Quantity")}</TableHead>
+                  <TableHead>{tr("Flexibility")}</TableHead>
+                  <TableHead>{tr("Notes")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -170,7 +172,7 @@ const ClientRfqDetail = () => {
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="text-xs">
-                        {flexLabel[item.flexibility] || item.flexibility}
+                        {tr(flexLabel[item.flexibility] || item.flexibility)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

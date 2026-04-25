@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Download01, Upload01 } from "@untitledui/icons";
 import { downloadCsv, parseCsv } from "@/lib/csv";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Row = {
   name: string;
@@ -96,6 +97,10 @@ const validateRow = (raw: Record<string, string>): ParsedRow => {
 };
 
 const SupplierProductsBulk = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
+
   const bulkCreate = useMutation(api.products.bulkCreate);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
@@ -110,14 +115,14 @@ const SupplierProductsBulk = () => {
     const text = await file.text();
     const rows = parseCsv(text);
     if (rows.length === 0) {
-      toast.error("Empty file");
+      toast.error(tr("Empty file"));
       setParsedRows([]);
       return;
     }
     const headers = rows[0].map((h) => h.trim().toLowerCase());
     const missing = REQUIRED_HEADERS.filter((h) => !headers.includes(h));
     if (missing.length > 0) {
-      toast.error(`Missing required columns: ${missing.join(", ")}`);
+      toast.error(tr("Missing required columns: {columns}", { columns: missing.join(", ") }));
       setParsedRows([]);
       return;
     }
@@ -130,23 +135,23 @@ const SupplierProductsBulk = () => {
       return validateRow(raw);
     });
     setParsedRows(parsed);
-    if (parsed.length === 0) toast.error("No data rows found");
-    else toast.success(`Parsed ${parsed.length} row(s)`);
+    if (parsed.length === 0) toast.error(tr("No data rows found"));
+    else toast.success(tr("Parsed {count} row(s)", { count: fmtNumber(parsed.length) }));
   };
 
   const handleSubmit = async () => {
     if (validRows.length === 0) {
-      toast.error("No valid rows to import");
+      toast.error(tr("No valid rows to import"));
       return;
     }
     setBusy(true);
     try {
       const res = await bulkCreate({ rows: validRows.map((r) => r.row!) as any });
-      toast.success(`${res.count} product(s) submitted for approval`);
+      toast.success(tr("{count} products submitted for approval", { count: fmtNumber(res.count) }));
       setParsedRows([]);
       setFileName(null);
     } catch (err: any) {
-      toast.error(err.message || "Bulk import failed");
+      toast.error(err.message || tr("Bulk import failed"));
     } finally {
       setBusy(false);
     }
@@ -176,17 +181,17 @@ const SupplierProductsBulk = () => {
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Bulk Product Upload</h1>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Bulk Product Upload")}</h1>
             <p className="text-muted-foreground mt-1">
-              Import products from a CSV file. All rows are submitted for MWRD approval.
+              {tr("Import products from a CSV file. All rows are submitted for MWRD approval.")}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleTemplate}>
-              <Download01 className="w-4 h-4 me-2" /> Download template
+              <Download01 className="w-4 h-4 me-2" /> {tr("Download template")}
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/supplier/products">Back to products</Link>
+              <Link to="/supplier/products">{tr("Back to Products")}</Link>
             </Button>
           </div>
         </div>
@@ -207,16 +212,16 @@ const SupplierProductsBulk = () => {
               />
               <div className="flex items-center gap-3">
                 <Button onClick={() => fileRef.current?.click()} disabled={busy}>
-                  <Upload01 className="w-4 h-4 me-2" /> Select CSV
+                  <Upload01 className="w-4 h-4 me-2" /> {tr("Select CSV")}
                 </Button>
                 {fileName && <span className="text-sm text-muted-foreground">{fileName}</span>}
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Required columns: <code>{REQUIRED_HEADERS.join(", ")}</code>.{" "}
-              <code>availability_status</code> must be one of <code>AVAILABLE</code>, <code>LIMITED_STOCK</code>,
-              or <code>OUT_OF_STOCK</code>. Optional columns: <code>{OPTIONAL_HEADERS.join(", ")}</code> — when set,
-              availability is auto-derived from stock.
+              {tr("Required columns:")} <code>{REQUIRED_HEADERS.join(", ")}</code>.{" "}
+              {tr("availability_status must be one of")} <code>AVAILABLE</code>, <code>LIMITED_STOCK</code>, {tr("or")}{" "}
+              <code>OUT_OF_STOCK</code>. {tr("Optional columns:")} <code>{OPTIONAL_HEADERS.join(", ")}</code> —{" "}
+              {tr("when set, availability is auto-derived from stock.")}
             </p>
           </CardContent>
         </Card>
@@ -227,28 +232,28 @@ const SupplierProductsBulk = () => {
               <div className="flex items-center justify-between border-b border-border p-4">
                 <div className="flex items-center gap-3">
                   <Badge variant="outline" className="bg-green-100 text-green-800">
-                    {validRows.length} valid
+                    {tr("{count} valid", { count: fmtNumber(validRows.length) })}
                   </Badge>
                   {invalidRows.length > 0 && (
                     <Badge variant="outline" className="bg-red-100 text-red-800">
-                      {invalidRows.length} invalid
+                      {tr("{count} invalid", { count: fmtNumber(invalidRows.length) })}
                     </Badge>
                   )}
                 </div>
                 <Button onClick={handleSubmit} disabled={busy || validRows.length === 0}>
-                  Import {validRows.length} product{validRows.length === 1 ? "" : "s"}
+                  {tr("Import {count} products", { count: fmtNumber(validRows.length) })}
                 </Button>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead>Lead time</TableHead>
-                    <TableHead>Availability</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{tr("Name")}</TableHead>
+                    <TableHead>{tr("Category")}</TableHead>
+                    <TableHead>{tr("SKU")}</TableHead>
+                    <TableHead>{tr("Cost")}</TableHead>
+                    <TableHead>{tr("Lead time")}</TableHead>
+                    <TableHead>{tr("Availability")}</TableHead>
+                    <TableHead>{tr("Status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -261,14 +266,18 @@ const SupplierProductsBulk = () => {
                         <TableCell>{(data as any).sku || "—"}</TableCell>
                         <TableCell>{(data as any).cost_price ?? "—"}</TableCell>
                         <TableCell>{(data as any).lead_time_days ?? "—"}</TableCell>
-                        <TableCell className="text-xs">{(data as any).availability_status || "—"}</TableCell>
+                        <TableCell className="text-xs">
+                          {(data as any).availability_status
+                            ? (lang === "ar" ? tr((data as any).availability_status) : (data as any).availability_status)
+                            : "—"}
+                        </TableCell>
                         <TableCell>
                           {parsed.errors.length === 0 ? (
-                            <Badge variant="outline" className="bg-green-100 text-green-800">Valid</Badge>
+                            <Badge variant="outline" className="bg-green-100 text-green-800">{tr("Valid")}</Badge>
                           ) : (
                             <div>
-                              <Badge variant="outline" className="bg-red-100 text-red-800">Invalid</Badge>
-                              <p className="text-xs text-muted-foreground mt-1">{parsed.errors.join("; ")}</p>
+                              <Badge variant="outline" className="bg-red-100 text-red-800">{tr("Invalid")}</Badge>
+                              <p className="text-xs text-muted-foreground mt-1">{parsed.errors.map((e) => tr(e)).join("; ")}</p>
                             </div>
                           )}
                         </TableCell>

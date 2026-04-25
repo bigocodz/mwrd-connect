@@ -24,8 +24,10 @@ import {
   PROFILE_KYC_LABEL,
 } from "@/components/kyc/kycLabels";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const SupplierKyc = () => {
+  const { tr } = useLanguage();
   const docsData = useQuery(api.kyc.listMine);
   const submit = useMutation(api.kyc.submit);
   const remove = useMutation(api.kyc.remove);
@@ -60,16 +62,16 @@ const SupplierKyc = () => {
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!res.ok) throw new Error("Upload failed");
+      if (!res.ok) throw new Error(tr("Upload failed"));
       const { storageId: id } = await res.json();
       setStorageId(id);
       setUploadedFileName(file.name);
       setContentType(file.type);
       setSize(file.size);
       if (!name) setName(file.name);
-      toast.success("File uploaded");
+      toast.success(tr("File uploaded"));
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      toast.error(err.message || tr("Upload failed"));
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -78,7 +80,7 @@ const SupplierKyc = () => {
 
   const handleSubmit = async () => {
     if (!storageId || !name.trim()) {
-      toast.error("Upload a file and provide a name");
+      toast.error(tr("Upload a file and provide a name"));
       return;
     }
     setBusy(true);
@@ -92,23 +94,23 @@ const SupplierKyc = () => {
         expiry_date: expiry || undefined,
         notes: notes.trim() || undefined,
       });
-      toast.success("Document submitted");
+      toast.success(tr("Document submitted"));
       setOpen(false);
       reset();
     } catch (err: any) {
-      toast.error(err.message || "Submission failed");
+      toast.error(err.message || tr("Submission failed"));
     } finally {
       setBusy(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Remove this document?")) return;
+    if (!confirm(tr("Remove this document?"))) return;
     try {
       await remove({ id: id as any });
-      toast.success("Document removed");
+      toast.success(tr("Document removed"));
     } catch (err: any) {
-      toast.error(err.message || "Could not remove");
+      toast.error(err.message || tr("Could not remove"));
     }
   };
 
@@ -119,14 +121,14 @@ const SupplierKyc = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">KYC Documents</h1>
-            <p className="text-muted-foreground mt-1">Upload onboarding documents for MWRD verification.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("KYC Documents")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Upload onboarding documents for MWRD verification.")}</p>
             <Badge variant="outline" className={`mt-2 ${PROFILE_KYC_COLOR[profileStatus] || ""}`}>
-              Account: {PROFILE_KYC_LABEL[profileStatus] ?? profileStatus}
+              {tr("Account: {status}", { status: tr(PROFILE_KYC_LABEL[profileStatus] ?? profileStatus) })}
             </Badge>
           </div>
           <Button onClick={() => { reset(); setOpen(true); }}>
-            <Plus className="w-4 h-4 me-2" /> Upload Document
+            <Plus className="w-4 h-4 me-2" /> {tr("Upload Document")}
           </Button>
         </div>
 
@@ -134,19 +136,19 @@ const SupplierKyc = () => {
           <Card><CardContent className="p-0">
             <EmptyState
               icon="audit"
-              title="No documents uploaded yet"
-              description="Upload your CR, VAT certificate, bank letter, and signatory documents to verify your supplier account."
+              title={tr("No documents uploaded yet")}
+              description={tr("Upload your CR, VAT certificate, bank letter, and signatory documents to verify your supplier account.")}
             />
           </CardContent></Card>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Document</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Expiry</TableHead>
-                <TableHead>File</TableHead>
+                <TableHead>{tr("Document")}</TableHead>
+                <TableHead>{tr("Type")}</TableHead>
+                <TableHead>{tr("Status")}</TableHead>
+                <TableHead>{tr("Expiry")}</TableHead>
+                <TableHead>{tr("File")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -157,10 +159,10 @@ const SupplierKyc = () => {
                     <div className="font-medium">{doc.name}</div>
                     {doc.notes && <p className="text-xs text-muted-foreground">{doc.notes}</p>}
                   </TableCell>
-                  <TableCell className="text-sm">{KYC_TYPE_LABEL[doc.document_type] ?? doc.document_type}</TableCell>
+                  <TableCell className="text-sm">{tr(KYC_TYPE_LABEL[doc.document_type] ?? doc.document_type)}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={KYC_STATUS_COLOR[doc.status] || ""}>
-                      {KYC_STATUS_LABEL[doc.status] ?? doc.status}
+                      {tr(KYC_STATUS_LABEL[doc.status] ?? doc.status)}
                     </Badge>
                     {doc.status === "REJECTED" && doc.rejection_reason && (
                       <p className="text-xs text-muted-foreground mt-1">{doc.rejection_reason}</p>
@@ -169,7 +171,7 @@ const SupplierKyc = () => {
                   <TableCell className="text-sm">{doc.expiry_date ?? "—"}</TableCell>
                   <TableCell>
                     {doc.url ? (
-                      <a className="underline text-sm" href={doc.url} target="_blank" rel="noreferrer">View</a>
+                      <a className="underline text-sm" href={doc.url} target="_blank" rel="noreferrer">{tr("View")}</a>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
@@ -190,23 +192,23 @@ const SupplierKyc = () => {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Upload KYC document</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Upload KYC document")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label>Document type</Label>
+              <Label>{tr("Document type")}</Label>
               <Select value={docType} onValueChange={setDocType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {KYC_DOCUMENT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    <SelectItem key={t.value} value={t.value}>{tr(t.label)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. CR Certificate 2026" /></div>
-            <div><Label>Expiry date (optional)</Label><Input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} /></div>
+            <div><Label>{tr("Name")}</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("e.g. CR Certificate 2026")} /></div>
+            <div><Label>{tr("Expiry Date (optional)")}</Label><Input type="date" value={expiry} onChange={(e) => setExpiry(e.target.value)} /></div>
             <div>
-              <Label>File</Label>
+              <Label>{tr("File")}</Label>
               <input
                 ref={fileRef}
                 type="file"
@@ -219,16 +221,16 @@ const SupplierKyc = () => {
               />
               <div className="flex items-center gap-2">
                 <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
-                  <Upload01 className="w-4 h-4 me-2" /> {uploadedFileName ? "Replace file" : "Upload file"}
+                  <Upload01 className="w-4 h-4 me-2" /> {uploadedFileName ? tr("Replace file") : tr("Upload file")}
                 </Button>
                 {uploadedFileName && <span className="text-sm text-muted-foreground">{uploadedFileName}</span>}
               </div>
             </div>
-            <div><Label>Notes (optional)</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+            <div><Label>{tr("Notes (optional)")}</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={busy || !storageId}>Submit Document</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{tr("Cancel")}</Button>
+            <Button onClick={handleSubmit} disabled={busy || !storageId}>{tr("Submit Document")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

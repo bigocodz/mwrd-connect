@@ -521,13 +521,13 @@ const ClientCreateRfq = () => {
             <div>
               <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="h-4 w-4 text-primary" />
-                Supporting documents
+                {tr("Supporting documents")}
               </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">Add links to specs, purchase policies, drawings, or other files.</p>
+              <p className="mt-1 text-sm text-muted-foreground">{tr("Add links to specs, purchase policies, drawings, or other files.")}</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setAttachments([...attachments, emptyAttachment()])}>
               <Plus className="h-4 w-4 me-2" />
-              Add
+              {tr("Add")}
             </Button>
           </CardHeader>
           {attachments.length > 0 && (
@@ -535,26 +535,30 @@ const ClientCreateRfq = () => {
               {attachments.map((attachment) => (
                 <div key={attachment.key} className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[160px_1fr_1fr_auto]">
                   <div>
-                    <Label>Type</Label>
+                    <Label>{tr("Type")}</Label>
                     <Select
                       value={attachment.document_type}
                       onValueChange={(v) => updateAttachment(attachment.key, { document_type: v as RfqAttachmentDraft["document_type"] })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="SPECIFICATION">Specification</SelectItem>
-                        <SelectItem value="PURCHASE_POLICY">Purchase Policy</SelectItem>
-                        <SelectItem value="SUPPORTING_DOCUMENT">Supporting Document</SelectItem>
-                        <SelectItem value="OTHER">Other</SelectItem>
+                        <SelectItem value="SPECIFICATION">{tr("Specification")}</SelectItem>
+                        <SelectItem value="PURCHASE_POLICY">{tr("Purchase Policy")}</SelectItem>
+                        <SelectItem value="SUPPORTING_DOCUMENT">{tr("Supporting Document")}</SelectItem>
+                        <SelectItem value="OTHER">{tr("Other")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>Name</Label>
-                    <Input value={attachment.name} onChange={(e) => updateAttachment(attachment.key, { name: e.target.value })} placeholder="Document name" />
+                    <Label>{tr("Name")}</Label>
+                    <Input
+                      value={attachment.name}
+                      onChange={(e) => updateAttachment(attachment.key, { name: e.target.value })}
+                      placeholder={tr("Document name")}
+                    />
                   </div>
                   <div>
-                    <Label>URL</Label>
+                    <Label>{tr("URL")}</Label>
                     <Input
                       value={attachment.url}
                       onChange={(e) => updateAttachment(attachment.key, { url: e.target.value, storage_id: null, content_type: "", size: null })}
@@ -567,11 +571,15 @@ const ClientCreateRfq = () => {
                     </Button>
                   </div>
                   <div className="md:col-span-4">
-                    <Label>Notes</Label>
-                    <Input value={attachment.notes} onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })} placeholder="Optional context for suppliers" />
+                    <Label>{tr("Notes")}</Label>
+                    <Input
+                      value={attachment.notes}
+                      onChange={(e) => updateAttachment(attachment.key, { notes: e.target.value })}
+                      placeholder={tr("Optional context for suppliers")}
+                    />
                   </div>
                   <div className="md:col-span-4">
-                    <Label>Upload File</Label>
+                    <Label>{tr("Upload File")}</Label>
                     <Input
                       type="file"
                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
@@ -580,10 +588,11 @@ const ClientCreateRfq = () => {
                     />
                     {attachment.storage_id && (
                       <p className="mt-1 text-xs text-primary">
-                        Uploaded file ready{attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                        {tr("Uploaded file ready")}
+                        {attachment.size ? ` · ${(attachment.size / 1024 / 1024).toFixed(2)} MB` : ""}
                       </p>
                     )}
-                    {uploadingAttachmentKey === attachment.key && <p className="mt-1 text-xs text-muted-foreground">Uploading…</p>}
+                    {uploadingAttachmentKey === attachment.key && <p className="mt-1 text-xs text-muted-foreground">{tr("Uploading…")}</p>}
                   </div>
                 </div>
               ))}
@@ -592,45 +601,45 @@ const ClientCreateRfq = () => {
         </Card>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => navigate("/client/rfqs")}>Cancel</Button>
+          <Button variant="outline" onClick={() => navigate("/client/rfqs")}>{tr("Cancel")}</Button>
           <Button variant="outline" onClick={() => setScheduleOpen(true)} disabled={isFrozen || items.length === 0}>
-            Save as schedule
+            {tr("Save as schedule")}
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || isFrozen}>
             <ShoppingBag className="w-4 h-4 me-2" />
-            {submitting ? "Submitting…" : "Submit RFQ"}
+            {submitting ? tr("Submitting…") : tr("Submit RFQ")}
           </Button>
         </div>
       </div>
 
       <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Save as repeat RFQ</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Save as repeat RFQ")}</DialogTitle></DialogHeader>
           <div className="space-y-3 py-2">
             <div>
-              <Label>Schedule name</Label>
-              <Input value={scheduleName} onChange={(e) => setScheduleName(e.target.value)} placeholder="Monthly office supplies" />
+              <Label>{tr("Schedule name")}</Label>
+              <Input value={scheduleName} onChange={(e) => setScheduleName(e.target.value)} placeholder={tr("Monthly office supplies")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Cadence</Label>
+                <Label>{tr("Cadence")}</Label>
                 <Select value={scheduleCadence} onValueChange={(v) => setScheduleCadence(v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="WEEKLY">Weekly</SelectItem>
-                    <SelectItem value="BIWEEKLY">Every 2 weeks</SelectItem>
-                    <SelectItem value="MONTHLY">Monthly</SelectItem>
-                    <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                    <SelectItem value="WEEKLY">{tr("Weekly")}</SelectItem>
+                    <SelectItem value="BIWEEKLY">{tr("Every 2 weeks")}</SelectItem>
+                    <SelectItem value="MONTHLY">{tr("Monthly")}</SelectItem>
+                    <SelectItem value="QUARTERLY">{tr("Quarterly")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>First run</Label>
+                <Label>{tr("First run")}</Label>
                 <Input type="date" value={scheduleStart} onChange={(e) => setScheduleStart(e.target.value)} />
               </div>
             </div>
             <div>
-              <Label>Lead time per RFQ (days)</Label>
+              <Label>{tr("Lead time per RFQ (days)")}</Label>
               <Input
                 type="number"
                 min="1"
@@ -638,16 +647,16 @@ const ClientCreateRfq = () => {
                 onChange={(e) => setScheduleLeadDays(e.target.value)}
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Each generated RFQ will have <code>required_by</code> set this many days after creation.
+                {tr("Each generated RFQ will have required_by set this many days after creation.")}
               </p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Items, category, notes, delivery, and org tags above are stored as the template.
+              {tr("Items, category, notes, delivery, and org tags above are stored as the template.")}
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setScheduleOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveSchedule} disabled={savingSchedule}>Save schedule</Button>
+            <Button variant="outline" onClick={() => setScheduleOpen(false)}>{tr("Cancel")}</Button>
+            <Button onClick={handleSaveSchedule} disabled={savingSchedule}>{tr("Save schedule")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

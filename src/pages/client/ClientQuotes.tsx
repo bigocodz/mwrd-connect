@@ -15,6 +15,7 @@ import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusColor: Record<string, string> = {
   SENT_TO_CLIENT: "bg-blue-100 text-blue-800",
@@ -26,6 +27,20 @@ const statusColor: Record<string, string> = {
 };
 
 const ClientQuotes = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
+  const fmtCurrency = (amount: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "SAR" }).format(amount);
+
+  const statusLabel = (status: string) => {
+    if (lang === "ar") return tr(status);
+    return status
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
   const quotesData = useQuery(api.quotes.listMine);
   const approvalRequests = useQuery(api.approvals.listMyRequests) ?? [];
   const loading = quotesData === undefined;
@@ -59,10 +74,10 @@ const ClientQuotes = () => {
     setActing(true);
     try {
       await respond({ id: selectedQuoteId as any, status });
-      toast.success(status === "ACCEPTED" ? "Quote accepted!" : "Quote rejected");
+      toast.success(status === "ACCEPTED" ? tr("Quote accepted!") : tr("Quote rejected"));
       setDetailOpen(false);
     } catch (err: any) {
-      toast.error("Error: " + err.message);
+      toast.error(tr("Error: {message}", { message: err.message }));
     } finally {
       setActing(false);
     }
@@ -70,17 +85,17 @@ const ClientQuotes = () => {
 
   const handleRevisionRequest = async () => {
     if (!selectedQuoteId || !revisionMessage.trim()) {
-      toast.error("Add revision notes for MWRD");
+      toast.error(tr("Add revision notes for MWRD"));
       return;
     }
     setActing(true);
     try {
       await requestRevision({ id: selectedQuoteId as any, message: revisionMessage.trim() });
-      toast.success("Revision request sent to MWRD");
+      toast.success(tr("Revision request sent to MWRD"));
       setRevisionMessage("");
       setDetailOpen(false);
     } catch (err: any) {
-      toast.error("Error: " + err.message);
+      toast.error(tr("Error: {message}", { message: err.message }));
     } finally {
       setActing(false);
     }
@@ -90,23 +105,23 @@ const ClientQuotes = () => {
     <ClientLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">My Quotes</h1>
-          <p className="text-muted-foreground mt-1">Review quotes sent to you by MWRD.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("My Quotes")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Review quotes sent to you by MWRD.")}</p>
         </div>
 
         {pendingApprovals.length > 0 && (
           <Card className="border-amber-300 bg-amber-50">
             <CardContent className="p-4">
               <p className="font-medium text-amber-900">
-                {pendingApprovals.length} accepted quote{pendingApprovals.length === 1 ? "" : "s"} awaiting approval
+                {tr("{count} accepted quotes awaiting approval", { count: fmtNumber(pendingApprovals.length) })}
               </p>
               <p className="text-sm text-amber-800 mt-1">
-                Acceptance triggered an approval rule. Order creation is paused until MWRD approves.
+                {tr("Acceptance triggered an approval rule. Order creation is paused until MWRD approves.")}
               </p>
               <ul className="mt-2 text-sm text-amber-900 space-y-1">
                 {pendingApprovals.map((r: any) => (
                   <li key={r._id}>
-                    <span className="font-medium">{r.rule_name}</span> — {new Intl.NumberFormat("en-SA", { style: "currency", currency: "SAR" }).format(r.quote_total)}
+                    <span className="font-medium">{r.rule_name}</span> — {fmtCurrency(r.quote_total)}
                   </li>
                 ))}
               </ul>
@@ -116,17 +131,17 @@ const ClientQuotes = () => {
 
         {loading ? <TableSkeleton rows={5} cols={5} /> : quotes.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="quotes" title="No quotes available yet" description="When MWRD prepares a quote for your RFQ, it will appear here." />
+            <EmptyState icon="quotes" title={tr("No quotes available yet")} description={tr("When MWRD prepares a quote for your RFQ, it will appear here.")} />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Quote ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Received</TableHead>
+                  <TableHead>{tr("Quote ID")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Items")}</TableHead>
+                  <TableHead>{tr("Received")}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -135,14 +150,14 @@ const ClientQuotes = () => {
                   <TableRow key={q._id}>
                     <TableCell className="font-mono text-xs">{q._id.slice(0, 8)}…</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={statusColor[q.status] || ""}>{q.status.replace(/_/g, " ")}</Badge>
+                      <Badge variant="outline" className={statusColor[q.status] || ""}>{statusLabel(q.status)}</Badge>
                     </TableCell>
                     <TableCell>{q.items_count}</TableCell>
                     <TableCell className="text-sm">
-                      {q.reviewed_at ? new Date(q.reviewed_at).toLocaleDateString() : "—"}
+                      {q.reviewed_at ? new Date(q.reviewed_at).toLocaleDateString(locale) : "—"}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => openDetail(q._id)}>View</Button>
+                      <Button variant="ghost" size="sm" onClick={() => openDetail(q._id)}>{tr("View")}</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -157,17 +172,17 @@ const ClientQuotes = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              Quote <span className="font-mono text-muted-foreground">{selectedQuoteId?.slice(0, 8)}</span>
+              {tr("Quote")} <span className="font-mono text-muted-foreground">{selectedQuoteId?.slice(0, 8)}</span>
             </DialogTitle>
           </DialogHeader>
           <div className="max-h-96 overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Qty</TableHead>
-                  <TableHead>Lead Time</TableHead>
-                  <TableHead>Price <VatBadge className="ms-1" /></TableHead>
+                  <TableHead>{tr("Item")}</TableHead>
+                  <TableHead>{tr("Qty")}</TableHead>
+                  <TableHead>{tr("Lead Time")}</TableHead>
+                  <TableHead>{tr("Price")} <VatBadge className="ms-1" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -175,16 +190,16 @@ const ClientQuotes = () => {
                   <TableRow key={item._id}>
                     <TableCell className="font-medium">
                       {item.is_quoted ? (
-                        item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || "Item"
+                        item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || tr("Item")
                       ) : (
                         <span className="text-muted-foreground line-through">
-                          {item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || "Item"}
-                          <Badge variant="destructive" className="ms-2 text-xs">Unavailable</Badge>
+                          {item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || tr("Item")}
+                          <Badge variant="destructive" className="ms-2 text-xs">{tr("Unavailable")}</Badge>
                         </span>
                       )}
                     </TableCell>
                     <TableCell>{item.rfq_item?.quantity}</TableCell>
-                    <TableCell>{item.is_quoted ? `${item.lead_time_days} days` : "—"}</TableCell>
+                    <TableCell>{item.is_quoted ? tr("{days} days", { days: fmtNumber(item.lead_time_days) }) : "—"}</TableCell>
                     <TableCell className="font-bold">
                       {item.is_quoted ? formatSAR(item.final_price_with_vat) : "—"}
                     </TableCell>
@@ -195,7 +210,7 @@ const ClientQuotes = () => {
           </div>
           {quoteItems.length > 0 && (
             <div className="text-end border-t pt-3">
-              <p className="text-sm text-muted-foreground flex items-center justify-end gap-2">Total <VatBadge /></p>
+              <p className="text-sm text-muted-foreground flex items-center justify-end gap-2">{tr("Total")} <VatBadge /></p>
               <p className="text-xl font-bold text-primary">
                 {formatSAR(
                   quoteItems
@@ -207,12 +222,12 @@ const ClientQuotes = () => {
           )}
           {revisionEvents.length > 0 && (
             <div className="space-y-2 border-t pt-3">
-              <p className="text-sm font-medium">Revision history</p>
+              <p className="text-sm font-medium">{tr("Revision history")}</p>
               {revisionEvents.map((event: any) => (
                 <div key={event._id} className="rounded-lg border border-border p-3 text-sm">
                   <div className="flex items-center justify-between gap-3">
-                    <Badge variant="secondary">{event.actor_role.replace(/_/g, " ")}</Badge>
-                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString()}</span>
+                    <Badge variant="secondary">{statusLabel(event.actor_role)}</Badge>
+                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleString(locale)}</span>
                   </div>
                   <p className="mt-2 text-muted-foreground">{event.message}</p>
                 </div>
@@ -222,23 +237,23 @@ const ClientQuotes = () => {
           {selectedQuote?.status === "SENT_TO_CLIENT" && (
             <>
               <div className="space-y-2 border-t pt-3">
-                <Label>Request Revision</Label>
+                <Label>{tr("Request Revision")}</Label>
                 <Textarea
                   value={revisionMessage}
                   onChange={(e) => setRevisionMessage(e.target.value)}
-                  placeholder="Tell MWRD what should change: quantities, delivery date, item substitution, pricing, payment terms…"
+                  placeholder={tr("Tell MWRD what should change: quantities, delivery date, item substitution, pricing, payment terms…")}
                 />
               </div>
               <DialogFooter className="gap-2">
                 <Button variant="destructive" onClick={() => handleAction("REJECTED")} disabled={acting}>
-                <XCircle className="w-4 h-4 me-2" /> Reject
-              </Button>
-              <Button variant="outline" onClick={handleRevisionRequest} disabled={acting}>
-                  <MessageSquare className="w-4 h-4 me-2" /> Request Revision
-              </Button>
-              <Button onClick={() => handleAction("ACCEPTED")} disabled={acting}>
-                <CheckCircle className="w-4 h-4 me-2" /> Accept Quote
-              </Button>
+                  <XCircle className="w-4 h-4 me-2" /> {tr("Reject")}
+                </Button>
+                <Button variant="outline" onClick={handleRevisionRequest} disabled={acting}>
+                  <MessageSquare className="w-4 h-4 me-2" /> {tr("Request Revision")}
+                </Button>
+                <Button onClick={() => handleAction("ACCEPTED")} disabled={acting}>
+                  <CheckCircle className="w-4 h-4 me-2" /> {tr("Accept Quote")}
+                </Button>
               </DialogFooter>
             </>
           )}

@@ -7,6 +7,7 @@ import { Star } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const StarDisplay = ({ rating }: { rating: number }) => (
   <div className="flex gap-0.5">
@@ -17,6 +18,8 @@ const StarDisplay = ({ rating }: { rating: number }) => (
 );
 
 const AdminReviews = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const reviewsData = useQuery(api.reviews.listAll);
   const loading = reviewsData === undefined;
   const reviews = reviewsData ?? [];
@@ -26,24 +29,28 @@ const AdminReviews = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">All Reviews</h1>
-          <p className="text-muted-foreground mt-1">Full review list with real identities.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("All Reviews")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Full review list with real identities.")}</p>
         </div>
 
         {loading ? <TableSkeleton rows={5} cols={5} /> : reviews.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="reviews" title="No reviews yet" description="Reviews will appear here when clients rate suppliers." />
+            <EmptyState
+              icon="reviews"
+              title={tr("No reviews yet")}
+              description={tr("Reviews will appear here when clients rate suppliers.")}
+            />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Comment</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead>{tr("Client")}</TableHead>
+                  <TableHead>{tr("Supplier")}</TableHead>
+                  <TableHead>{tr("Rating")}</TableHead>
+                  <TableHead>{tr("Comment")}</TableHead>
+                  <TableHead>{tr("Date")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -59,7 +66,7 @@ const AdminReviews = () => {
                     </TableCell>
                     <TableCell><StarDisplay rating={r.rating} /></TableCell>
                     <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{r.comment || "—"}</TableCell>
-                    <TableCell className="text-sm">{new Date(r._creationTime).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-sm">{new Date(r._creationTime).toLocaleDateString(locale)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

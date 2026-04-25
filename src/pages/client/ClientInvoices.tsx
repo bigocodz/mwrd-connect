@@ -15,8 +15,12 @@ import {
   CLIENT_INVOICE_STATUS_LABEL,
 } from "@/components/invoices/clientInvoiceStatus";
 import { StatementPanel } from "@/components/invoices/StatementPanel";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ClientInvoices = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
   const invoicesData = useQuery(api.clientInvoices.listMine);
   const loading = invoicesData === undefined;
   const invoices = invoicesData ?? [];
@@ -30,23 +34,23 @@ const ClientInvoices = () => {
     <ClientLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Invoices</h1>
-          <p className="text-muted-foreground mt-1">All invoices issued by MWRD for your orders.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Invoices")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("All invoices issued by MWRD for your orders.")}</p>
         </div>
 
         {invoices.length > 0 && (
           <div className="grid gap-4 md:grid-cols-3">
             <Card><CardContent className="p-4">
-              <p className="text-xs uppercase text-muted-foreground">Outstanding</p>
+              <p className="text-xs uppercase text-muted-foreground">{tr("Outstanding")}</p>
               <p className="text-2xl font-display font-bold mt-1">{formatSAR(outstanding)}</p>
             </CardContent></Card>
             <Card><CardContent className="p-4">
-              <p className="text-xs uppercase text-muted-foreground">Overdue</p>
-              <p className="text-2xl font-display font-bold mt-1">{overdueCount}</p>
+              <p className="text-xs uppercase text-muted-foreground">{tr("Overdue")}</p>
+              <p className="text-2xl font-display font-bold mt-1">{fmtNumber(overdueCount)}</p>
             </CardContent></Card>
             <Card><CardContent className="p-4">
-              <p className="text-xs uppercase text-muted-foreground">Total invoices</p>
-              <p className="text-2xl font-display font-bold mt-1">{invoices.length}</p>
+              <p className="text-xs uppercase text-muted-foreground">{tr("Total invoices")}</p>
+              <p className="text-2xl font-display font-bold mt-1">{fmtNumber(invoices.length)}</p>
             </CardContent></Card>
           </div>
         )}
@@ -55,8 +59,8 @@ const ClientInvoices = () => {
           <Card><CardContent className="p-0">
             <EmptyState
               icon="payments"
-              title="No invoices yet"
-              description="MWRD will issue invoices once orders are delivered."
+              title={tr("No invoices yet")}
+              description={tr("MWRD will issue invoices once orders are delivered.")}
             />
           </CardContent></Card>
         ) : (
@@ -64,12 +68,12 @@ const ClientInvoices = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Issued</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Order</TableHead>
+                  <TableHead>{tr("Invoice #")}</TableHead>
+                  <TableHead>{tr("Issued")}</TableHead>
+                  <TableHead>{tr("Due")}</TableHead>
+                  <TableHead>{tr("Total")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("Order")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -81,21 +85,21 @@ const ClientInvoices = () => {
                     <TableCell className="font-medium">{formatSAR(inv.total_amount)}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={CLIENT_INVOICE_STATUS_COLOR[inv.status] || ""}>
-                        {CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status}
+                        {tr(CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status)}
                       </Badge>
                       {inv.status === "VOID" && inv.void_reason && (
                         <p className="text-xs text-muted-foreground mt-1">{inv.void_reason}</p>
                       )}
                       {inv.status === "PAID" && inv.paid_at && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          Paid {new Date(inv.paid_at).toLocaleDateString()}
+                          {tr("Paid {date}", { date: new Date(inv.paid_at).toLocaleDateString(locale) })}
                         </p>
                       )}
                     </TableCell>
                     <TableCell>
                       {inv.order_id ? (
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/client/orders/${inv.order_id}`}>View order</Link>
+                          <Link to={`/client/orders/${inv.order_id}`}>{tr("View order")}</Link>
                         </Button>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>

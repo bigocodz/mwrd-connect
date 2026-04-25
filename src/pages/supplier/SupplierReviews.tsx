@@ -7,6 +7,7 @@ import { Star } from "lucide-react";
 import { TableSkeleton, CardSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const StarDisplay = ({ rating }: { rating: number }) => (
   <div className="flex gap-0.5">
@@ -17,20 +18,27 @@ const StarDisplay = ({ rating }: { rating: number }) => (
 );
 
 const SupplierReviews = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
   const reviewsData = useQuery(api.reviews.listForSupplier);
   const loading = reviewsData === undefined;
   const reviews = reviewsData ?? [];
   const { page, setPage, totalPages, paginated, total } = usePagination(reviews);
 
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "—";
+  const avgRating =
+    reviews.length > 0
+      ? new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
+          reviews.reduce((s, r) => s + r.rating, 0) / reviews.length,
+        )
+      : "—";
 
   return (
     <SupplierLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">My Reviews</h1>
-          <p className="text-muted-foreground mt-1">See how clients rate your service.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("My Reviews")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("See how clients rate your service.")}</p>
         </div>
 
         {loading ? <CardSkeleton count={2} /> : (
@@ -41,7 +49,7 @@ const SupplierReviews = () => {
                   <Star className="w-7 h-7 text-primary fill-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Average Rating</p>
+                  <p className="text-sm text-muted-foreground">{tr("Average Rating")}</p>
                   <p className="text-3xl font-bold text-foreground">{avgRating}</p>
                 </div>
               </CardContent>
@@ -49,28 +57,28 @@ const SupplierReviews = () => {
             <Card>
               <CardContent className="pt-6 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">{reviews.length}</span>
+                  <span className="text-2xl font-bold text-primary">{fmtNumber(reviews.length)}</span>
                 </div>
-                <div><p className="text-sm text-muted-foreground">Total Reviews</p></div>
+                <div><p className="text-sm text-muted-foreground">{tr("Total Reviews")}</p></div>
               </CardContent>
             </Card>
           </div>
         )}
 
         <Card>
-          <CardHeader><CardTitle>Review History</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("Review History")}</CardTitle></CardHeader>
           <CardContent>
             {loading ? <TableSkeleton rows={5} cols={4} /> : reviews.length === 0 ? (
-              <EmptyState icon="reviews" title="No reviews yet" description="Reviews from clients will appear here." />
+              <EmptyState icon="reviews" title={tr("No reviews yet")} description={tr("Reviews from clients will appear here.")} />
             ) : (
               <>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Rating</TableHead>
-                      <TableHead>Comment</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>{tr("Client")}</TableHead>
+                      <TableHead>{tr("Rating")}</TableHead>
+                      <TableHead>{tr("Comment")}</TableHead>
+                      <TableHead>{tr("Date")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -79,7 +87,7 @@ const SupplierReviews = () => {
                         <TableCell className="font-medium">{r.client_public_id || "—"}</TableCell>
                         <TableCell><StarDisplay rating={r.rating} /></TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-xs truncate">{r.comment || "—"}</TableCell>
-                        <TableCell className="text-sm">{new Date(r._creationTime).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-sm">{new Date(r._creationTime).toLocaleDateString(locale)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

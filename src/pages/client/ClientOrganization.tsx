@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { Badge } from "@/components/ui/badge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type FieldDef = { name: keyof FormState; label: string; type?: "text" | "textarea"; placeholder?: string };
 
@@ -50,6 +51,7 @@ const emptyRule = (): RuleDraft => ({
 });
 
 const ClientOrganization = () => {
+  const { tr } = useLanguage();
   const costCenters = useQuery(api.organization.listMyCostCenters) ?? [];
   const branches = useQuery(api.organization.listMyBranches) ?? [];
   const departments = useQuery(api.organization.listMyDepartments) ?? [];
@@ -62,12 +64,12 @@ const ClientOrganization = () => {
   const saveRule = async () => {
     if (!ruleDraft) return;
     if (!ruleDraft.name.trim()) {
-      toast.error("Name required");
+      toast.error(tr("Name required"));
       return;
     }
     const min = Number(ruleDraft.min_amount);
     if (!Number.isFinite(min) || min < 0) {
-      toast.error("Minimum amount required");
+      toast.error(tr("Minimum amount required"));
       return;
     }
     const maxRaw = ruleDraft.max_amount.trim();
@@ -75,7 +77,7 @@ const ClientOrganization = () => {
     if (maxRaw) {
       max = Number(maxRaw);
       if (!Number.isFinite(max) || max < min) {
-        toast.error("Maximum must be ≥ minimum");
+        toast.error(tr("Maximum must be ≥ minimum"));
         return;
       }
     }
@@ -93,22 +95,22 @@ const ClientOrganization = () => {
         enabled: ruleDraft.enabled,
         notes: ruleDraft.notes?.trim() || undefined,
       });
-      toast.success("Rule saved");
+      toast.success(tr("Rule saved"));
       setRuleDraft(null);
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setRuleBusy(false);
     }
   };
 
   const removeRule = async (id: string) => {
-    if (!confirm("Delete this approval rule?")) return;
+    if (!confirm(tr("Delete this approval rule?"))) return;
     try {
       await deleteRule({ id: id as any });
-      toast.success("Rule deleted");
+      toast.success(tr("Rule deleted"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
@@ -161,36 +163,36 @@ const ClientOrganization = () => {
     try {
       const { section, id, state } = editing;
       if (section === "cost_center") {
-        if (!state.code?.trim() || !state.name.trim()) throw new Error("Code and name required");
+        if (!state.code?.trim() || !state.name.trim()) throw new Error(tr("Code and name required"));
         if (id) await updateCostCenter({ id: id as any, code: state.code, name: state.name, notes: state.notes });
         else await createCostCenter({ code: state.code, name: state.name, notes: state.notes });
       } else if (section === "branch") {
-        if (!state.name.trim()) throw new Error("Name required");
+        if (!state.name.trim()) throw new Error(tr("Name required"));
         if (id) await updateBranch({ id: id as any, name: state.name, location: state.location, notes: state.notes });
         else await createBranch({ name: state.name, location: state.location, notes: state.notes });
       } else {
-        if (!state.name.trim()) throw new Error("Name required");
+        if (!state.name.trim()) throw new Error(tr("Name required"));
         if (id) await updateDepartment({ id: id as any, name: state.name, notes: state.notes });
         else await createDepartment({ name: state.name, notes: state.notes });
       }
-      toast.success("Saved");
+      toast.success(tr("Saved"));
       setEditing(null);
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
   };
 
   const handleArchive = async (section: Section, id: string) => {
-    if (!confirm("Archive this entry? It can no longer be selected on new RFQs.")) return;
+    if (!confirm(tr("Archive this entry? It can no longer be selected on new RFQs."))) return;
     try {
       if (section === "cost_center") await archiveCostCenter({ id: id as any });
       else if (section === "branch") await archiveBranch({ id: id as any });
       else await archiveDepartment({ id: id as any });
-      toast.success("Archived");
+      toast.success(tr("Archived"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
@@ -198,9 +200,9 @@ const ClientOrganization = () => {
     <ClientLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Organization</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Organization")}</h1>
           <p className="text-muted-foreground mt-1">
-            Set up cost centers, branches, and departments to tag RFQs and orders.
+            {tr("Set up cost centers, branches, and departments to tag RFQs and orders.")}
           </p>
         </div>
 
@@ -208,22 +210,22 @@ const ClientOrganization = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Cost centers</CardTitle>
-                <CardDescription>Track spend by code (e.g. project, GL account).</CardDescription>
+                <CardTitle>{tr("Cost centers")}</CardTitle>
+                <CardDescription>{tr("Track spend by code (e.g. project, GL account).")}</CardDescription>
               </div>
               <Button size="sm" onClick={() => openNew("cost_center")}>
-                <Plus className="w-4 h-4 me-2" /> New cost center
+                <Plus className="w-4 h-4 me-2" /> {tr("New cost center")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {costCenters.length === 0 ? <SectionEmpty label="No cost centers yet." /> : (
+            {costCenters.length === 0 ? <SectionEmpty label={tr("No cost centers yet.")} /> : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead>{tr("Code")}</TableHead>
+                    <TableHead>{tr("Name")}</TableHead>
+                    <TableHead>{tr("Notes")}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -234,7 +236,7 @@ const ClientOrganization = () => {
                       <TableCell className="font-medium">{cc.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{cc.notes ?? "—"}</TableCell>
                       <TableCell className="text-end">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit("cost_center", cc)}>Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit("cost_center", cc)}>{tr("Edit")}</Button>
                         <Button variant="ghost" size="sm" onClick={() => handleArchive("cost_center", cc._id)}>
                           <Trash01 className="w-4 h-4" />
                         </Button>
@@ -251,22 +253,22 @@ const ClientOrganization = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Branches</CardTitle>
-                <CardDescription>Physical locations and delivery sites.</CardDescription>
+                <CardTitle>{tr("Branches")}</CardTitle>
+                <CardDescription>{tr("Physical locations and delivery sites.")}</CardDescription>
               </div>
               <Button size="sm" onClick={() => openNew("branch")}>
-                <Plus className="w-4 h-4 me-2" /> New branch
+                <Plus className="w-4 h-4 me-2" /> {tr("New branch")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {branches.length === 0 ? <SectionEmpty label="No branches yet." /> : (
+            {branches.length === 0 ? <SectionEmpty label={tr("No branches yet.")} /> : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead>{tr("Name")}</TableHead>
+                    <TableHead>{tr("Location")}</TableHead>
+                    <TableHead>{tr("Notes")}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -277,7 +279,7 @@ const ClientOrganization = () => {
                       <TableCell className="text-sm">{b.location ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{b.notes ?? "—"}</TableCell>
                       <TableCell className="text-end">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit("branch", b)}>Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit("branch", b)}>{tr("Edit")}</Button>
                         <Button variant="ghost" size="sm" onClick={() => handleArchive("branch", b._id)}>
                           <Trash01 className="w-4 h-4" />
                         </Button>
@@ -294,21 +296,21 @@ const ClientOrganization = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Departments</CardTitle>
-                <CardDescription>Functional teams (HR, IT, Operations, …).</CardDescription>
+                <CardTitle>{tr("Departments")}</CardTitle>
+                <CardDescription>{tr("Functional teams (HR, IT, Operations, …).")}</CardDescription>
               </div>
               <Button size="sm" onClick={() => openNew("department")}>
-                <Plus className="w-4 h-4 me-2" /> New department
+                <Plus className="w-4 h-4 me-2" /> {tr("New department")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {departments.length === 0 ? <SectionEmpty label="No departments yet." /> : (
+            {departments.length === 0 ? <SectionEmpty label={tr("No departments yet.")} /> : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Notes</TableHead>
+                    <TableHead>{tr("Name")}</TableHead>
+                    <TableHead>{tr("Notes")}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -318,7 +320,7 @@ const ClientOrganization = () => {
                       <TableCell className="font-medium">{d.name}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{d.notes ?? "—"}</TableCell>
                       <TableCell className="text-end">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit("department", d)}>Edit</Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit("department", d)}>{tr("Edit")}</Button>
                         <Button variant="ghost" size="sm" onClick={() => handleArchive("department", d._id)}>
                           <Trash01 className="w-4 h-4" />
                         </Button>
@@ -335,25 +337,25 @@ const ClientOrganization = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Approval rules</CardTitle>
+                <CardTitle>{tr("Approval rules")}</CardTitle>
                 <CardDescription>
-                  Quote acceptances are held for MWRD approval when they match a rule. First match wins.
+                  {tr("Quote acceptances are held for MWRD approval when they match a rule. First match wins.")}
                 </CardDescription>
               </div>
               <Button size="sm" onClick={() => setRuleDraft(emptyRule())}>
-                <Plus className="w-4 h-4 me-2" /> New rule
+                <Plus className="w-4 h-4 me-2" /> {tr("New rule")}
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {rules.length === 0 ? <SectionEmpty label="No approval rules yet — every quote auto-creates an order on accept." /> : (
+            {rules.length === 0 ? <SectionEmpty label={tr("No approval rules yet — every quote auto-creates an order on accept.")} /> : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Threshold</TableHead>
-                    <TableHead>Filters</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{tr("Name")}</TableHead>
+                    <TableHead>{tr("Threshold")}</TableHead>
+                    <TableHead>{tr("Filters")}</TableHead>
+                    <TableHead>{tr("Status")}</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -367,24 +369,30 @@ const ClientOrganization = () => {
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         <div className="flex flex-wrap gap-1">
-                          {rule.category && <Badge variant="outline">cat: {rule.category}</Badge>}
+                          {rule.category && <Badge variant="outline">{tr("Category")}: {rule.category}</Badge>}
                           {rule.cost_center_id && (
-                            <Badge variant="outline">cc: {costCenters.find((c: any) => c._id === rule.cost_center_id)?.code ?? "?"}</Badge>
+                            <Badge variant="outline">
+                              {tr("Cost center")}: {costCenters.find((c: any) => c._id === rule.cost_center_id)?.code ?? "?"}
+                            </Badge>
                           )}
                           {rule.branch_id && (
-                            <Badge variant="outline">br: {branches.find((b: any) => b._id === rule.branch_id)?.name ?? "?"}</Badge>
+                            <Badge variant="outline">
+                              {tr("Branch")}: {branches.find((b: any) => b._id === rule.branch_id)?.name ?? "?"}
+                            </Badge>
                           )}
                           {rule.department_id && (
-                            <Badge variant="outline">dept: {departments.find((d: any) => d._id === rule.department_id)?.name ?? "?"}</Badge>
+                            <Badge variant="outline">
+                              {tr("Department")}: {departments.find((d: any) => d._id === rule.department_id)?.name ?? "?"}
+                            </Badge>
                           )}
                           {!rule.category && !rule.cost_center_id && !rule.branch_id && !rule.department_id && (
-                            <span>Any</span>
+                            <span>{tr("Any")}</span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={rule.enabled ? "bg-green-100 text-green-800" : "bg-muted text-muted-foreground"}>
-                          {rule.enabled ? "Enabled" : "Disabled"}
+                          {rule.enabled ? tr("Enabled") : tr("Disabled")}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-end">
@@ -406,7 +414,7 @@ const ClientOrganization = () => {
                             })
                           }
                         >
-                          Edit
+                          {tr("Edit")}
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => removeRule(rule._id)}>
                           <Trash01 className="w-4 h-4" />
@@ -424,21 +432,21 @@ const ClientOrganization = () => {
       <Dialog open={ruleDraft !== null} onOpenChange={(o) => !o && setRuleDraft(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{ruleDraft?.id ? "Edit rule" : "New approval rule"}</DialogTitle>
+            <DialogTitle>{ruleDraft?.id ? tr("Edit rule") : tr("New approval rule")}</DialogTitle>
           </DialogHeader>
           {ruleDraft && (
             <div className="space-y-3 py-2">
               <div>
-                <Label>Name</Label>
+                <Label>{tr("Name")}</Label>
                 <Input
                   value={ruleDraft.name}
                   onChange={(e) => setRuleDraft({ ...ruleDraft, name: e.target.value })}
-                  placeholder="High-value purchase, IT equipment, Branch HQ…"
+                  placeholder={tr("High-value purchase, IT equipment, Branch HQ…")}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Min amount (SAR)</Label>
+                  <Label>{tr("Min amount (SAR)")}</Label>
                   <Input
                     type="number"
                     min="0"
@@ -448,7 +456,7 @@ const ClientOrganization = () => {
                   />
                 </div>
                 <div>
-                  <Label>Max amount (optional)</Label>
+                  <Label>{tr("Max amount (optional)")}</Label>
                   <Input
                     type="number"
                     min="0"
@@ -459,23 +467,23 @@ const ClientOrganization = () => {
                 </div>
               </div>
               <div>
-                <Label>Category (optional)</Label>
+                <Label>{tr("Category (optional)")}</Label>
                 <Input
                   value={ruleDraft.category ?? ""}
                   onChange={(e) => setRuleDraft({ ...ruleDraft, category: e.target.value })}
-                  placeholder="Match RFQ category exactly"
+                  placeholder={tr("Match RFQ category exactly")}
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <Label>Cost center</Label>
+                  <Label>{tr("Cost center")}</Label>
                   <Select
                     value={ruleDraft.cost_center_id ?? "__any"}
                     onValueChange={(v) => setRuleDraft({ ...ruleDraft, cost_center_id: v === "__any" ? undefined : v })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__any">Any</SelectItem>
+                      <SelectItem value="__any">{tr("Any")}</SelectItem>
                       {costCenters.map((cc: any) => (
                         <SelectItem key={cc._id} value={cc._id}>{cc.code} — {cc.name}</SelectItem>
                       ))}
@@ -483,14 +491,14 @@ const ClientOrganization = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label>Branch</Label>
+                  <Label>{tr("Branch")}</Label>
                   <Select
                     value={ruleDraft.branch_id ?? "__any"}
                     onValueChange={(v) => setRuleDraft({ ...ruleDraft, branch_id: v === "__any" ? undefined : v })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__any">Any</SelectItem>
+                      <SelectItem value="__any">{tr("Any")}</SelectItem>
                       {branches.map((b: any) => (
                         <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
                       ))}
@@ -498,14 +506,14 @@ const ClientOrganization = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label>Department</Label>
+                  <Label>{tr("Department")}</Label>
                   <Select
                     value={ruleDraft.department_id ?? "__any"}
                     onValueChange={(v) => setRuleDraft({ ...ruleDraft, department_id: v === "__any" ? undefined : v })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__any">Any</SelectItem>
+                      <SelectItem value="__any">{tr("Any")}</SelectItem>
                       {departments.map((d: any) => (
                         <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
                       ))}
@@ -515,8 +523,8 @@ const ClientOrganization = () => {
               </div>
               <div className="flex items-center justify-between rounded-md border border-border px-3 py-2">
                 <div>
-                  <p className="text-sm font-medium">Enabled</p>
-                  <p className="text-xs text-muted-foreground">Disabled rules don't gate quote acceptance.</p>
+                  <p className="text-sm font-medium">{tr("Enabled")}</p>
+                  <p className="text-xs text-muted-foreground">{tr("Disabled rules don't gate quote acceptance.")}</p>
                 </div>
                 <Switch
                   checked={ruleDraft.enabled}
@@ -524,7 +532,7 @@ const ClientOrganization = () => {
                 />
               </div>
               <div>
-                <Label>Notes</Label>
+                <Label>{tr("Notes")}</Label>
                 <Textarea
                   value={ruleDraft.notes ?? ""}
                   onChange={(e) => setRuleDraft({ ...ruleDraft, notes: e.target.value })}
@@ -533,8 +541,8 @@ const ClientOrganization = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRuleDraft(null)}>Cancel</Button>
-            <Button onClick={saveRule} disabled={ruleBusy}>Save rule</Button>
+            <Button variant="outline" onClick={() => setRuleDraft(null)}>{tr("Cancel")}</Button>
+            <Button onClick={saveRule} disabled={ruleBusy}>{tr("Save rule")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -543,33 +551,36 @@ const ClientOrganization = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editing?.id ? "Edit" : "New"}{" "}
-              {editing?.section === "cost_center" ? "cost center" : editing?.section === "branch" ? "branch" : "department"}
+              {editing?.section === "cost_center"
+                ? editing?.id ? tr("Edit cost center") : tr("New cost center")
+                : editing?.section === "branch"
+                ? editing?.id ? tr("Edit branch") : tr("New branch")
+                : editing?.id ? tr("Edit department") : tr("New department")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             {editing && sectionFields[editing.section].map((f) => (
               <div key={String(f.name)}>
-                <Label>{f.label}</Label>
+                <Label>{tr(f.label)}</Label>
                 {f.type === "textarea" ? (
                   <Textarea
                     value={(editing.state[f.name] ?? "") as string}
                     onChange={(e) => setEditing({ ...editing, state: { ...editing.state, [f.name]: e.target.value } })}
-                    placeholder={f.placeholder}
+                    placeholder={f.placeholder ? tr(f.placeholder) : undefined}
                   />
                 ) : (
                   <Input
                     value={(editing.state[f.name] ?? "") as string}
                     onChange={(e) => setEditing({ ...editing, state: { ...editing.state, [f.name]: e.target.value } })}
-                    placeholder={f.placeholder}
+                    placeholder={f.placeholder ? tr(f.placeholder) : undefined}
                   />
                 )}
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={busy}>Save</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>{tr("Cancel")}</Button>
+            <Button onClick={handleSave} disabled={busy}>{tr("Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

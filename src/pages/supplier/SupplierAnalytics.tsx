@@ -15,6 +15,7 @@ import SupplierLayout from "@/components/supplier/SupplierLayout";
 import { EmptyMessage, MetricCard, PageHeader, Panel, SkeletonLine } from "@/components/app/AppSurface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatSAR } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const WINDOWS = [
   { label: "Last 7 days", value: 7 },
@@ -34,6 +35,9 @@ const fmtPct = (n: number | null | undefined) => (n == null ? "—" : `${n.toFix
 const fmtRating = (n: number | null | undefined) => (n == null ? "—" : `${n.toFixed(2)} / 5`);
 
 const SupplierAnalytics = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
   const [windowDays, setWindowDays] = useState(90);
   const data = useQuery(api.dashboard.supplierAnalytics, { windowDays });
   const loading = data === undefined;
@@ -41,14 +45,14 @@ const SupplierAnalytics = () => {
   return (
     <SupplierLayout>
       <PageHeader
-        title="My Performance"
-        description="Track how your responsiveness, win rate, and delivery SLA shape MWRD's view of your business."
+        title={tr("My Performance")}
+        description={tr("Track how your responsiveness, win rate, and delivery SLA shape MWRD's view of your business.")}
         actions={
           <Select value={String(windowDays)} onValueChange={(v) => setWindowDays(Number(v))}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               {WINDOWS.map((w) => (
-                <SelectItem key={w.value} value={String(w.value)}>{w.label}</SelectItem>
+                <SelectItem key={w.value} value={String(w.value)}>{tr(w.label)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -58,86 +62,91 @@ const SupplierAnalytics = () => {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={ClockCheck}
-          label="Avg response time"
+          label={tr("Avg response time")}
           value={fmtHours(data?.avgResponseHours)}
           loading={loading}
-          helper={data ? `${data.assignedCount} assigned` : undefined}
+          helper={data ? tr("{count} assigned", { count: fmtNumber(data.assignedCount) }) : undefined}
         />
         <MetricCard
           icon={Receipt}
-          label="Response rate"
+          label={tr("Response rate")}
           value={fmtPct(data?.responseRate)}
           loading={loading}
           tone={data && data.responseRate != null && data.responseRate < 60 ? "warning" : "success"}
         />
         <MetricCard
           icon={BarChartSquareUp}
-          label="Win rate"
+          label={tr("Win rate")}
           value={fmtPct(data?.winRate)}
           loading={loading}
           tone="success"
-          helper={data ? `${data.wins} wins of ${data.quotedCount} quotes` : undefined}
+          helper={data ? tr("{wins} wins of {quotes} quotes", { wins: fmtNumber(data.wins), quotes: fmtNumber(data.quotedCount) }) : undefined}
         />
         <MetricCard
           icon={Star01}
-          label="Average rating"
+          label={tr("Average rating")}
           value={fmtRating(data?.avgRating)}
           loading={loading}
-          helper={data ? `${data.ratingsCount} reviews` : undefined}
+          helper={data ? tr("{count} reviews", { count: fmtNumber(data.ratingsCount) }) : undefined}
         />
         <MetricCard
           icon={PackageCheck}
-          label="Completed orders"
-          value={data ? String(data.completedOrders) : ""}
+          label={tr("Completed orders")}
+          value={data ? fmtNumber(data.completedOrders) : ""}
           loading={loading}
-          helper={data ? `${data.inFlightOrders} in flight` : undefined}
+          helper={data ? tr("{count} in flight", { count: fmtNumber(data.inFlightOrders) }) : undefined}
         />
         <MetricCard
           icon={BankNote01}
-          label="Completed value"
+          label={tr("Completed value")}
           value={data ? formatSAR(data.totalCompletedValue) : ""}
           loading={loading}
         />
         <MetricCard
           icon={Truck01}
-          label="On-time delivery"
+          label={tr("On-time delivery")}
           value={fmtPct(data?.onTimeRate)}
           loading={loading}
           tone={data && data.onTimeRate != null && data.onTimeRate < 80 ? "warning" : "success"}
-          helper={data && data.deliveredWithEta ? `${data.lateDeliveries} late of ${data.deliveredWithEta}` : undefined}
+          helper={data && data.deliveredWithEta ? tr("{late} late of {total}", { late: fmtNumber(data.lateDeliveries), total: fmtNumber(data.deliveredWithEta) }) : undefined}
         />
         <MetricCard
           icon={AlertCircle}
-          label="Dispute rate"
+          label={tr("Dispute rate")}
           value={fmtPct(data?.disputeRate)}
           loading={loading}
           tone={data && data.disputeRate != null && data.disputeRate > 5 ? "danger" : "default"}
-          helper={data ? `${data.disputedCount} disputed` : undefined}
+          helper={data ? tr("{count} disputed", { count: fmtNumber(data.disputedCount) }) : undefined}
         />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
-        <Panel title="Payout aging" icon={BankNote01} description="Outstanding payouts by age bucket.">
+        <Panel title={tr("Payout aging")} icon={BankNote01} description={tr("Outstanding payouts by age bucket.")}>
           {loading ? (
             <SkeletonLine className="h-24 w-full" />
           ) : data && data.payoutPending.count === 0 ? (
-            <EmptyMessage>No outstanding payouts.</EmptyMessage>
+            <EmptyMessage>{tr("No outstanding payouts.")}</EmptyMessage>
           ) : (
             data && (
               <div className="space-y-4">
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-sm text-[#87867f]">Pending total</p>
+                    <p className="text-sm text-[#87867f]">{tr("Pending total")}</p>
                     <p className="font-display text-[1.6rem] font-medium text-[#141413]">
                       {formatSAR(data.payoutPending.total)}
                     </p>
                   </div>
-                  <p className="text-sm text-[#5e5d59]">{data.payoutPending.count} pending · {formatSAR(data.paidLast30)} paid (30d)</p>
+                  <p className="text-sm text-[#5e5d59]">
+                    {tr("{count} pending · {amount} paid (30d)", {
+                      count: fmtNumber(data.payoutPending.count),
+                      amount: formatSAR(data.paidLast30),
+                    })}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {(["0-7", "8-14", "15-30", "30+"] as const).map((bucket) => (
                     <div key={bucket} className="rounded-lg bg-[#f5f4ed] p-3 shadow-[inset_0_0_0_1px_#e8e6dc]">
-                      <p className="text-xs text-[#87867f]">{bucket} days</p>
+                      <p className="text-xs text-[#87867f]">{tr("{bucket} days", { bucket })}</p>
                       <p className="mt-1 text-sm font-medium text-[#141413]">
                         {formatSAR(data.payoutPending.buckets[bucket])}
                       </p>
@@ -149,27 +158,27 @@ const SupplierAnalytics = () => {
           )}
         </Panel>
 
-        <Panel title="Invoice status" icon={Receipt} description="Submitted invoices and their current state.">
+        <Panel title={tr("Invoice status")} icon={Receipt} description={tr("Submitted invoices and their current state.")}>
           {loading ? (
             <SkeletonLine className="h-24 w-full" />
           ) : (
             data && (
               <dl className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="text-[#87867f]">Submitted</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{data.invoiceCounts.submitted}</dd>
+                  <dt className="text-[#87867f]">{tr("Submitted")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.submitted)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[#87867f]">Approved</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{data.invoiceCounts.approved}</dd>
+                  <dt className="text-[#87867f]">{tr("Approved")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.approved)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[#87867f]">Paid</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{data.invoiceCounts.paid}</dd>
+                  <dt className="text-[#87867f]">{tr("Paid")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.paid)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[#87867f]">Rejected</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{data.invoiceCounts.rejected}</dd>
+                  <dt className="text-[#87867f]">{tr("Rejected")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.rejected)}</dd>
                 </div>
               </dl>
             )

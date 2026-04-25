@@ -11,6 +11,7 @@ import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { toast } from "sonner";
 import { Trash01 } from "@untitledui/icons";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const cadenceLabel: Record<string, string> = {
   WEEKLY: "Weekly",
@@ -20,6 +21,10 @@ const cadenceLabel: Record<string, string> = {
 };
 
 const ClientSchedules = () => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
+
   const data = useQuery(api.schedules.listMine);
   const setActive = useMutation(api.schedules.setActive);
   const remove = useMutation(api.schedules.remove);
@@ -32,22 +37,22 @@ const ClientSchedules = () => {
     setBusy(id);
     try {
       await setActive({ id: id as any, active: next });
-      toast.success(next ? "Resumed" : "Paused");
+      toast.success(next ? tr("Resumed") : tr("Paused"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this schedule? It won't generate any more RFQs.")) return;
+    if (!confirm(tr("Delete this schedule? It won't generate any more RFQs."))) return;
     setBusy(id);
     try {
       await remove({ id: id as any });
-      toast.success("Deleted");
+      toast.success(tr("Deleted"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(null);
     }
@@ -57,9 +62,9 @@ const ClientSchedules = () => {
     setBusy(id);
     try {
       await runNow({ id: id as any });
-      toast.success("RFQ generated");
+      toast.success(tr("RFQ generated"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(null);
     }
@@ -69,9 +74,9 @@ const ClientSchedules = () => {
     <ClientLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Repeat RFQs</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Repeat RFQs")}</h1>
           <p className="text-muted-foreground mt-1">
-            Schedule recurring RFQs for items you procure on a fixed cadence.
+            {tr("Schedule recurring RFQs for items you procure on a fixed cadence.")}
           </p>
         </div>
 
@@ -79,20 +84,20 @@ const ClientSchedules = () => {
           <Card><CardContent className="p-0">
             <EmptyState
               icon="rfqs"
-              title="No schedules yet"
-              description="From the create-RFQ page you can save the current RFQ as a schedule."
+              title={tr("No schedules yet")}
+              description={tr("From the create-RFQ page you can save the current RFQ as a schedule.")}
             />
           </CardContent></Card>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Cadence</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Next run</TableHead>
-                <TableHead>Last run</TableHead>
-                <TableHead>Active</TableHead>
+                <TableHead>{tr("Name")}</TableHead>
+                <TableHead>{tr("Cadence")}</TableHead>
+                <TableHead>{tr("Items")}</TableHead>
+                <TableHead>{tr("Next run")}</TableHead>
+                <TableHead>{tr("Last run")}</TableHead>
+                <TableHead>{tr("Active")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -100,13 +105,13 @@ const ClientSchedules = () => {
               {schedules.map((s: any) => (
                 <TableRow key={s._id}>
                   <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell><Badge variant="outline">{cadenceLabel[s.cadence] ?? s.cadence}</Badge></TableCell>
-                  <TableCell>{s.template.items.length}</TableCell>
+                  <TableCell><Badge variant="outline">{tr(cadenceLabel[s.cadence] ?? s.cadence)}</Badge></TableCell>
+                  <TableCell>{fmtNumber(s.template.items.length)}</TableCell>
                   <TableCell className="text-sm">
-                    {s.active ? new Date(s.next_run_at).toLocaleDateString() : "—"}
+                    {s.active ? new Date(s.next_run_at).toLocaleDateString(locale) : "—"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {s.last_run_at ? new Date(s.last_run_at).toLocaleDateString() : "—"}
+                    {s.last_run_at ? new Date(s.last_run_at).toLocaleDateString(locale) : "—"}
                   </TableCell>
                   <TableCell>
                     <Switch
@@ -117,7 +122,7 @@ const ClientSchedules = () => {
                   </TableCell>
                   <TableCell className="text-end">
                     <Button size="sm" variant="ghost" onClick={() => handleRunNow(s._id)} disabled={busy === s._id}>
-                      Run now
+                      {tr("Run now")}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => handleDelete(s._id)} disabled={busy === s._id}>
                       <Trash01 className="w-4 h-4" />

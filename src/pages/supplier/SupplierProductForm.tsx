@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const CATEGORIES = [
   "Building Materials", "Electrical", "Plumbing", "HVAC",
@@ -18,6 +19,7 @@ const CATEGORIES = [
 ];
 
 const SupplierProductForm = () => {
+  const { tr, dir } = useLanguage();
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
   const isEdit = !!productId;
@@ -90,10 +92,10 @@ const SupplierProductForm = () => {
       } else {
         await createProduct(payload);
       }
-      toast.success(isEdit ? "Product resubmitted for review" : "Product submitted for review");
+      toast.success(isEdit ? tr("Product resubmitted for review") : tr("Product submitted for review"));
       navigate("/supplier/products");
     } catch (err: any) {
-      toast.error("Failed to save: " + err.message);
+      toast.error(tr("Failed to save: {message}", { message: err.message }));
     } finally {
       setLoading(false);
     }
@@ -106,84 +108,84 @@ const SupplierProductForm = () => {
   return (
     <SupplierLayout>
       <Link to="/supplier/products" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6">
-        <ArrowLeft className="w-4 h-4" /> Back to Products
+        {dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />} {tr("Back to Products")}
       </Link>
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle>{isEdit ? "Edit Product" : "Add Product"}</CardTitle>
+          <CardTitle>{isEdit ? tr("Edit Product") : tr("Add Product")}</CardTitle>
           <CardDescription>
             {isEdit && isApproved
-              ? "Editing an approved product will resubmit it for review."
-              : "Fill in the details below. Your product will be reviewed before appearing in the catalog."}
+              ? tr("Editing an approved product will resubmit it for review.")
+              : tr("Fill in the details below. Your product will be reviewed before appearing in the catalog.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name">Product Name *</Label>
+              <Label htmlFor="name">{tr("Product Name")} *</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="desc">Description</Label>
+              <Label htmlFor="desc">{tr("Description")}</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={2000} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Category *</Label>
+                <Label>{tr("Category")} *</Label>
                 <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={tr("Select category")} /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tr(c)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subcat">Subcategory</Label>
+                <Label htmlFor="subcat">{tr("Subcategory")}</Label>
                 <Input id="subcat" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} maxLength={100} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU</Label>
+                <Label htmlFor="sku">{tr("SKU")}</Label>
                 <Input id="sku" value={sku} onChange={(e) => setSku(e.target.value)} maxLength={50} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="brand">Brand</Label>
+                <Label htmlFor="brand">{tr("Brand")}</Label>
                 <Input id="brand" value={brand} onChange={(e) => setBrand(e.target.value)} maxLength={100} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="images">Image URLs (one per line)</Label>
-              <Textarea id="images" value={images} onChange={(e) => setImages(e.target.value)} rows={3} placeholder={"https://example.com/image1.jpg\nhttps://example.com/image2.jpg"} />
+              <Label htmlFor="images">{tr("Image URLs (one per line)")}</Label>
+              <Textarea id="images" value={images} onChange={(e) => setImages(e.target.value)} rows={3} placeholder={tr("Paste image URLs (one per line)")} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Your Price (SAR) *</Label>
+                <Label htmlFor="price">{tr("Your Price (SAR)")} *</Label>
                 <Input id="price" type="number" step="0.01" min="0" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lead">Lead Time (days) *</Label>
+                <Label htmlFor="lead">{tr("Lead Time (days)")} *</Label>
                 <Input id="lead" type="number" min="1" value={leadTime} onChange={(e) => setLeadTime(e.target.value)} required />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Availability</Label>
+              <Label>{tr("Availability")}</Label>
               <Select value={availability} onValueChange={setAvailability}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="AVAILABLE">Available</SelectItem>
-                  <SelectItem value="LIMITED_STOCK">Limited Stock</SelectItem>
-                  <SelectItem value="OUT_OF_STOCK">Out of Stock</SelectItem>
+                  <SelectItem value="AVAILABLE">{tr("Available")}</SelectItem>
+                  <SelectItem value="LIMITED_STOCK">{tr("Limited Stock")}</SelectItem>
+                  <SelectItem value="OUT_OF_STOCK">{tr("Out of stock")}</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Set stock below to auto-derive availability (0 = out of stock; ≤ threshold = limited).
+                {tr("Set stock below to auto-derive availability (0 = out of stock; ≤ threshold = limited).")}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="stock">Stock quantity</Label>
+                <Label htmlFor="stock">{tr("Stock quantity")}</Label>
                 <Input
                   id="stock"
                   type="number"
@@ -191,11 +193,11 @@ const SupplierProductForm = () => {
                   step="1"
                   value={stockQuantity}
                   onChange={(e) => setStockQuantity(e.target.value)}
-                  placeholder="Leave blank to manage manually"
+                  placeholder={tr("Leave blank to manage manually")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="threshold">Low-stock threshold</Label>
+                <Label htmlFor="threshold">{tr("Low-stock threshold")}</Label>
                 <Input
                   id="threshold"
                   type="number"
@@ -203,13 +205,13 @@ const SupplierProductForm = () => {
                   step="1"
                   value={lowStockThreshold}
                   onChange={(e) => setLowStockThreshold(e.target.value)}
-                  placeholder="Optional"
+                  placeholder={tr("Optional")}
                 />
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading || !category}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
-              {isEdit ? "Resubmit for Review" : "Submit for Review"}
+              {isEdit ? tr("Resubmit for Review") : tr("Submit for Review")}
             </Button>
           </form>
         </CardContent>

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { CheckCircle, MessageSquare01, Truck01, Upload01, XCircle } from "@untitledui/icons";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { formatSAR, VatBadge } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   DISPUTE_BADGE_COLOR,
   DISPUTE_LABEL,
@@ -44,6 +45,7 @@ const TrackingDialog = ({
   busy: boolean;
   title: string;
 }) => {
+  const { tr } = useLanguage();
   const [carrier, setCarrier] = useState(initial.carrier ?? "");
   const [trackingNumber, setTrackingNumber] = useState(initial.tracking_number ?? "");
   const [trackingUrl, setTrackingUrl] = useState(initial.tracking_url ?? "");
@@ -56,13 +58,13 @@ const TrackingDialog = ({
       <DialogContent>
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
         <div className="space-y-3 py-2">
-          <div><Label>Carrier</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder="DHL, SMSA, Aramex…" /></div>
-          <div><Label>Tracking number</Label><Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} /></div>
-          <div><Label>Tracking URL</Label><Input value={trackingUrl} onChange={(e) => setTrackingUrl(e.target.value)} placeholder="https://…" /></div>
-          <div><Label>Estimated delivery</Label><Input type="date" value={eta} onChange={(e) => setEta(e.target.value)} /></div>
+          <div><Label>{tr("Carrier")}</Label><Input value={carrier} onChange={(e) => setCarrier(e.target.value)} placeholder={tr("DHL, SMSA, Aramex…")} /></div>
+          <div><Label>{tr("Tracking number")}</Label><Input value={trackingNumber} onChange={(e) => setTrackingNumber(e.target.value)} /></div>
+          <div><Label>{tr("Tracking URL")}</Label><Input value={trackingUrl} onChange={(e) => setTrackingUrl(e.target.value)} placeholder="https://…" /></div>
+          <div><Label>{tr("Estimated delivery")}</Label><Input type="date" value={eta} onChange={(e) => setEta(e.target.value)} /></div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>{tr("Cancel")}</Button>
           <Button
             disabled={busy}
             onClick={async () => {
@@ -74,7 +76,7 @@ const TrackingDialog = ({
               });
             }}
           >
-            Save
+            {tr("Save")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -83,6 +85,7 @@ const TrackingDialog = ({
 };
 
 const RoleActions = ({ order, role }: { order: any; role: Role }) => {
+  const { tr } = useLanguage();
   const confirmBySupplier = useMutation(api.orders.confirmBySupplier);
   const markPreparing = useMutation(api.orders.markPreparing);
   const markDispatched = useMutation(api.orders.markDispatched);
@@ -114,7 +117,7 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
       await fn();
       toast.success(label);
     } catch (err: any) {
-      toast.error(err.message || "Action failed");
+      toast.error(err.message || tr("Action failed"));
     } finally {
       setBusy(false);
     }
@@ -133,12 +136,12 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
         headers: { "Content-Type": file.type || "application/octet-stream" },
         body: file,
       });
-      if (!upload.ok) throw new Error("Upload failed");
+      if (!upload.ok) throw new Error(tr("Upload failed"));
       const { storageId } = await upload.json();
       await attachProofOfDelivery({ id: order._id, storage_id: storageId, name: file.name });
-      toast.success("Proof of delivery uploaded");
+      toast.success(tr("Proof of delivery uploaded"));
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      toast.error(err.message || tr("Upload failed"));
     } finally {
       setBusy(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -148,27 +151,27 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
   return (
     <div className="flex flex-wrap gap-2">
       {role === "SUPPLIER" && order.status === "PENDING_CONFIRMATION" && (
-        <Button onClick={() => wrap("Order confirmed", () => confirmBySupplier({ id: order._id }))} disabled={busy}>
-          <CheckCircle className="w-4 h-4 me-2" /> Confirm Order
+        <Button onClick={() => wrap(tr("Order confirmed"), () => confirmBySupplier({ id: order._id }))} disabled={busy}>
+          <CheckCircle className="w-4 h-4 me-2" /> {tr("Confirm Order")}
         </Button>
       )}
       {role === "SUPPLIER" && order.status === "CONFIRMED" && (
-        <Button onClick={() => wrap("Marked as preparing", () => markPreparing({ id: order._id }))} disabled={busy}>
-          Mark as Preparing
+        <Button onClick={() => wrap(tr("Marked as preparing"), () => markPreparing({ id: order._id }))} disabled={busy}>
+          {tr("Mark as Preparing")}
         </Button>
       )}
       {role === "SUPPLIER" && (order.status === "PREPARING" || order.status === "CONFIRMED") && (
         <Button onClick={() => setTrackingDialog("DISPATCH")} disabled={busy}>
-          <Truck01 className="w-4 h-4 me-2" /> Dispatch with tracking
+          <Truck01 className="w-4 h-4 me-2" /> {tr("Dispatch with tracking")}
         </Button>
       )}
       {role === "SUPPLIER" && order.status === "DISPATCHED" && (
         <>
           <Button variant="outline" onClick={() => setTrackingDialog("UPDATE")} disabled={busy}>
-            Update tracking
+            {tr("Update tracking")}
           </Button>
-          <Button onClick={() => wrap("Marked as delivered", () => markDelivered({ id: order._id }))} disabled={busy}>
-            Mark as Delivered
+          <Button onClick={() => wrap(tr("Marked as delivered"), () => markDelivered({ id: order._id }))} disabled={busy}>
+            {tr("Mark as Delivered")}
           </Button>
         </>
       )}
@@ -185,33 +188,33 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
             }}
           />
           <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={busy}>
-            <Upload01 className="w-4 h-4 me-2" /> {order.pod_storage_id ? "Replace POD" : "Upload POD"}
+            <Upload01 className="w-4 h-4 me-2" /> {order.pod_storage_id ? tr("Replace POD") : tr("Upload POD")}
           </Button>
         </>
       )}
       {role === "CLIENT" && order.status === "DELIVERED" && (
-        <Button onClick={() => wrap("Order completed", () => confirmByClient({ id: order._id }))} disabled={busy}>
-          <CheckCircle className="w-4 h-4 me-2" /> Confirm Receipt
+        <Button onClick={() => wrap(tr("Order completed"), () => confirmByClient({ id: order._id }))} disabled={busy}>
+          <CheckCircle className="w-4 h-4 me-2" /> {tr("Confirm Receipt")}
         </Button>
       )}
       {role === "CLIENT" &&
         ["DELIVERED", "COMPLETED"].includes(order.status) &&
         order.dispute_status !== "OPEN" && (
           <Button variant="outline" onClick={() => setDisputeOpen(true)} disabled={busy}>
-            Open Dispute
+            {tr("Open Dispute")}
           </Button>
         )}
       {role === "ADMIN" && order.dispute_status === "OPEN" && (
         <Button onClick={() => setResolveOpen(true)} disabled={busy}>
-          Resolve Dispute
+          {tr("Resolve Dispute")}
         </Button>
       )}
       <Button variant="outline" size="sm" onClick={() => setNoteOpen(true)} disabled={busy}>
-        <MessageSquare01 className="w-4 h-4 me-2" /> Add Note
+        <MessageSquare01 className="w-4 h-4 me-2" /> {tr("Add Note")}
       </Button>
       {canCancel && (
         <Button variant="destructive" size="sm" onClick={() => setCancelOpen(true)} disabled={busy}>
-          <XCircle className="w-4 h-4 me-2" /> Cancel Order
+          <XCircle className="w-4 h-4 me-2" /> {tr("Cancel Order")}
         </Button>
       )}
 
@@ -226,13 +229,13 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
             estimated_delivery_at: order.estimated_delivery_at,
           }}
           busy={busy}
-          title={trackingDialog === "DISPATCH" ? "Dispatch order" : "Update tracking"}
+          title={trackingDialog === "DISPATCH" ? tr("Dispatch order") : tr("Update tracking")}
           onSubmit={async (values) => {
             const action =
               trackingDialog === "DISPATCH"
                 ? () => markDispatched({ id: order._id, ...values })
                 : () => updateTracking({ id: order._id, ...values });
-            await wrap(trackingDialog === "DISPATCH" ? "Order dispatched" : "Tracking updated", action);
+            await wrap(trackingDialog === "DISPATCH" ? tr("Order dispatched") : tr("Tracking updated"), action);
             setTrackingDialog(null);
           }}
         />
@@ -240,23 +243,23 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Cancel order</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Cancel Order")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Reason</Label>
-            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why is this order being cancelled?" />
+            <Label>{tr("Reason")}</Label>
+            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tr("Why is this order being cancelled?")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>{tr("Close")}</Button>
             <Button
               variant="destructive"
               disabled={busy || !reason.trim()}
               onClick={async () => {
-                await wrap("Order cancelled", () => cancelOrder({ id: order._id, reason: reason.trim() }));
+                await wrap(tr("Order cancelled"), () => cancelOrder({ id: order._id, reason: reason.trim() }));
                 setCancelOpen(false);
                 setReason("");
               }}
             >
-              Confirm Cancellation
+              {tr("Confirm Cancellation")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -264,22 +267,22 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
 
       <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Add note</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Add Note")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Message</Label>
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Visible to all parties on this order." />
+            <Label>{tr("Message")}</Label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("Visible to all parties on this order.")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setNoteOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setNoteOpen(false)}>{tr("Close")}</Button>
             <Button
               disabled={busy || !note.trim()}
               onClick={async () => {
-                await wrap("Note added", () => addNote({ id: order._id, message: note.trim() }));
+                await wrap(tr("Note added"), () => addNote({ id: order._id, message: note.trim() }));
                 setNoteOpen(false);
                 setNote("");
               }}
             >
-              Save Note
+              {tr("Save Note")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -287,28 +290,28 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
 
       <Dialog open={disputeOpen} onOpenChange={setDisputeOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Open dispute</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Open Dispute")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>What went wrong?</Label>
+            <Label>{tr("What went wrong?")}</Label>
             <Textarea
               value={disputeReason}
               onChange={(e) => setDisputeReason(e.target.value)}
-              placeholder="Damaged goods, wrong items, missing quantity, late delivery…"
+              placeholder={tr("Damaged goods, wrong items, missing quantity, late delivery…")}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDisputeOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setDisputeOpen(false)}>{tr("Close")}</Button>
             <Button
               disabled={busy || !disputeReason.trim()}
               onClick={async () => {
-                await wrap("Dispute opened", () =>
+                await wrap(tr("Dispute opened"), () =>
                   openDispute({ id: order._id, reason: disputeReason.trim() }),
                 );
                 setDisputeOpen(false);
                 setDisputeReason("");
               }}
             >
-              Open Dispute
+              {tr("Open Dispute")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -316,40 +319,40 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
 
       <Dialog open={resolveOpen} onOpenChange={setResolveOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Resolve dispute</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Resolve Dispute")}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Outcome</Label>
+              <Label>{tr("Outcome")}</Label>
               <Select value={outcome} onValueChange={(v) => setOutcome(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="RESOLVED">Resolved in client favor</SelectItem>
-                  <SelectItem value="REJECTED">Closed without action</SelectItem>
+                  <SelectItem value="RESOLVED">{tr("Resolved in client favor")}</SelectItem>
+                  <SelectItem value="REJECTED">{tr("Closed without action")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Resolution notes</Label>
+              <Label>{tr("Resolution notes")}</Label>
               <Textarea
                 value={resolution}
                 onChange={(e) => setResolution(e.target.value)}
-                placeholder="Refund issued, replacement scheduled, claim closed…"
+                placeholder={tr("Refund issued, replacement scheduled, claim closed…")}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setResolveOpen(false)}>Close</Button>
+            <Button variant="outline" onClick={() => setResolveOpen(false)}>{tr("Close")}</Button>
             <Button
               disabled={busy || !resolution.trim()}
               onClick={async () => {
-                await wrap("Dispute updated", () =>
+                await wrap(tr("Dispute updated"), () =>
                   resolveDispute({ id: order._id, resolution: resolution.trim(), outcome }),
                 );
                 setResolveOpen(false);
                 setResolution("");
               }}
             >
-              Save
+              {tr("Save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -359,16 +362,18 @@ const RoleActions = ({ order, role }: { order: any; role: Role }) => {
 };
 
 const DeliveryCard = ({ order, podUrl }: { order: any; podUrl: string | null }) => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   if (!order.carrier && !order.tracking_number && !order.estimated_delivery_at && !order.pod_storage_id) {
     return null;
   }
   return (
     <Card><CardContent className="p-4 space-y-2">
-      <p className="text-xs text-muted-foreground uppercase">Delivery</p>
-      {order.carrier && <p className="text-sm"><span className="text-muted-foreground">Carrier: </span>{order.carrier}</p>}
+      <p className="text-xs text-muted-foreground uppercase">{tr("Delivery")}</p>
+      {order.carrier && <p className="text-sm"><span className="text-muted-foreground">{tr("Carrier")}: </span>{order.carrier}</p>}
       {order.tracking_number && (
         <p className="text-sm">
-          <span className="text-muted-foreground">Tracking: </span>
+          <span className="text-muted-foreground">{tr("Tracking")}: </span>
           {order.tracking_url ? (
             <a className="underline" href={order.tracking_url} target="_blank" rel="noreferrer">{order.tracking_number}</a>
           ) : (
@@ -378,17 +383,17 @@ const DeliveryCard = ({ order, podUrl }: { order: any; podUrl: string | null }) 
       )}
       {order.estimated_delivery_at && (
         <p className="text-sm">
-          <span className="text-muted-foreground">ETA: </span>
-          {new Date(order.estimated_delivery_at).toLocaleDateString()}
+          <span className="text-muted-foreground">{tr("ETA")}: </span>
+          {new Date(order.estimated_delivery_at).toLocaleDateString(locale)}
         </p>
       )}
       {order.pod_storage_id && (
         <p className="text-sm">
-          <span className="text-muted-foreground">Proof of delivery: </span>
+          <span className="text-muted-foreground">{tr("Proof of delivery")}: </span>
           {podUrl ? (
-            <a className="underline" href={podUrl} target="_blank" rel="noreferrer">{order.pod_name || "Download"}</a>
+            <a className="underline" href={podUrl} target="_blank" rel="noreferrer">{order.pod_name || tr("Download")}</a>
           ) : (
-            order.pod_name || "Uploaded"
+            order.pod_name || tr("Uploaded")
           )}
         </p>
       )}
@@ -397,29 +402,31 @@ const DeliveryCard = ({ order, podUrl }: { order: any; podUrl: string | null }) 
 };
 
 const DisputeCard = ({ order }: { order: any }) => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
   if (!order.dispute_status) return null;
   return (
     <Card><CardContent className="p-4 space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground uppercase">Dispute</p>
+        <p className="text-xs text-muted-foreground uppercase">{tr("Dispute")}</p>
         <Badge variant="outline" className={DISPUTE_BADGE_COLOR[order.dispute_status] || ""}>
-          {DISPUTE_LABEL[order.dispute_status] ?? order.dispute_status}
+          {tr(DISPUTE_LABEL[order.dispute_status] ?? order.dispute_status)}
         </Badge>
       </div>
       {order.dispute_reason && (
-        <p className="text-sm"><span className="text-muted-foreground">Reason: </span>{order.dispute_reason}</p>
+        <p className="text-sm"><span className="text-muted-foreground">{tr("Reason:")} </span>{order.dispute_reason}</p>
       )}
       {order.dispute_opened_at && (
         <p className="text-xs text-muted-foreground">
-          Opened {new Date(order.dispute_opened_at).toLocaleString()}
+          {tr("Opened")} {new Date(order.dispute_opened_at).toLocaleString(locale)}
         </p>
       )}
       {order.dispute_resolution && (
-        <p className="text-sm border-t pt-2"><span className="text-muted-foreground">Resolution: </span>{order.dispute_resolution}</p>
+        <p className="text-sm border-t pt-2"><span className="text-muted-foreground">{tr("Resolution:")} </span>{order.dispute_resolution}</p>
       )}
       {order.dispute_resolved_at && (
         <p className="text-xs text-muted-foreground">
-          {order.dispute_status === "RESOLVED" ? "Resolved" : "Closed"} {new Date(order.dispute_resolved_at).toLocaleString()}
+          {order.dispute_status === "RESOLVED" ? tr("Resolved") : tr("Closed")} {new Date(order.dispute_resolved_at).toLocaleString(locale)}
         </p>
       )}
     </CardContent></Card>
@@ -427,9 +434,13 @@ const DisputeCard = ({ order }: { order: any }) => {
 };
 
 export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role }) => {
+  const { tr, lang } = useLanguage();
+  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
+
   const data = useQuery(api.orders.getById, { id: orderId as any });
   if (data === undefined) return <TableSkeleton rows={5} cols={4} />;
-  if (data === null) return <p className="text-muted-foreground">Order not found.</p>;
+  if (data === null) return <p className="text-muted-foreground">{tr("Order not found.")}</p>;
 
   const order: any = data;
   const items: any[] = order.items ?? [];
@@ -439,17 +450,17 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground font-mono">Order {order._id.slice(0, 8)}…</p>
+          <p className="text-xs text-muted-foreground font-mono">{tr("Order")} {order._id.slice(0, 8)}…</p>
           <h1 className="text-2xl font-display font-bold text-foreground">
-            {ORDER_STATUS_LABEL[order.status] ?? order.status}
+            {tr(ORDER_STATUS_LABEL[order.status] ?? order.status)}
           </h1>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className={ORDER_STATUS_COLOR[order.status] || ""}>
-              {ORDER_STATUS_LABEL[order.status] ?? order.status}
+              {tr(ORDER_STATUS_LABEL[order.status] ?? order.status)}
             </Badge>
             {order.dispute_status && (
               <Badge variant="outline" className={DISPUTE_BADGE_COLOR[order.dispute_status] || ""}>
-                {DISPUTE_LABEL[order.dispute_status] ?? order.dispute_status}
+                {tr(DISPUTE_LABEL[order.dispute_status] ?? order.dispute_status)}
               </Badge>
             )}
           </div>
@@ -459,27 +470,27 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card><CardContent className="p-4 space-y-1">
-          <p className="text-xs text-muted-foreground uppercase">Client</p>
+          <p className="text-xs text-muted-foreground uppercase">{tr("Client")}</p>
           <p className="font-medium">{order.client_public_id}</p>
           {order.client_company_name && <p className="text-sm text-muted-foreground">{order.client_company_name}</p>}
           {order.delivery_location && (
             <>
-              <p className="text-xs text-muted-foreground uppercase pt-2">Delivery location</p>
+              <p className="text-xs text-muted-foreground uppercase pt-2">{tr("Delivery location")}</p>
               <p className="text-sm">{order.delivery_location}</p>
             </>
           )}
           {order.required_by && (
             <>
-              <p className="text-xs text-muted-foreground uppercase pt-2">Required by</p>
+              <p className="text-xs text-muted-foreground uppercase pt-2">{tr("Required by")}</p>
               <p className="text-sm">{order.required_by}</p>
             </>
           )}
         </CardContent></Card>
         <Card><CardContent className="p-4 space-y-1">
-          <p className="text-xs text-muted-foreground uppercase">Supplier</p>
+          <p className="text-xs text-muted-foreground uppercase">{tr("Supplier")}</p>
           <p className="font-medium">{order.supplier_public_id}</p>
           {order.supplier_company_name && <p className="text-sm text-muted-foreground">{order.supplier_company_name}</p>}
-          <p className="text-xs text-muted-foreground uppercase pt-2">Total <VatBadge className="ms-1" /></p>
+          <p className="text-xs text-muted-foreground uppercase pt-2">{tr("Total")} <VatBadge className="ms-1" /></p>
           <p className="text-xl font-bold text-primary">{formatSAR(order.total_with_vat)}</p>
         </CardContent></Card>
       </div>
@@ -491,11 +502,11 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Item</TableHead>
-              <TableHead>Qty</TableHead>
-              <TableHead>Lead Time</TableHead>
-              <TableHead>Unit Price <VatBadge className="ms-1" /></TableHead>
-              <TableHead>Subtotal</TableHead>
+              <TableHead>{tr("Item")}</TableHead>
+              <TableHead>{tr("Qty")}</TableHead>
+              <TableHead>{tr("Lead Time")}</TableHead>
+              <TableHead>{tr("Unit Price")} <VatBadge className="ms-1" /></TableHead>
+              <TableHead>{tr("Subtotal")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -505,10 +516,10 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
               return (
                 <TableRow key={item._id}>
                   <TableCell className="font-medium">
-                    {item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || "Item"}
+                    {item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || tr("Item")}
                   </TableCell>
-                  <TableCell>{qty}</TableCell>
-                  <TableCell>{item.lead_time_days ? `${item.lead_time_days} days` : "—"}</TableCell>
+                  <TableCell>{fmtNumber(qty)}</TableCell>
+                  <TableCell>{item.lead_time_days ? tr("{days} days", { days: fmtNumber(item.lead_time_days) }) : "—"}</TableCell>
                   <TableCell>{formatSAR(unit)}</TableCell>
                   <TableCell className="font-medium">{formatSAR(unit * qty)}</TableCell>
                 </TableRow>
