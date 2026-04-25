@@ -27,8 +27,10 @@ const statusColor: Record<string, string> = {
 
 const ClientQuotes = () => {
   const quotesData = useQuery(api.quotes.listMine);
+  const approvalRequests = useQuery(api.approvals.listMyRequests) ?? [];
   const loading = quotesData === undefined;
   const quotes = quotesData ?? [];
+  const pendingApprovals = approvalRequests.filter((r: any) => r.status === "PENDING");
   const respond = useMutation(api.quotes.respond);
   const requestRevision = useMutation(api.quotes.requestClientRevision);
 
@@ -91,6 +93,26 @@ const ClientQuotes = () => {
           <h1 className="text-2xl font-display font-bold text-foreground">My Quotes</h1>
           <p className="text-muted-foreground mt-1">Review quotes sent to you by MWRD.</p>
         </div>
+
+        {pendingApprovals.length > 0 && (
+          <Card className="border-amber-300 bg-amber-50">
+            <CardContent className="p-4">
+              <p className="font-medium text-amber-900">
+                {pendingApprovals.length} accepted quote{pendingApprovals.length === 1 ? "" : "s"} awaiting approval
+              </p>
+              <p className="text-sm text-amber-800 mt-1">
+                Acceptance triggered an approval rule. Order creation is paused until MWRD approves.
+              </p>
+              <ul className="mt-2 text-sm text-amber-900 space-y-1">
+                {pendingApprovals.map((r: any) => (
+                  <li key={r._id}>
+                    <span className="font-medium">{r.rule_name}</span> — {new Intl.NumberFormat("en-SA", { style: "currency", currency: "SAR" }).format(r.quote_total)}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? <TableSkeleton rows={5} cols={5} /> : quotes.length === 0 ? (
           <Card><CardContent className="p-0">

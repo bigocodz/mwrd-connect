@@ -39,6 +39,8 @@ const SupplierProductForm = () => {
   const [costPrice, setCostPrice] = useState("");
   const [leadTime, setLeadTime] = useState("7");
   const [availability, setAvailability] = useState("AVAILABLE");
+  const [stockQuantity, setStockQuantity] = useState("");
+  const [lowStockThreshold, setLowStockThreshold] = useState("");
 
   useEffect(() => {
     if (productData) {
@@ -52,6 +54,10 @@ const SupplierProductForm = () => {
       setCostPrice(String(productData.cost_price));
       setLeadTime(String(productData.lead_time_days));
       setAvailability(productData.availability_status);
+      setStockQuantity(productData.stock_quantity != null ? String(productData.stock_quantity) : "");
+      setLowStockThreshold(
+        productData.low_stock_threshold != null ? String(productData.low_stock_threshold) : "",
+      );
       setIsApproved(productData.approval_status === "APPROVED");
     }
   }, [productData?._id]);
@@ -60,6 +66,9 @@ const SupplierProductForm = () => {
     e.preventDefault();
     setLoading(true);
     const imageArray = images.split("\n").map((s) => s.trim()).filter(Boolean);
+    const stockNumber = stockQuantity.trim() === "" ? undefined : Math.max(0, Math.floor(Number(stockQuantity)));
+    const thresholdNumber =
+      lowStockThreshold.trim() === "" ? undefined : Math.max(0, Math.floor(Number(lowStockThreshold)));
     const payload = {
       name: name.trim(),
       description: description.trim() || undefined,
@@ -71,6 +80,8 @@ const SupplierProductForm = () => {
       cost_price: parseFloat(costPrice) || 0,
       lead_time_days: parseInt(leadTime) || 7,
       availability_status: availability as "AVAILABLE" | "LIMITED_STOCK" | "OUT_OF_STOCK",
+      stock_quantity: stockNumber,
+      low_stock_threshold: thresholdNumber,
     };
 
     try {
@@ -166,6 +177,35 @@ const SupplierProductForm = () => {
                   <SelectItem value="OUT_OF_STOCK">Out of Stock</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Set stock below to auto-derive availability (0 = out of stock; ≤ threshold = limited).
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stock">Stock quantity</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                  placeholder="Leave blank to manage manually"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="threshold">Low-stock threshold</Label>
+                <Input
+                  id="threshold"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={lowStockThreshold}
+                  onChange={(e) => setLowStockThreshold(e.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading || !category}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}

@@ -1,11 +1,15 @@
-import { FileQuestion02, HomeLine, Receipt, ShoppingBag03, Wallet02 } from "@untitledui/icons";
+import { Building02, FileQuestion02, HomeLine, PackageCheck, Receipt, RefreshCcw01, ShoppingBag03, Wallet02 } from "@untitledui/icons";
 import AppShell from "@/components/app/AppShell";
 
 const navItems = [
   { label: "Dashboard", href: "/client/dashboard", icon: HomeLine },
   { label: "Product Catalog", href: "/client/catalog", icon: ShoppingBag03 },
   { label: "My RFQs", href: "/client/rfqs", icon: FileQuestion02 },
+  { label: "Repeat RFQs", href: "/client/schedules", icon: RefreshCcw01 },
   { label: "Quotes", href: "/client/quotes", icon: Receipt },
+  { label: "Orders", href: "/client/orders", icon: PackageCheck },
+  { label: "Invoices", href: "/client/invoices", icon: Receipt },
+  { label: "Organization", href: "/client/organization", icon: Building02 },
   { label: "Account & Billing", href: "/client/account", icon: Wallet02 },
 ];
 

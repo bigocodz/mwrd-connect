@@ -104,7 +104,20 @@ export const getById = query({
       profile.role === "ADMIN"
         ? await quotesQuery.collect()
         : await quotesQuery.filter((q) => q.neq(q.field("status"), "PENDING_ADMIN")).collect();
-    return { ...rfq, items: itemsWithProducts, attachments: await resolveAttachments(ctx, attachments), quotes_count: quotes.length };
+    const [costCenter, branch, department] = await Promise.all([
+      rfq.cost_center_id ? ctx.db.get(rfq.cost_center_id) : null,
+      rfq.branch_id ? ctx.db.get(rfq.branch_id) : null,
+      rfq.department_id ? ctx.db.get(rfq.department_id) : null,
+    ]);
+    return {
+      ...rfq,
+      items: itemsWithProducts,
+      attachments: await resolveAttachments(ctx, attachments),
+      quotes_count: quotes.length,
+      cost_center: costCenter,
+      branch,
+      department,
+    };
   },
 });
 
@@ -263,6 +276,9 @@ export const create = mutation({
     expiry_date: v.optional(v.string()),
     required_by: v.optional(v.string()),
     delivery_location: v.optional(v.string()),
+    cost_center_id: v.optional(v.id("cost_centers")),
+    branch_id: v.optional(v.id("branches")),
+    department_id: v.optional(v.id("departments")),
     attachments: v.optional(v.array(attachmentInput)),
     items: v.array(
       v.object({
@@ -282,6 +298,16 @@ export const create = mutation({
     const profile = await requireClient(ctx);
     if (profile.status === "FROZEN") throw new Error("Account is frozen");
 
+    const verifyOwnership = async (table: "cost_centers" | "branches" | "departments", id: any) => {
+      const doc = (await ctx.db.get(id)) as { client_id?: any } | null;
+      if (!doc || doc.client_id !== profile._id) {
+        throw new Error(`Invalid ${table} reference`);
+      }
+    };
+    if (args.cost_center_id) await verifyOwnership("cost_centers", args.cost_center_id);
+    if (args.branch_id) await verifyOwnership("branches", args.branch_id);
+    if (args.department_id) await verifyOwnership("departments", args.department_id);
+
     const rfqId = await ctx.db.insert("rfqs", {
       client_id: profile._id,
       status: "OPEN",
@@ -291,6 +317,9 @@ export const create = mutation({
       expiry_date: args.expiry_date,
       required_by: args.required_by,
       delivery_location: args.delivery_location,
+      cost_center_id: args.cost_center_id,
+      branch_id: args.branch_id,
+      department_id: args.department_id,
     });
 
     await Promise.all(args.items.map((item) => ctx.db.insert("rfq_items", { ...item, rfq_id: rfqId })));

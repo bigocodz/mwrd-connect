@@ -32,6 +32,22 @@ const AdminQuoteReview = () => {
   const quoteData = useQuery(api.quotes.getForReview, quoteId ? { id: quoteId as any } : "skip");
   const loading = quoteData === undefined;
 
+  const contractProductIds: any[] = (quoteData?.items ?? [])
+    .map((item: any) => item.rfq_item?.product?._id)
+    .filter((id: any): id is string => !!id);
+  const contractsData = useQuery(
+    api.contracts.findApplicable,
+    quoteData && quoteData.supplier_id && quoteData.rfq?.client_id
+      ? {
+          supplier_id: quoteData.supplier_id as any,
+          client_id: quoteData.rfq.client_id as any,
+          product_ids: contractProductIds as any,
+        }
+      : "skip",
+  );
+  const contractPricing: Record<string, any> = (contractsData?.pricing as any) ?? {};
+  const applicableContracts: any[] = contractsData?.contracts ?? [];
+
   const [margins, setMargins] = useState<Record<string, number>>({});
   const [revisionInstructions, setRevisionInstructions] = useState("");
   const [sending, setSending] = useState(false);
@@ -123,6 +139,9 @@ const AdminQuoteReview = () => {
   const items = quoteData.items ?? [];
   const attachments = quoteData.attachments ?? [];
   const revisionEvents = quoteData.revision_events ?? [];
+  const productIds: string[] = items
+    .map((item: any) => item.rfq_item?.product?._id)
+    .filter((id: any): id is string => !!id);
   const canRequestSupplierRevision = ["PENDING_ADMIN", "CLIENT_REVISION_REQUESTED", "REVISION_SUBMITTED"].includes(quoteData.status);
   const canSendToClient = quoteData.status !== "SUPPLIER_REVISION_REQUESTED";
 
@@ -212,11 +231,35 @@ const AdminQuoteReview = () => {
           </Card>
         )}
 
+        {applicableContracts.length > 0 && (
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                Applicable contracts ({applicableContracts.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 text-sm space-y-1">
+              {applicableContracts.map((c: any) => (
+                <div key={c._id} className="flex justify-between gap-3">
+                  <span className="font-medium">{c.name}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {c.start_date}{c.end_date ? ` → ${c.end_date}` : ""}
+                    {c.discount_percent != null ? ` · ${c.discount_percent}% discount` : ""}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
         {items.map((item: any, idx: number) => {
           const margin = margins[item._id] ?? globalMargin;
           const calc = item.is_quoted ? getCalculated(item.cost_price ?? 0, margin) : null;
           const itemName = item.rfq_item?.product?.name || item.rfq_item?.custom_item_description || "Custom Item";
           const category = item.rfq_item?.product?.category;
+          const productId = item.rfq_item?.product?._id;
+          const contractMatch = productId ? contractPricing[String(productId)] : null;
 
           let marginSource = "Global";
           if (clientMargin != null && clientMargin >= 0) marginSource = "Client";
@@ -236,7 +279,18 @@ const AdminQuoteReview = () => {
                 </div>
               </CardHeader>
               {item.is_quoted && (
-                <CardContent className="px-4 pb-4">
+                <CardContent className="px-4 pb-4 space-y-3">
+                  {contractMatch && (
+                    <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900">
+                      Contracted price for this product: <span className="font-medium">{formatSAR(contractMatch.price)}</span>
+                      <span className="text-muted-foreground"> · {contractMatch.contract_name}</span>
+                      {Math.abs((item.cost_price ?? 0) - contractMatch.price) > 0.01 && (
+                        <span className="ml-2 text-amber-700">
+                          Supplier quoted {formatSAR(item.cost_price ?? 0)} ({(((item.cost_price ?? 0) - contractMatch.price) >= 0 ? "+" : "")}{((((item.cost_price ?? 0) - contractMatch.price) / contractMatch.price) * 100).toFixed(1)}%)
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
                       <Label className="text-xs text-muted-foreground">Supplier Cost (SAR)</Label>

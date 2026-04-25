@@ -1,0 +1,27 @@
+import { Badge } from "@/components/ui/badge";
+import { ORDER_EVENT_LABEL } from "./orderStatus";
+
+export const OrderTimeline = ({ events }: { events: any[] }) => {
+  if (!events?.length) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium">Timeline</p>
+      <ol className="space-y-2">
+        {events.map((event: any) => (
+          <li key={event._id} className="rounded-lg border border-border p-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">{event.actor_role}</Badge>
+                <span className="font-medium">{ORDER_EVENT_LABEL[event.event_type] ?? event.event_type}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {new Date(event.created_at).toLocaleString()}
+              </span>
+            </div>
+            {event.message && <p className="mt-2 text-muted-foreground">{event.message}</p>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+};

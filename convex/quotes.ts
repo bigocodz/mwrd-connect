@@ -1,6 +1,8 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireAdmin, requireClient, requireSupplier } from "./lib";
+import { createFromQuote as createOrderFromQuote } from "./orders";
+import { checkApprovalForQuote } from "./approvals";
 
 const attachmentInput = v.object({
   document_type: v.union(
@@ -445,6 +447,10 @@ export const respond = mutation({
     await ctx.db.patch(args.id, { status: args.status });
     if (args.status === "ACCEPTED") {
       await ctx.db.patch(rfq._id, { status: "CLOSED" });
+      const pendingApproval = await checkApprovalForQuote(ctx, args.id, profile._id);
+      if (!pendingApproval) {
+        await createOrderFromQuote(ctx, args.id, profile._id);
+      }
     }
   },
 });

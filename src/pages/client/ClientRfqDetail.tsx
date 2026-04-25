@@ -100,6 +100,20 @@ const ClientRfqDetail = () => {
               <p className="text-muted-foreground">Quote options</p>
               <p className="font-medium">{rfqData.quotes_count ?? 0}</p>
             </div>
+            <div>
+              <p className="text-muted-foreground">Cost center</p>
+              <p className="font-medium">
+                {rfqData.cost_center ? `${rfqData.cost_center.code} — ${rfqData.cost_center.name}` : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Branch</p>
+              <p className="font-medium">{rfqData.branch?.name ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Department</p>
+              <p className="font-medium">{rfqData.department?.name ?? "—"}</p>
+            </div>
           </CardContent>
         </Card>
 

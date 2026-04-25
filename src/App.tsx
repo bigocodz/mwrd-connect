@@ -25,12 +25,18 @@ import AdminPendingProducts from "./pages/admin/AdminPendingProducts";
 import AdminMarginSettings from "./pages/admin/AdminMarginSettings";
 import SupplierProducts from "./pages/supplier/SupplierProducts";
 import SupplierProductForm from "./pages/supplier/SupplierProductForm";
+import SupplierProductsBulk from "./pages/supplier/SupplierProductsBulk";
 import ClientCatalog from "./pages/client/ClientCatalog";
 import ClientRfqs from "./pages/client/ClientRfqs";
 import ClientCreateRfq from "./pages/client/ClientCreateRfq";
 import ClientRfqDetail from "./pages/client/ClientRfqDetail";
 import ClientQuoteComparison from "./pages/client/ClientQuoteComparison";
 import ClientQuotes from "./pages/client/ClientQuotes";
+import ClientOrders from "./pages/client/ClientOrders";
+import ClientOrderDetail from "./pages/client/ClientOrderDetail";
+import ClientOrganization from "./pages/client/ClientOrganization";
+import ClientSchedules from "./pages/client/ClientSchedules";
+import ClientInvoices from "./pages/client/ClientInvoices";
 import ClientAccount from "./pages/client/ClientAccount";
 import AdminRfqs from "./pages/admin/AdminRfqs";
 import AdminRfqQuoteComparison from "./pages/admin/AdminRfqQuoteComparison";
@@ -42,8 +48,23 @@ import AdminPayouts from "./pages/admin/AdminPayouts";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
+import AdminSupplierInvoices from "./pages/admin/AdminSupplierInvoices";
+import AdminClientInvoices from "./pages/admin/AdminClientInvoices";
+import AdminContracts from "./pages/admin/AdminContracts";
+import AdminContractDetail from "./pages/admin/AdminContractDetail";
+import AdminLifecycle from "./pages/admin/AdminLifecycle";
+import AdminDisputes from "./pages/admin/AdminDisputes";
+import AdminPreferredSuppliers from "./pages/admin/AdminPreferredSuppliers";
+import AdminApprovals from "./pages/admin/AdminApprovals";
 import SupplierRfqs from "./pages/supplier/SupplierRfqs";
 import SupplierRfqRespond from "./pages/supplier/SupplierRfqRespond";
+import SupplierOrders from "./pages/supplier/SupplierOrders";
+import SupplierOrderDetail from "./pages/supplier/SupplierOrderDetail";
+import SupplierInvoices from "./pages/supplier/SupplierInvoices";
+import SupplierAnalytics from "./pages/supplier/SupplierAnalytics";
+import SupplierKyc from "./pages/supplier/SupplierKyc";
 import SupplierPayouts from "./pages/supplier/SupplierPayouts";
 import SupplierReviews from "./pages/supplier/SupplierReviews";
 import NotFound from "./pages/NotFound";
@@ -90,6 +111,21 @@ const App = () => (
                 <Route path="/client/quotes" element={
                   <ProtectedRoute allowedRoles={["CLIENT"]}><ClientQuotes /></ProtectedRoute>
                 } />
+                <Route path="/client/orders" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientOrders /></ProtectedRoute>
+                } />
+                <Route path="/client/orders/:orderId" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientOrderDetail /></ProtectedRoute>
+                } />
+                <Route path="/client/organization" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientOrganization /></ProtectedRoute>
+                } />
+                <Route path="/client/schedules" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientSchedules /></ProtectedRoute>
+                } />
+                <Route path="/client/invoices" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientInvoices /></ProtectedRoute>
+                } />
                 <Route path="/client/account" element={
                   <ProtectedRoute allowedRoles={["CLIENT"]}><ClientAccount /></ProtectedRoute>
                 } />
@@ -103,6 +139,9 @@ const App = () => (
                 <Route path="/supplier/products/add" element={
                   <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProductForm /></ProtectedRoute>
                 } />
+                <Route path="/supplier/products/bulk" element={
+                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProductsBulk /></ProtectedRoute>
+                } />
                 <Route path="/supplier/products/:productId" element={
                   <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProductForm /></ProtectedRoute>
                 } />
@@ -111,6 +150,21 @@ const App = () => (
                 } />
                 <Route path="/supplier/rfqs/:rfqId/respond" element={
                   <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierRfqRespond /></ProtectedRoute>
+                } />
+                <Route path="/supplier/orders" element={
+                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierOrders /></ProtectedRoute>
+                } />
+                <Route path="/supplier/orders/:orderId" element={
+                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierOrderDetail /></ProtectedRoute>
+                } />
+                <Route path="/supplier/invoices" element={
+                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierInvoices /></ProtectedRoute>
+                } />
+                <Route path="/supplier/analytics" element={
+                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierAnalytics /></ProtectedRoute>
+                } />
+                <Route path="/supplier/kyc" element={
+                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierKyc /></ProtectedRoute>
                 } />
                 <Route path="/supplier/payouts" element={
                   <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierPayouts /></ProtectedRoute>
@@ -166,6 +220,36 @@ const App = () => (
                 } />
                 <Route path="/admin/leads" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminLeads /></ProtectedRoute>
+                } />
+                <Route path="/admin/orders" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminOrders /></ProtectedRoute>
+                } />
+                <Route path="/admin/orders/:orderId" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminOrderDetail /></ProtectedRoute>
+                } />
+                <Route path="/admin/supplier-invoices" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminSupplierInvoices /></ProtectedRoute>
+                } />
+                <Route path="/admin/client-invoices" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminClientInvoices /></ProtectedRoute>
+                } />
+                <Route path="/admin/contracts" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminContracts /></ProtectedRoute>
+                } />
+                <Route path="/admin/contracts/:contractId" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminContractDetail /></ProtectedRoute>
+                } />
+                <Route path="/admin/lifecycle" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminLifecycle /></ProtectedRoute>
+                } />
+                <Route path="/admin/disputes" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminDisputes /></ProtectedRoute>
+                } />
+                <Route path="/admin/preferred-suppliers" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPreferredSuppliers /></ProtectedRoute>
+                } />
+                <Route path="/admin/approvals" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminApprovals /></ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />
               </Routes>

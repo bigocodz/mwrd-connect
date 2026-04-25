@@ -69,6 +69,47 @@ export const listSuppliers = query({
   },
 });
 
+export const listPreferredSuppliers = query({
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    const suppliers = await ctx.db
+      .query("profiles")
+      .withIndex("by_role", (q) => q.eq("role", "SUPPLIER"))
+      .collect();
+    const preferred = suppliers.filter((s) => s.is_preferred);
+    return preferred.sort((a, b) => (b.preferred_at ?? 0) - (a.preferred_at ?? 0));
+  },
+});
+
+export const setPreferredSupplier = mutation({
+  args: {
+    id: v.id("profiles"),
+    is_preferred: v.boolean(),
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx);
+    const profile = await ctx.db.get(args.id);
+    if (!profile) throw new ConvexError("Supplier not found");
+    if (profile.role !== "SUPPLIER") throw new ConvexError("Only suppliers can be marked preferred");
+    if (args.is_preferred) {
+      await ctx.db.patch(args.id, {
+        is_preferred: true,
+        preferred_note: args.note,
+        preferred_at: Date.now(),
+        preferred_by: admin._id,
+      });
+    } else {
+      await ctx.db.patch(args.id, {
+        is_preferred: false,
+        preferred_note: undefined,
+        preferred_at: undefined,
+        preferred_by: undefined,
+      });
+    }
+  },
+});
+
 export const updateProfile = mutation({
   args: {
     id: v.id("profiles"),

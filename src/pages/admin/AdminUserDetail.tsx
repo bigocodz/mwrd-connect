@@ -14,6 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Loader2, Snowflake, Sun, Save } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { AdminKycPanel } from "@/components/kyc/AdminKycPanel";
+import { PreferredSupplierCard } from "@/components/users/PreferredSupplierCard";
+import { StatementPanel } from "@/components/invoices/StatementPanel";
 
 const AdminUserDetail = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -241,6 +244,22 @@ const AdminUserDetail = () => {
           {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
           Save Changes
         </Button>
+      </div>
+
+      {profile.role === "SUPPLIER" && (
+        <div className="mt-6">
+          <PreferredSupplierCard profile={profile} />
+        </div>
+      )}
+
+      {profile.role === "CLIENT" && (
+        <div className="mt-6">
+          <StatementPanel mode="ADMIN" clientId={profile._id} />
+        </div>
+      )}
+
+      <div className="mt-6">
+        <AdminKycPanel profileId={profile._id} />
       </div>
 
       <Dialog open={freezeOpen} onOpenChange={setFreezeOpen}>

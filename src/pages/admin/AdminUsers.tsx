@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Star } from "lucide-react";
 import { format } from "date-fns";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -129,7 +129,12 @@ const AdminUsers = () => {
               <TableBody>
                 {paginated.map((u) => (
                   <TableRow key={u._id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/users/${u._id}`)}>
-                    <TableCell className="font-mono text-sm">{u.public_id || "—"}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      <div className="flex items-center gap-1.5">
+                        {u.public_id || "—"}
+                        {u.is_preferred && <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" aria-label="Preferred supplier" />}
+                      </div>
+                    </TableCell>
                     <TableCell>{u.company_name || "—"}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{u.role.toLowerCase()}</Badge></TableCell>
                     <TableCell><span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[u.status] || ""}`}>{u.status}</span></TableCell>

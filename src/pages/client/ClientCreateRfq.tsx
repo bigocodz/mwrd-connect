@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Trash2, ShoppingBag, AlertTriangle, Loader2, FileText, Sparkles } from "lucide-react";
 import { getRfqTemplate, rfqTemplates } from "@/data/rfqTemplates";
@@ -75,6 +76,10 @@ const ClientCreateRfq = () => {
   const productsData = useQuery(api.products.listApproved);
   const loadingProducts = productsData === undefined;
   const products = productsData ?? [];
+  const costCenters = useQuery(api.organization.listMyCostCenters) ?? [];
+  const branches = useQuery(api.organization.listMyBranches) ?? [];
+  const departments = useQuery(api.organization.listMyDepartments) ?? [];
+  const createSchedule = useMutation(api.schedules.create);
 
   const [items, setItems] = useState<RfqItemDraft[]>([emptyItem()]);
   const [templateKey, setTemplateKey] = useState("blank");
@@ -83,9 +88,62 @@ const ClientCreateRfq = () => {
   const [requiredBy, setRequiredBy] = useState("");
   const [notes, setNotes] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const [costCenterId, setCostCenterId] = useState("");
+  const [branchId, setBranchId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [attachments, setAttachments] = useState<RfqAttachmentDraft[]>([]);
   const [uploadingAttachmentKey, setUploadingAttachmentKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleName, setScheduleName] = useState("");
+  const [scheduleCadence, setScheduleCadence] = useState<"WEEKLY" | "BIWEEKLY" | "MONTHLY" | "QUARTERLY">("MONTHLY");
+  const [scheduleStart, setScheduleStart] = useState(dateInputFromToday(7));
+  const [scheduleLeadDays, setScheduleLeadDays] = useState("7");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
+  const handleSaveSchedule = async () => {
+    if (!scheduleName.trim()) {
+      toast.error("Schedule name required");
+      return;
+    }
+    if (items.length === 0) {
+      toast.error("Add at least one item");
+      return;
+    }
+    setSavingSchedule(true);
+    try {
+      await createSchedule({
+        name: scheduleName.trim(),
+        cadence: scheduleCadence,
+        start_at: new Date(scheduleStart).getTime(),
+        template: {
+          category: category || undefined,
+          template_key: templateKey === "blank" ? undefined : templateKey,
+          notes: notes || undefined,
+          delivery_location: deliveryLocation || undefined,
+          lead_time_days: Math.max(1, parseInt(scheduleLeadDays, 10) || 7),
+          cost_center_id: costCenterId ? (costCenterId as any) : undefined,
+          branch_id: branchId ? (branchId as any) : undefined,
+          department_id: departmentId ? (departmentId as any) : undefined,
+          items: items.map((item) => ({
+            product_id: item.product_id ? (item.product_id as any) : undefined,
+            custom_item_description: item.custom_item_description || undefined,
+            quantity: item.quantity,
+            flexibility: item.flexibility,
+            special_notes: item.special_notes || undefined,
+          })),
+        },
+      });
+      toast.success("Schedule saved");
+      setScheduleOpen(false);
+      setScheduleName("");
+      navigate("/client/schedules");
+    } catch (err: any) {
+      toast.error(err.message || "Failed");
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
 
   const isFrozen = profile?.status === "FROZEN";
 
@@ -192,6 +250,9 @@ const ClientCreateRfq = () => {
         expiry_date: expiryDate || undefined,
         required_by: requiredBy || undefined,
         delivery_location: deliveryLocation || undefined,
+        cost_center_id: costCenterId ? (costCenterId as any) : undefined,
+        branch_id: branchId ? (branchId as any) : undefined,
+        department_id: departmentId ? (departmentId as any) : undefined,
         attachments: attachments.map(({ key: _key, notes: attachmentNotes, storage_id, url, content_type, size, ...attachment }) => ({
           ...attachment,
           storage_id: storage_id ? (storage_id as any) : undefined,
@@ -401,6 +462,49 @@ const ClientCreateRfq = () => {
                 placeholder="General notes for this RFQ…"
               />
             </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <div>
+                <Label>Cost center (optional)</Label>
+                <Select value={costCenterId || "__none"} onValueChange={(v) => setCostCenterId(v === "__none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">None</SelectItem>
+                    {costCenters.map((cc: any) => (
+                      <SelectItem key={cc._id} value={cc._id}>{cc.code} — {cc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Branch (optional)</Label>
+                <Select value={branchId || "__none"} onValueChange={(v) => setBranchId(v === "__none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">None</SelectItem>
+                    {branches.map((b: any) => (
+                      <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Department (optional)</Label>
+                <Select value={departmentId || "__none"} onValueChange={(v) => setDepartmentId(v === "__none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">None</SelectItem>
+                    {departments.map((d: any) => (
+                      <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {costCenters.length === 0 && branches.length === 0 && departments.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Set up cost centers, branches, and departments in <span className="font-medium">Account → Organization</span> to tag RFQs.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -481,12 +585,64 @@ const ClientCreateRfq = () => {
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => navigate("/client/rfqs")}>Cancel</Button>
+          <Button variant="outline" onClick={() => setScheduleOpen(true)} disabled={isFrozen || items.length === 0}>
+            Save as schedule
+          </Button>
           <Button onClick={handleSubmit} disabled={submitting || isFrozen}>
             <ShoppingBag className="w-4 h-4 mr-2" />
             {submitting ? "Submitting…" : "Submit RFQ"}
           </Button>
         </div>
       </div>
+
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Save as repeat RFQ</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Schedule name</Label>
+              <Input value={scheduleName} onChange={(e) => setScheduleName(e.target.value)} placeholder="Monthly office supplies" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Cadence</Label>
+                <Select value={scheduleCadence} onValueChange={(v) => setScheduleCadence(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="WEEKLY">Weekly</SelectItem>
+                    <SelectItem value="BIWEEKLY">Every 2 weeks</SelectItem>
+                    <SelectItem value="MONTHLY">Monthly</SelectItem>
+                    <SelectItem value="QUARTERLY">Quarterly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>First run</Label>
+                <Input type="date" value={scheduleStart} onChange={(e) => setScheduleStart(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label>Lead time per RFQ (days)</Label>
+              <Input
+                type="number"
+                min="1"
+                value={scheduleLeadDays}
+                onChange={(e) => setScheduleLeadDays(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Each generated RFQ will have <code>required_by</code> set this many days after creation.
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Items, category, notes, delivery, and org tags above are stored as the template.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveSchedule} disabled={savingSchedule}>Save schedule</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ClientLayout>
   );
 };
