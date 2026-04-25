@@ -114,9 +114,7 @@ const Login = () => {
             <div className="bg-white px-6 py-10 sm:px-10 sm:py-12 lg:rounded-l-[84px] lg:px-14 lg:py-14">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#141413] text-[#faf9f5] shadow-[0_0_0_1px_#30302e]">
-                    <span className="font-display text-lg font-medium">M</span>
-                  </div>
+                  <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-2xl object-cover" />
                   <span className="font-display text-lg font-semibold text-[#141413]">MWRD</span>
                 </div>
 

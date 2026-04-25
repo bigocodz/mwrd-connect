@@ -34,9 +34,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
       <aside className="hidden w-72 shrink-0 bg-[#faf9f5] shadow-[inset_-1px_0_0_#e8e6dc] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <div className="border-b border-[#f0eee6] px-5 py-5">
           <Link to={navItems[0]?.href ?? "/"} className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#141413] font-serif text-lg font-medium text-[#faf9f5] shadow-[0_0_0_1px_#30302e]">
-              M
-            </div>
+            <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-xl object-cover" />
             <div className="min-w-0">
               <p className="font-display text-xl font-medium leading-6 text-[#141413]">MWRD</p>
               <p className="text-xs leading-5 text-[#5e5d59]">Procurement workspace</p>
@@ -92,9 +90,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
         <header className="sticky top-0 z-30 border-b border-[#e8e6dc] bg-[#faf9f5]/95 backdrop-blur">
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#141413] font-serif text-base font-medium text-[#faf9f5]">
-                M
-              </div>
+              <img src="/logo.png" alt="MWRD" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
               <div className="min-w-0">
                 <p className="truncate font-display text-base font-medium text-[#141413]">MWRD</p>
                 <p className="truncate text-xs text-[#5e5d59]">{portalLabel}</p>
