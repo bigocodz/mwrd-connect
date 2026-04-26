@@ -3,17 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, Navigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, User, Languages } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, User, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthActions } from "@convex-dev/auth/react";
+
+type AuthPanelMode = "signIn" | "forgot" | "reset" | "updated";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [panelMode, setPanelMode] = useState<AuthPanelMode>("signIn");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
   const { tr, dir, lang, setLang } = useLanguage();
   const { profile, loading: authLoading } = useAuth();
   const { signIn } = useAuthActions();
@@ -40,6 +47,57 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openResetPanel = () => {
+    setResetEmail(email);
+    setResetCode("");
+    setResetPassword("");
+    setPanelMode("forgot");
+  };
+
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    try {
+      await signIn("password", { email: resetEmail, flow: "reset" });
+      setPanelMode("reset");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : tr("Failed to send reset email"));
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetPassword.length < 6) {
+      toast.error(tr("Password must be at least 6 characters"));
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await signIn("password", {
+        email: resetEmail,
+        code: resetCode,
+        newPassword: resetPassword,
+        flow: "reset-verification",
+      });
+      setPanelMode("updated");
+      setPassword("");
+      setResetCode("");
+      setResetPassword("");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : tr("Invalid or expired code"));
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const returnToSignIn = () => {
+    setPanelMode("signIn");
+    setResetCode("");
+    setResetPassword("");
   };
 
   const toggleLang = () => setLang(lang === "ar" ? "en" : "ar");
@@ -119,77 +177,197 @@ const Login = () => {
           </div>
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
-            <div className="mb-8 h-1 w-11 rounded-full bg-[#ff6d43]" />
-            <h1 className="font-display text-4xl font-semibold tracking-normal text-[#1a1a1a] sm:text-5xl">
-              {tr("Sign In")}
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-[#5f625f]">
-              {tr("Secure access for clients, suppliers, and admins with portal-level controls.")}
-            </p>
+            <div key={panelMode} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {panelMode === "signIn" && (
+                <>
+                  <div className="mb-8 h-1 w-11 rounded-full bg-[#ff6d43]" />
+                  <h1 className="font-display text-4xl font-semibold tracking-normal text-[#1a1a1a] sm:text-5xl">
+                    {tr("Sign In")}
+                  </h1>
+                  <p className="mt-3 text-sm leading-6 text-[#5f625f]">
+                    {tr("Secure access for clients, suppliers, and admins with portal-level controls.")}
+                  </p>
 
-            <form onSubmit={handleLogin} className="mt-10 space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="sr-only">{tr("Email or Username")}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder={tr("Email or Username")}
-                  className="h-12 px-4 text-base"
-                />
-              </div>
+                  <form onSubmit={handleLogin} className="mt-10 space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="sr-only">{tr("Email or Username")}</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        placeholder={tr("Email or Username")}
+                        className="h-12 px-4 text-base"
+                      />
+                    </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="sr-only">{tr("Password")}</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder={tr("Password")}
-                    className="h-12 ps-4 pe-12 text-base"
-                  />
-                  <button
-                    type="button"
-                    className="absolute end-4 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#8a8a85] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    aria-label={showPassword ? tr("Hide password") : tr("Show password")}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <div className={`flex ${dir === "rtl" ? "justify-end" : "justify-start"}`}>
-                  <Link to="/forgot-password" className="text-sm font-semibold text-[#ff6d43] hover:underline">
-                    {tr("Forgot password?")}
-                  </Link>
-                </div>
-              </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="sr-only">{tr("Password")}</Label>
+                      <div className="relative">
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          placeholder={tr("Password")}
+                          className="h-12 ps-4 pe-12 text-base"
+                        />
+                        <button
+                          type="button"
+                          className="absolute end-4 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#8a8a85] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          aria-label={showPassword ? tr("Hide password") : tr("Show password")}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      <div className={`flex ${dir === "rtl" ? "justify-end" : "justify-start"}`}>
+                        <button
+                          type="button"
+                          onClick={openResetPanel}
+                          className="text-sm font-semibold text-[#ff6d43] hover:underline"
+                        >
+                          {tr("Forgot password?")}
+                        </button>
+                      </div>
+                    </div>
 
-              <Button type="submit" disabled={loading} className="h-12 w-full">
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
+                    <Button type="submit" disabled={loading} className="h-12 w-full">
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          {tr("Sign In")}
+                          {dir === "rtl" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                        </>
+                      )}
+                    </Button>
+
+                    <div className="pt-2">
+                      <Link
+                        to="/"
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-[#5f625f] hover:text-[#1a1a1a]"
+                      >
+                        {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                        {tr("Back to Home")}
+                      </Link>
+                    </div>
+                  </form>
+                </>
+              )}
+
+              {panelMode === "forgot" && (
+                <>
+                  <div className="mb-8 h-1 w-11 rounded-full bg-[#ff6d43]" />
+                  <h1 className="font-display text-4xl font-semibold tracking-normal text-[#1a1a1a] sm:text-5xl">
+                    {tr("Reset Password")}
+                  </h1>
+                  <p className="mt-3 text-sm leading-6 text-[#5f625f]">
+                    {tr("Enter your email and we will send a verification code.")}
+                  </p>
+
+                  <form onSubmit={handleResetRequest} className="mt-10 space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-email" className="sr-only">{tr("Email")}</Label>
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        required
+                        placeholder={tr("Email")}
+                        className="h-12 px-4 text-base"
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={resetLoading} className="h-12 w-full">
+                      {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : tr("Send Reset Code")}
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={returnToSignIn}
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-[#5f625f] hover:text-[#1a1a1a]"
+                    >
+                      {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                      {tr("Back to Sign In")}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {panelMode === "reset" && (
+                <>
+                  <div className="mb-8 h-1 w-11 rounded-full bg-[#ff6d43]" />
+                  <h1 className="font-display text-4xl font-semibold tracking-normal text-[#1a1a1a] sm:text-5xl">
+                    {tr("Check your email")}
+                  </h1>
+                  <p className="mt-3 text-sm leading-6 text-[#5f625f]">
+                    {tr("We sent a verification code to")} <strong>{resetEmail}</strong>.
+                  </p>
+
+                  <form onSubmit={handleResetPassword} className="mt-10 space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-code" className="sr-only">{tr("Verification Code")}</Label>
+                      <Input
+                        id="reset-code"
+                        type="text"
+                        value={resetCode}
+                        onChange={(e) => setResetCode(e.target.value)}
+                        required
+                        placeholder={tr("Verification Code")}
+                        className="h-12 px-4 text-base"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="reset-password" className="sr-only">{tr("New Password")}</Label>
+                      <Input
+                        id="reset-password"
+                        type="password"
+                        value={resetPassword}
+                        onChange={(e) => setResetPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        placeholder={tr("New Password")}
+                        className="h-12 px-4 text-base"
+                      />
+                    </div>
+
+                    <Button type="submit" disabled={resetLoading} className="h-12 w-full">
+                      {resetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : tr("Update Password")}
+                    </Button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPanelMode("forgot")}
+                      className="inline-flex items-center gap-1 text-sm font-semibold text-[#5f625f] hover:text-[#1a1a1a]"
+                    >
+                      {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                      {tr("Use another email")}
+                    </button>
+                  </form>
+                </>
+              )}
+
+              {panelMode === "updated" && (
+                <>
+                  <CheckCircle2 className="mb-5 h-14 w-14 text-[#ff6d43]" />
+                  <h1 className="font-display text-4xl font-semibold tracking-normal text-[#1a1a1a] sm:text-5xl">
+                    {tr("Password Updated")}
+                  </h1>
+                  <p className="mt-3 text-sm leading-6 text-[#5f625f]">
+                    {tr("Your password has been reset successfully.")}
+                  </p>
+                  <Button type="button" onClick={returnToSignIn} className="mt-10 h-12 w-full">
                     {tr("Sign In")}
                     {dir === "rtl" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-                  </>
-                )}
-              </Button>
-
-              <div className="pt-2">
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-1 text-sm font-semibold text-[#5f625f] hover:text-[#1a1a1a]"
-                >
-                  {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-                  {tr("Back to Home")}
-                </Link>
-              </div>
-            </form>
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </section>
       </div>

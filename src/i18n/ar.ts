@@ -77,6 +77,7 @@ export const arStrings: Record<string, string> = {
   "Back to Home": "العودة للرئيسية",
   "Back to Login": "العودة لتسجيل الدخول",
   "Reset Password": "إعادة تعيين كلمة المرور",
+  "Enter your email and we will send a verification code.": "أدخل بريدك الإلكتروني وسنرسل رمز تحقق.",
   "Email": "البريد الإلكتروني",
   "Send Reset Code": "إرسال رمز إعادة التعيين",
   "Failed to send reset email": "تعذر إرسال رسالة إعادة التعيين",
@@ -93,6 +94,8 @@ export const arStrings: Record<string, string> = {
   "Code from email": "الرمز من البريد الإلكتروني",
   "New Password": "كلمة المرور الجديدة",
   "Update Password": "تحديث كلمة المرور",
+  "Back to Sign In": "العودة لتسجيل الدخول",
+  "Use another email": "استخدام بريد إلكتروني آخر",
   "Password must be at least 8 characters": "يجب ألا تقل كلمة المرور عن 8 أحرف",
   "Passwords do not match": "كلمتا المرور غير متطابقتين",
   "Password updated": "تم تحديث كلمة المرور",
@@ -811,7 +814,6 @@ export const arStrings: Record<string, string> = {
   "Procurement control that stays human.":
     "تحكم في المشتريات بلمسة إنسانية.",
   "Managed B2B Marketplace": "سوق B2B مُدار",
-  "RFQs": "طلبات التسعير",
 
   // Language toggle
   "Switch to Arabic": "التبديل إلى العربية",
