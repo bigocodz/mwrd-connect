@@ -23,7 +23,7 @@ const NotificationBell = () => {
     <div className="relative" ref={ref}>
       <button
         type="button"
-        className="relative flex h-10 w-10 items-center justify-center rounded-lg text-[#5f625f] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
+        className="relative flex h-10 w-10 items-center justify-center rounded-md text-[#5f625f] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2bb6c8]"
         onClick={() => setOpen(!open)}
         aria-label={tr("Notifications")}
       >
@@ -36,7 +36,7 @@ const NotificationBell = () => {
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg bg-white shadow-[0_18px_44px_rgba(26,26,26,0.12),0_0_0_1px_rgba(190,184,174,0.42)]">
+        <div className="absolute end-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-md bg-white shadow-[0_18px_44px_rgba(26,26,26,0.12),0_0_0_1px_rgba(190,184,174,0.42)]">
           <div className="flex items-center justify-between border-b border-[#ece7e1] px-3 py-2">
             <span className="font-display text-base font-semibold text-[#1a1a1a]">{tr("Notifications")}</span>
             {unreadCount > 0 && (

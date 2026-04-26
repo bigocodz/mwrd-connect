@@ -17,8 +17,10 @@ import { format } from "date-fns";
 import { AdminKycPanel } from "@/components/kyc/AdminKycPanel";
 import { PreferredSupplierCard } from "@/components/users/PreferredSupplierCard";
 import { StatementPanel } from "@/components/invoices/StatementPanel";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminUserDetail = () => {
+  const { tr } = useLanguage();
   const { userId } = useParams<{ userId: string }>();
 
   const profileData = useQuery(api.users.getById, userId ? { id: userId as any } : "skip");
@@ -68,9 +70,9 @@ const AdminUserDetail = () => {
       }
       await updateProfile(updates as any);
       await logAudit({ action: "UPDATE_PROFILE", target_user_id: userId as any, details: { status, kyc_status: kycStatus } });
-      toast.success("Profile updated");
+      toast.success(tr("Profile updated"));
     } catch (err: any) {
-      toast.error("Failed to save: " + err.message);
+      toast.error(tr("Failed to save:") + " " + err.message);
     } finally {
       setSaving(false);
     }
@@ -82,11 +84,11 @@ const AdminUserDetail = () => {
     try {
       await freezeAccount({ id: userId as any, freeze_reason: freezeReason });
       await logAudit({ action: "FREEZE_ACCOUNT", target_user_id: userId as any, details: { reason: freezeReason } });
-      toast.success("Account frozen");
+      toast.success(tr("Account frozen"));
       setFreezeOpen(false);
       setFreezeReason("");
     } catch (err: any) {
-      toast.error("Failed to freeze: " + err.message);
+      toast.error(tr("Failed to freeze:") + " " + err.message);
     } finally {
       setFreezing(false);
     }
@@ -98,9 +100,9 @@ const AdminUserDetail = () => {
     try {
       await unfreezeAccount({ id: userId as any });
       await logAudit({ action: "UNFREEZE_ACCOUNT", target_user_id: userId as any, details: {} });
-      toast.success("Account unfrozen");
+      toast.success(tr("Account unfrozen"));
     } catch (err: any) {
-      toast.error("Failed to unfreeze: " + err.message);
+      toast.error(tr("Failed to unfreeze:") + " " + err.message);
     } finally {
       setSaving(false);
     }
@@ -119,7 +121,7 @@ const AdminUserDetail = () => {
   if (!profile) {
     return (
       <AdminLayout>
-        <p className="text-muted-foreground">User not found.</p>
+        <p className="text-muted-foreground">{tr("User not found.")}</p>
       </AdminLayout>
     );
   }
@@ -129,12 +131,12 @@ const AdminUserDetail = () => {
   return (
     <AdminLayout>
       <Link to="/admin/users" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6">
-        <ArrowLeft className="w-4 h-4" /> Back to Users
+        <ArrowLeft className="w-4 h-4" /> {tr("Back to Users")}
       </Link>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">{profile.company_name || "Unknown"}</h1>
+          <h1 className="font-display text-3xl font-bold text-foreground">{profile.company_name || tr("Unknown")}</h1>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm text-muted-foreground font-mono">{profile.public_id}</span>
             <Badge variant="outline" className="capitalize">{profile.role.toLowerCase()}</Badge>
@@ -143,11 +145,11 @@ const AdminUserDetail = () => {
         <div className="flex gap-2">
           {profile.status === "FROZEN" ? (
             <Button variant="outline" onClick={handleUnfreeze} disabled={saving}>
-              <Sun className="w-4 h-4 me-1.5" /> Unfreeze
+              <Sun className="w-4 h-4 me-1.5" /> {tr("Unfreeze")}
             </Button>
           ) : (
             <Button variant="destructive" onClick={() => setFreezeOpen(true)}>
-              <Snowflake className="w-4 h-4 me-1.5" /> Freeze Account
+              <Snowflake className="w-4 h-4 me-1.5" /> {tr("Freeze Account")}
             </Button>
           )}
         </div>
@@ -155,38 +157,38 @@ const AdminUserDetail = () => {
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Account Settings</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tr("Account Settings")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{tr("Status")}</Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="DEACTIVATED">Deactivated</SelectItem>
-                  <SelectItem value="FROZEN">Frozen</SelectItem>
-                  <SelectItem value="REQUIRES_ATTENTION">Requires Attention</SelectItem>
+                  <SelectItem value="ACTIVE">{tr("Active")}</SelectItem>
+                  <SelectItem value="DEACTIVATED">{tr("Deactivated")}</SelectItem>
+                  <SelectItem value="FROZEN">{tr("Frozen")}</SelectItem>
+                  <SelectItem value="REQUIRES_ATTENTION">{tr("Requires Attention")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>KYC Status</Label>
+              <Label>{tr("KYC Status")}</Label>
               <Select value={kycStatus} onValueChange={setKycStatus}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="INCOMPLETE">Incomplete</SelectItem>
-                  <SelectItem value="IN_REVIEW">In Review</SelectItem>
-                  <SelectItem value="VERIFIED">Verified</SelectItem>
-                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="INCOMPLETE">{tr("Incomplete")}</SelectItem>
+                  <SelectItem value="IN_REVIEW">{tr("In Review")}</SelectItem>
+                  <SelectItem value="VERIFIED">{tr("Verified")}</SelectItem>
+                  <SelectItem value="REJECTED">{tr("Rejected")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p>Created: {format(new Date(profile._creationTime), "PPpp")}</p>
+              <p>{tr("Created")}: {format(new Date(profile._creationTime), "PPpp")}</p>
               {profile.frozen_at && (
                 <>
-                  <p>Frozen at: {format(new Date(profile.frozen_at), "PPpp")}</p>
-                  {profile.freeze_reason && <p>Reason: {profile.freeze_reason}</p>}
+                  <p>{tr("Frozen at")}: {format(new Date(profile.frozen_at), "PPpp")}</p>
+                  {profile.freeze_reason && <p>{tr("Reason")}: {profile.freeze_reason}</p>}
                 </>
               )}
             </div>
@@ -195,32 +197,32 @@ const AdminUserDetail = () => {
 
         {isClient ? (
           <Card>
-            <CardHeader><CardTitle>Financial Settings</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("Financial Settings")}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Credit Limit</Label>
+                <Label>{tr("Credit Limit")}</Label>
                 <Input type="number" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Current Balance</Label>
+                <Label>{tr("Current Balance")}</Label>
                 <Input type="number" value={profile.current_balance ?? 0} disabled className="bg-muted" />
               </div>
               <div className="space-y-2">
-                <Label>Payment Terms</Label>
+                <Label>{tr("Payment Terms")}</Label>
                 <Select value={paymentTerms} onValueChange={setPaymentTerms}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="net_30">Net 30</SelectItem>
-                    <SelectItem value="prepaid">Prepaid</SelectItem>
+                    <SelectItem value="net_30">{tr("Net 30")}</SelectItem>
+                    <SelectItem value="prepaid">{tr("Prepaid")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Client Margin Override (%)</Label>
+                <Label>{tr("Client Margin Override (%)")}</Label>
                 <Input
                   type="number"
                   step="0.01"
-                  placeholder="Leave empty for default"
+                  placeholder={tr("Leave empty for default")}
                   value={clientMargin}
                   onChange={(e) => setClientMargin(e.target.value)}
                 />
@@ -229,11 +231,11 @@ const AdminUserDetail = () => {
           </Card>
         ) : (
           <Card>
-            <CardHeader><CardTitle>Profile Info</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{tr("Profile Info")}</CardTitle></CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p><span className="text-muted-foreground">ID:</span> <span className="font-mono">{profile._id}</span></p>
-              <p><span className="text-muted-foreground">Public ID:</span> {profile.public_id}</p>
-              <p><span className="text-muted-foreground">Company:</span> {profile.company_name || "—"}</p>
+              <p><span className="text-muted-foreground">{tr("ID")}:</span> <span className="font-mono">{profile._id}</span></p>
+              <p><span className="text-muted-foreground">{tr("Public ID")}:</span> {profile.public_id}</p>
+              <p><span className="text-muted-foreground">{tr("Company")}:</span> {profile.company_name || "—"}</p>
             </CardContent>
           </Card>
         )}
@@ -242,7 +244,7 @@ const AdminUserDetail = () => {
       <div className="mt-6">
         <Button onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <Save className="w-4 h-4 me-1.5" />}
-          Save Changes
+          {tr("Save Changes")}
         </Button>
       </div>
 
@@ -265,27 +267,27 @@ const AdminUserDetail = () => {
       <Dialog open={freezeOpen} onOpenChange={setFreezeOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Freeze Account</DialogTitle>
+            <DialogTitle>{tr("Freeze Account")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              This will freeze <strong>{profile.company_name}</strong>'s account. They won't be able to access the portal.
+              {tr("This will freeze {company}'s account. They won't be able to access the portal.", { company: profile.company_name ?? "" })}
             </p>
             <div className="space-y-2">
-              <Label>Reason</Label>
+              <Label>{tr("Reason")}</Label>
               <Textarea
                 value={freezeReason}
                 onChange={(e) => setFreezeReason(e.target.value)}
-                placeholder="Explain why this account is being frozen..."
+                placeholder={tr("Explain why this account is being frozen...")}
                 rows={3}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setFreezeOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setFreezeOpen(false)}>{tr("Cancel")}</Button>
             <Button variant="destructive" onClick={handleFreeze} disabled={freezing || !freezeReason.trim()}>
               {freezing ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <Snowflake className="w-4 h-4 me-1.5" />}
-              Freeze Account
+              {tr("Freeze Account")}
             </Button>
           </DialogFooter>
         </DialogContent>

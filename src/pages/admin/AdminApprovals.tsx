@@ -15,6 +15,7 @@ import { CheckCircle, XCircle } from "@untitledui/icons";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatSAR } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const statusColor: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-800",
@@ -23,6 +24,7 @@ const statusColor: Record<string, string> = {
 };
 
 const AdminApprovals = () => {
+  const { tr } = useLanguage();
   const allData = useQuery(api.approvals.listAll);
   const approve = useMutation(api.approvals.approve);
   const reject = useMutation(api.approvals.reject);
@@ -39,9 +41,9 @@ const AdminApprovals = () => {
     setBusy(true);
     try {
       await approve({ id: id as any });
-      toast.success("Approved — order created");
+      toast.success(tr("Approved — order created"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -52,11 +54,11 @@ const AdminApprovals = () => {
     setBusy(true);
     try {
       await reject({ id: activeReject._id, note: note.trim() });
-      toast.success("Rejected");
+      toast.success(tr("Rejected"));
       setActiveReject(null);
       setNote("");
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -79,15 +81,15 @@ const AdminApprovals = () => {
       </TableCell>
       <TableCell>
         <Button size="sm" variant="ghost" asChild>
-          <Link to={`/admin/quotes/${r.quote_id}/review`}>Quote</Link>
+          <Link to={`/admin/quotes/${r.quote_id}/review`}>{tr("Quote")}</Link>
         </Button>
         {r.status === "PENDING" && (
           <>
             <Button size="sm" onClick={() => handleApprove(r._id)} disabled={busy}>
-              <CheckCircle className="w-3 h-3 me-1" /> Approve
+              <CheckCircle className="w-3 h-3 me-1" /> {tr("Approve")}
             </Button>
             <Button size="sm" variant="destructive" onClick={() => { setActiveReject(r); setNote(""); }} disabled={busy}>
-              <XCircle className="w-3 h-3 me-1" /> Reject
+              <XCircle className="w-3 h-3 me-1" /> {tr("Reject")}
             </Button>
           </>
         )}
@@ -99,11 +101,11 @@ const AdminApprovals = () => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Rule</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Total</TableHead>
-          <TableHead>Requested</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>{tr("Rule")}</TableHead>
+          <TableHead>{tr("Client")}</TableHead>
+          <TableHead>{tr("Total")}</TableHead>
+          <TableHead>{tr("Requested")}</TableHead>
+          <TableHead>{tr("Status")}</TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
@@ -115,15 +117,15 @@ const AdminApprovals = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Approval Queue</h1>
-          <p className="text-muted-foreground mt-1">Client-defined approval rules gate quote acceptance until MWRD reviews.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Approval Queue")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Client-defined approval rules gate quote acceptance until MWRD reviews.")}</p>
         </div>
 
         <section className="space-y-3">
-          <h2 className="font-display text-lg font-medium">Pending ({pending.length})</h2>
+          <h2 className="font-display text-lg font-medium">{tr("Pending")} ({pending.length})</h2>
           {loading ? <TableSkeleton rows={3} cols={6} /> : pending.length === 0 ? (
             <Card><CardContent className="p-0">
-              <EmptyState icon="audit" title="Nothing pending" description="No quote acceptances are waiting on approval." />
+              <EmptyState icon="audit" title={tr("Nothing pending")} description={tr("No quote acceptances are waiting on approval.")} />
             </CardContent></Card>
           ) : (
             renderTable(pending)
@@ -131,9 +133,9 @@ const AdminApprovals = () => {
         </section>
 
         <section className="space-y-3">
-          <h2 className="font-display text-lg font-medium">Decided ({decided.length})</h2>
+          <h2 className="font-display text-lg font-medium">{tr("Decided")} ({decided.length})</h2>
           {loading ? null : decided.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No decisions yet.</p>
+            <p className="text-sm text-muted-foreground">{tr("No decisions yet.")}</p>
           ) : (
             renderTable(decided)
           )}
@@ -142,14 +144,14 @@ const AdminApprovals = () => {
 
       <Dialog open={activeReject !== null} onOpenChange={(o) => !o && setActiveReject(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Reject approval request</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Reject approval request")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Reason</Label>
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tell the client why." />
+            <Label>{tr("Reason")}</Label>
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("Tell the client why.")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActiveReject(null)}>Close</Button>
-            <Button variant="destructive" disabled={busy || !note.trim()} onClick={handleReject}>Reject</Button>
+            <Button variant="outline" onClick={() => setActiveReject(null)}>{tr("Close")}</Button>
+            <Button variant="destructive" disabled={busy || !note.trim()} onClick={handleReject}>{tr("Reject")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

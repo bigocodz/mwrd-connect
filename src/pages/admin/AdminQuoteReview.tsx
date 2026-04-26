@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, ExternalLink, FileText, MessageSquare, Send } from "lucide-react";
 import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const documentLabel: Record<string, string> = {
   SPECIFICATION: "Specification",
@@ -24,6 +25,7 @@ const documentLabel: Record<string, string> = {
 };
 
 const AdminQuoteReview = () => {
+  const { tr } = useLanguage();
   const { quoteId } = useParams();
   const navigate = useNavigate();
   const sendToClient = useMutation(api.quotes.sendToClient);
@@ -330,22 +332,22 @@ const AdminQuoteReview = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <MessageSquare className="h-4 w-4 text-primary" />
-                Request supplier revision
+                {tr("Request supplier revision")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <Label>Instructions</Label>
+                <Label>{tr("Instructions")}</Label>
                 <Textarea
                   value={revisionInstructions}
                   onChange={(e) => setRevisionInstructions(e.target.value)}
-                  placeholder="Ask for revised prices, faster delivery, alternate product details, missing documents, or commercial clarification…"
+                  placeholder={tr("Ask for revised prices, faster delivery, alternate product details, missing documents, or commercial clarification…")}
                 />
               </div>
               <div className="flex justify-end">
                 <Button variant="outline" onClick={handleRequestSupplierRevision} disabled={requestingRevision}>
                   <MessageSquare className="me-2 h-4 w-4" />
-                  {requestingRevision ? "Sending…" : "Send Revision Request"}
+                  {requestingRevision ? tr("Sending…") : tr("Send Revision Request")}
                 </Button>
               </div>
             </CardContent>

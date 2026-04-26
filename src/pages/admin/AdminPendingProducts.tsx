@@ -10,8 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, X, Package } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminPendingProducts = () => {
+  const { tr } = useLanguage();
   const productsData = useQuery(api.products.listPending);
   const approve = useMutation(api.products.approve);
   const reject = useMutation(api.products.reject);
@@ -31,9 +33,9 @@ const AdminPendingProducts = () => {
       await approve({ id: productId as any });
       const product = products.find((p) => p._id === productId);
       await logAudit({ action: "APPROVE_PRODUCT", target_user_id: product?.supplier_id as any, details: { product_id: productId } });
-      toast.success("Product approved");
+      toast.success(tr("Product approved"));
     } catch (err: any) {
-      toast.error("Failed: " + err.message);
+      toast.error(tr("Failed:") + " " + err.message);
     } finally {
       setActing(false);
     }
@@ -46,12 +48,12 @@ const AdminPendingProducts = () => {
       await reject({ id: rejectId as any, rejection_reason: rejectReason });
       const product = products.find((p) => p._id === rejectId);
       await logAudit({ action: "REJECT_PRODUCT", target_user_id: product?.supplier_id as any, details: { product_id: rejectId, reason: rejectReason } });
-      toast.success("Product rejected");
+      toast.success(tr("Product rejected"));
       setRejectOpen(false);
       setRejectReason("");
       setRejectId(null);
     } catch (err: any) {
-      toast.error("Failed: " + err.message);
+      toast.error(tr("Failed:") + " " + err.message);
     } finally {
       setActing(false);
     }
@@ -59,14 +61,14 @@ const AdminPendingProducts = () => {
 
   return (
     <AdminLayout>
-      <h1 className="font-display text-3xl font-bold text-foreground mb-6">Pending Product Approvals</h1>
+      <h1 className="font-display text-3xl font-bold text-foreground mb-6">{tr("Pending Product Approvals")}</h1>
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
       ) : products.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <Package className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p>No pending products to review.</p>
+          <p>{tr("No pending products to review.")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -91,16 +93,16 @@ const AdminPendingProducts = () => {
                     </div>
                     {p.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{p.description}</p>}
                     <div className="flex gap-4 mt-3 text-sm">
-                      <span className="text-muted-foreground">Cost: <strong className="text-foreground font-mono">{Number(p.cost_price).toLocaleString()} SAR</strong></span>
-                      <span className="text-muted-foreground">Lead: <strong className="text-foreground">{p.lead_time_days} days</strong></span>
+                      <span className="text-muted-foreground">{tr("Cost")}: <strong className="text-foreground font-mono">{Number(p.cost_price).toLocaleString()} {tr("SAR")}</strong></span>
+                      <span className="text-muted-foreground">{tr("Lead")}: <strong className="text-foreground">{tr("{n} days", { n: p.lead_time_days })}</strong></span>
                     </div>
                   </div>
                   <div className="flex md:flex-col gap-2 flex-shrink-0">
                     <Button size="sm" onClick={() => handleApprove(p._id)} disabled={acting}>
-                      <Check className="w-4 h-4 me-1" /> Approve
+                      <Check className="w-4 h-4 me-1" /> {tr("Approve")}
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => { setRejectId(p._id); setRejectOpen(true); }} disabled={acting}>
-                      <X className="w-4 h-4 me-1" /> Reject
+                      <X className="w-4 h-4 me-1" /> {tr("Reject")}
                     </Button>
                   </div>
                 </div>
@@ -112,19 +114,19 @@ const AdminPendingProducts = () => {
 
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Reject Product</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Reject Product")}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">Provide a reason for rejecting this product. The supplier will see this.</p>
+            <p className="text-sm text-muted-foreground">{tr("Provide a reason for rejecting this product. The supplier will see this.")}</p>
             <div className="space-y-2">
-              <Label>Reason</Label>
-              <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="e.g., Insufficient product description..." rows={3} />
+              <Label>{tr("Reason")}</Label>
+              <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder={tr("e.g., Insufficient product description...")} rows={3} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRejectOpen(false)}>{tr("Cancel")}</Button>
             <Button variant="destructive" onClick={handleReject} disabled={acting || !rejectReason.trim()}>
               {acting ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
-              Reject
+              {tr("Reject")}
             </Button>
           </DialogFooter>
         </DialogContent>

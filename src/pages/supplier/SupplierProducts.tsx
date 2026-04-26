@@ -157,7 +157,7 @@ const SupplierProducts = () => {
         <EmptyState icon="products" title={tr("No products match this filter")} />
       ) : (
         <>
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -171,15 +171,15 @@ const SupplierProducts = () => {
               </TableHeader>
               <TableBody>
                 {paginated.map((p: any) => (
-                  <TableRow key={p._id} className="hover:bg-muted/50">
+                  <TableRow key={p._id}>
                     <TableCell className="font-medium cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{p.name}</TableCell>
                     <TableCell className="text-muted-foreground cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{p.category}{p.subcategory ? ` / ${p.subcategory}` : ""}</TableCell>
                     <TableCell>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${approvalColors[p.approval_status]}`}>{enumLabel(p.approval_status)}</span>
+                      <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${approvalColors[p.approval_status]}`}>{enumLabel(p.approval_status)}</span>
                       {p.approval_status === "REJECTED" && p.rejection_reason && <p className="text-xs text-destructive mt-0.5">{p.rejection_reason}</p>}
                     </TableCell>
                     <TableCell>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[p.availability_status]}`}>{enumLabel(p.availability_status)}</span>
+                      <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${statusColors[p.availability_status]}`}>{enumLabel(p.availability_status)}</span>
                     </TableCell>
                     <TableCell className="text-end">
                       {p.stock_quantity != null ? (

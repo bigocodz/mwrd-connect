@@ -11,8 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ShoppingCart, Package, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminCreateUser = () => {
+  const { tr } = useLanguage();
   const navigate = useNavigate();
   const createUser = useAction(api.admin.createUser);
   const [email, setEmail] = useState("");
@@ -29,16 +31,16 @@ const AdminCreateUser = () => {
       !/[A-Z]/.test(tempPassword) ||
       !/\d/.test(tempPassword)
     ) {
-      toast.error("Password must be 8+ characters with upper, lower, and a number");
+      toast.error(tr("Password must be 8+ characters with upper, lower, and a number"));
       return;
     }
     setLoading(true);
     try {
       const publicId = await createUser({ email, password: tempPassword, role, company_name: companyName });
-      toast.success(`User created: ${publicId}`);
+      toast.success(tr("User created: {id}", { id: publicId }));
       navigate("/admin/users");
     } catch (err: any) {
-      toast.error(err.message || "Failed to create user");
+      toast.error(err.message || tr("Failed to create user"));
     } finally {
       setLoading(false);
     }
@@ -47,47 +49,47 @@ const AdminCreateUser = () => {
   return (
     <AdminLayout>
       <Link to="/admin/users" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground text-sm mb-6">
-        <ArrowLeft className="w-4 h-4" /> Back to Users
+        <ArrowLeft className="w-4 h-4" /> {tr("Back to Users")}
       </Link>
 
       <Card className="max-w-lg">
         <CardHeader>
-          <CardTitle>Create New User</CardTitle>
-          <CardDescription>Manually onboard a client or supplier</CardDescription>
+          <CardTitle>{tr("Create New User")}</CardTitle>
+          <CardDescription>{tr("Manually onboard a client or supplier")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>{tr("Role")}</Label>
               <RadioGroup value={role} onValueChange={(v) => setRole(v as "CLIENT" | "SUPPLIER")} className="grid grid-cols-2 gap-3">
                 <Label htmlFor="cr-client" className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 cursor-pointer transition-all ${role === "CLIENT" ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"}`}>
                   <RadioGroupItem value="CLIENT" id="cr-client" className="sr-only" />
                   <ShoppingCart className="w-5 h-5 text-accent" />
-                  <span className="font-medium text-sm">Client</span>
+                  <span className="font-medium text-sm">{tr("Client")}</span>
                 </Label>
                 <Label htmlFor="cr-supplier" className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 cursor-pointer transition-all ${role === "SUPPLIER" ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"}`}>
                   <RadioGroupItem value="SUPPLIER" id="cr-supplier" className="sr-only" />
                   <Package className="w-5 h-5 text-accent" />
-                  <span className="font-medium text-sm">Supplier</span>
+                  <span className="font-medium text-sm">{tr("Supplier")}</span>
                 </Label>
               </RadioGroup>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Company Name</Label>
+              <Label htmlFor="company">{tr("Company Name")}</Label>
               <Input id="company" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tr("Email")}</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Temporary Password</Label>
-              <Input id="password" type="text" value={tempPassword} onChange={(e) => setTempPassword(e.target.value)} required minLength={8} placeholder="Min 8 chars, upper + lower + number" />
-              <p className="text-xs text-muted-foreground">Requires 8+ characters with uppercase, lowercase, and a number. The user should change this after first login.</p>
+              <Label htmlFor="password">{tr("Temporary Password")}</Label>
+              <Input id="password" type="text" value={tempPassword} onChange={(e) => setTempPassword(e.target.value)} required minLength={8} placeholder={tr("Min 8 chars, upper + lower + number")} />
+              <p className="text-xs text-muted-foreground">{tr("Requires 8+ characters with uppercase, lowercase, and a number. The user should change this after first login.")}</p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : null}
-              Create User
+              {tr("Create User")}
             </Button>
           </form>
         </CardContent>

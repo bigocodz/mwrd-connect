@@ -7,8 +7,8 @@ const HowItWorks = () => {
   return (
     <section className="py-24 bg-background relative overflow-hidden">
       {/* Decorative blobs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 start-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 end-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -28,7 +28,7 @@ const HowItWorks = () => {
 
         <div className="max-w-4xl mx-auto relative">
           {/* Connecting line */}
-          <div className="absolute left-8 sm:left-1/2 top-0 bottom-0 w-px bg-border hidden sm:block" />
+          <div className="absolute start-8 sm:start-1/2 top-0 bottom-0 w-px bg-border hidden sm:block" />
 
           {t.howItWorks.steps.map((step, i) => (
             <motion.div

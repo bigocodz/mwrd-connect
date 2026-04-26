@@ -37,7 +37,7 @@ type PanelProps = {
 };
 
 export const Panel = ({ children, title, description, icon: Icon, className, actions }: PanelProps) => (
-  <section className={cn("overflow-hidden rounded-lg bg-white shadow-[0_20px_54px_rgba(26,26,26,0.055),0_0_0_1px_rgba(190,184,174,0.34)]", className)}>
+  <section className={cn("overflow-hidden rounded-md bg-white shadow-[0_20px_54px_rgba(26,26,26,0.055),0_0_0_1px_rgba(190,184,174,0.34)]", className)}>
     {(title || description || actions) && (
       <div className="relative flex flex-col gap-3 border-b border-[#ece7e1] bg-[linear-gradient(180deg,#ffffff,#fbfcfc)] px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea,rgba(198,228,238,0))]" />
@@ -55,7 +55,7 @@ export const Panel = ({ children, title, description, icon: Icon, className, act
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
     )}
-    <div className="p-6">{children}</div>
+    <div className="p-6 [&_table]:w-full [&_table]:text-sm [&_thead]:bg-[#fbfcfc] [&_thead_tr]:border-b [&_thead_tr]:border-[#ded8d0] [&_tbody_tr]:border-b [&_tbody_tr]:border-[#ece7e1] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-[#fbfcfc] [&_td]:px-4 [&_td]:py-4 [&_th]:h-12 [&_th]:whitespace-nowrap [&_th]:px-4 [&_th]:py-3 [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:text-[#6c6f6c]">{children}</div>
   </section>
 );
 
@@ -76,7 +76,7 @@ const metricTone = {
 };
 
 export const MetricCard = ({ label, value, icon: Icon, helper, loading, tone = "default" }: MetricCardProps) => (
-  <div className="group relative overflow-hidden rounded-lg bg-white p-6 shadow-[0_18px_44px_rgba(26,26,26,0.05),0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(26,26,26,0.09),0_0_0_1px_rgba(255,109,67,0.25)]">
+  <div className="group relative overflow-hidden rounded-md bg-white p-6 shadow-[0_18px_44px_rgba(26,26,26,0.05),0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(26,26,26,0.09),0_0_0_1px_rgba(255,109,67,0.25)]">
     <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)] opacity-80" />
     <div className="pointer-events-none absolute -end-8 -top-8 h-24 w-24 rounded-full bg-[#c6e4ee]/35 transition-transform group-hover:scale-125" />
     <div className="flex items-start justify-between gap-4">
@@ -141,7 +141,7 @@ export const SkeletonLine = ({ className }: SkeletonLineProps) => (
 );
 
 export const EmptyMessage = ({ children }: { children: ReactNode }) => (
-  <p className="rounded-lg bg-[#f7f8f7] px-4 py-6 text-center text-sm leading-relaxed text-[#5f625f] shadow-[inset_0_0_0_1px_rgba(190,184,174,0.38)]">
+  <p className="rounded-md bg-[#f7f8f7] px-4 py-6 text-center text-sm leading-relaxed text-[#5f625f] shadow-[inset_0_0_0_1px_rgba(190,184,174,0.38)]">
     {children}
   </p>
 );

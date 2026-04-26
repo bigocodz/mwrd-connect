@@ -154,7 +154,7 @@ const ClientCatalog = () => {
             <span className="text-xs text-muted-foreground">{tr("Lead: {days} days", { days: p.lead_time_days })}</span>
           </div>
           {p.availability_status === "LIMITED_STOCK" && (
-            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2">
+            <span className="mt-2 inline-flex rounded-md bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-800">
               {tr("Limited Stock")}
             </span>
           )}

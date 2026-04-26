@@ -17,13 +17,7 @@ import { downloadCsv } from "@/lib/csv";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { EmptyMessage, MetricCard, PageHeader, Panel, SkeletonLine } from "@/components/app/AppSurface";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const WINDOWS = [
-  { label: "Last 7 days", value: 7 },
-  { label: "Last 30 days", value: 30 },
-  { label: "Last 90 days", value: 90 },
-  { label: "Last 365 days", value: 365 },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const fmtHours = (n: number | null | undefined) => {
   if (n == null) return "—";
@@ -42,18 +36,26 @@ const TableSkeleton = () => (
 );
 
 const AdminLifecycle = () => {
+  const { tr } = useLanguage();
   const [windowDays, setWindowDays] = useState(90);
   const data = useQuery(api.dashboard.lifecycleMetrics, { windowDays });
   const loading = data === undefined;
 
+  const WINDOWS = [
+    { label: tr("Last 7 days"), value: 7 },
+    { label: tr("Last 30 days"), value: 30 },
+    { label: tr("Last 90 days"), value: 90 },
+    { label: tr("Last 365 days"), value: 365 },
+  ];
+
   const funnelStages = data
     ? [
-        { label: "RFQs", value: data.funnel.rfqs },
-        { label: "With quotes", value: data.funnel.quoted },
-        { label: "Accepted", value: data.funnel.accepted },
-        { label: "Orders", value: data.funnel.orders },
-        { label: "Delivered", value: data.funnel.delivered },
-        { label: "Completed", value: data.funnel.completed },
+        { label: tr("RFQs"), value: data.funnel.rfqs },
+        { label: tr("With quotes"), value: data.funnel.quoted },
+        { label: tr("Accepted"), value: data.funnel.accepted },
+        { label: tr("Orders"), value: data.funnel.orders },
+        { label: tr("Delivered"), value: data.funnel.delivered },
+        { label: tr("Completed"), value: data.funnel.completed },
       ]
     : [];
   const funnelPeak = funnelStages.reduce((max, s) => Math.max(max, s.value), 0);
@@ -61,8 +63,8 @@ const AdminLifecycle = () => {
   return (
     <AdminLayout>
       <PageHeader
-        title="Lifecycle & SLA"
-        description="Cycle times, supplier responsiveness, delivery SLA, and dispute health for the active procurement window."
+        title={tr("Lifecycle & SLA")}
+        description={tr("Cycle times, supplier responsiveness, delivery SLA, and dispute health for the active procurement window.")}
         actions={
           <div className="flex items-center gap-2">
             <Button
@@ -122,7 +124,7 @@ const AdminLifecycle = () => {
                 downloadCsv(`mwrd-lifecycle-${windowDays}d-${new Date().toISOString().slice(0, 10)}.csv`, rows);
               }}
             >
-              <Download01 className="w-4 h-4 me-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> {tr("Export CSV")}
             </Button>
             <Select value={String(windowDays)} onValueChange={(v) => setWindowDays(Number(v))}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -139,58 +141,58 @@ const AdminLifecycle = () => {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           icon={ClockCheck}
-          label="Median RFQ cycle (create → accept)"
+          label={tr("Median RFQ cycle (create → accept)")}
           value={fmtHours(data?.medianRfqCycleHours)}
           loading={loading}
         />
         <MetricCard
           icon={Receipt}
-          label="Median admin quote turnaround"
+          label={tr("Median admin quote turnaround")}
           value={fmtHours(data?.medianAdminTurnaroundHours)}
           loading={loading}
         />
         <MetricCard
           icon={Users01}
-          label="Avg supplier response time"
+          label={tr("Avg supplier response time")}
           value={fmtHours(data?.avgSupplierResponseHours)}
           loading={loading}
         />
         <MetricCard
           icon={BarChartSquareUp}
-          label="Quote coverage"
+          label={tr("Quote coverage")}
           value={fmtPct(data?.quoteCoverage)}
           loading={loading}
           tone="success"
         />
         <MetricCard
           icon={Truck01}
-          label="Median delivery (dispatch → deliver)"
+          label={tr("Median delivery (dispatch → deliver)")}
           value={fmtHours(data?.medianDeliveryHours)}
           loading={loading}
         />
         <MetricCard
           icon={PackageCheck}
-          label="On-time delivery"
+          label={tr("On-time delivery")}
           value={fmtPct(data?.onTimeRate)}
           loading={loading}
           tone={data && data.onTimeRate != null && data.onTimeRate < 80 ? "warning" : "success"}
           helper={
             data && data.deliveredWithRequiredBy
-              ? `${data.lateDeliveries} late of ${data.deliveredWithRequiredBy} with ETA`
+              ? tr("{late} late of {total} with ETA", { late: data.lateDeliveries, total: data.deliveredWithRequiredBy })
               : undefined
           }
         />
         <MetricCard
           icon={AlertCircle}
-          label="Dispute rate"
+          label={tr("Dispute rate")}
           value={fmtPct(data?.disputeRate)}
           loading={loading}
           tone={data && data.disputeRate != null && data.disputeRate > 5 ? "danger" : "default"}
-          helper={data ? `${data.openDisputes} open` : undefined}
+          helper={data ? tr("{n} open", { n: data.openDisputes }) : undefined}
         />
         <MetricCard
           icon={AlertCircle}
-          label="Cancellation rate"
+          label={tr("Cancellation rate")}
           value={fmtPct(data?.cancellationRate)}
           loading={loading}
           tone={data && data.cancellationRate != null && data.cancellationRate > 10 ? "warning" : "default"}
@@ -198,11 +200,11 @@ const AdminLifecycle = () => {
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
-        <Panel title="Procurement funnel" icon={BarChartSquareUp} description="Counts within the selected window.">
+        <Panel title={tr("Procurement funnel")} icon={BarChartSquareUp} description={tr("Counts within the selected window.")}>
           {loading ? (
             <TableSkeleton />
           ) : data && data.funnel.rfqs === 0 ? (
-            <EmptyMessage>No RFQs in this window.</EmptyMessage>
+            <EmptyMessage>{tr("No RFQs in this window.")}</EmptyMessage>
           ) : (
             <div className="space-y-3">
               {funnelStages.map((stage) => {
@@ -223,25 +225,25 @@ const AdminLifecycle = () => {
           )}
         </Panel>
 
-        <Panel title="Quality & friction" icon={AlertCircle} description="Lower is better.">
+        <Panel title={tr("Quality & friction")} icon={AlertCircle} description={tr("Lower is better.")}>
           {loading ? (
             <TableSkeleton />
           ) : (
             <dl className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <dt className="text-[#8a8a85]">Supplier response rate</dt>
+                <dt className="text-[#8a8a85]">{tr("Supplier response rate")}</dt>
                 <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtPct(data?.supplierResponseRate)}</dd>
               </div>
               <div>
-                <dt className="text-[#8a8a85]">Quote revision rate</dt>
+                <dt className="text-[#8a8a85]">{tr("Quote revision rate")}</dt>
                 <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtPct(data?.revisionRate)}</dd>
               </div>
               <div>
-                <dt className="text-[#8a8a85]">Open disputes</dt>
+                <dt className="text-[#8a8a85]">{tr("Open disputes")}</dt>
                 <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{data?.openDisputes ?? "—"}</dd>
               </div>
               <div>
-                <dt className="text-[#8a8a85]">Late deliveries</dt>
+                <dt className="text-[#8a8a85]">{tr("Late deliveries")}</dt>
                 <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{data?.lateDeliveries ?? "—"}</dd>
               </div>
             </dl>
@@ -250,24 +252,24 @@ const AdminLifecycle = () => {
       </div>
 
       <div className="mt-6">
-        <Panel title="Supplier responsiveness" icon={Users01} description="Top suppliers ranked by win rate within the window.">
+        <Panel title={tr("Supplier responsiveness")} icon={Users01} description={tr("Top suppliers ranked by win rate within the window.")}>
           {loading ? (
             <TableSkeleton />
           ) : data && !data.supplierLeaderboard.length ? (
-            <EmptyMessage>No supplier activity in this window.</EmptyMessage>
+            <EmptyMessage>{tr("No supplier activity in this window.")}</EmptyMessage>
           ) : (
             data && (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
                     <tr className="border-b border-[#e9eef0] text-start text-xs font-semibold uppercase text-[#8a8a85]">
-                      <th className="pb-3">Supplier</th>
-                      <th className="pb-3 text-end">Assigned</th>
-                      <th className="pb-3 text-end">Quoted</th>
-                      <th className="pb-3 text-end">Response rate</th>
-                      <th className="pb-3 text-end">Wins</th>
-                      <th className="pb-3 text-end">Win rate</th>
-                      <th className="pb-3 text-end">Avg response</th>
+                      <th className="pb-3">{tr("Supplier")}</th>
+                      <th className="pb-3 text-end">{tr("Assigned")}</th>
+                      <th className="pb-3 text-end">{tr("Quoted")}</th>
+                      <th className="pb-3 text-end">{tr("Response rate")}</th>
+                      <th className="pb-3 text-end">{tr("Wins")}</th>
+                      <th className="pb-3 text-end">{tr("Win rate")}</th>
+                      <th className="pb-3 text-end">{tr("Avg response")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -276,7 +278,7 @@ const AdminLifecycle = () => {
                         <td className="py-3">
                           <div className="flex items-center gap-1.5 font-medium text-[#1a1a1a]">
                             {s.public_id}
-                            {s.is_preferred && <Star01 className="w-3.5 h-3.5 text-amber-500" aria-label="Preferred" />}
+                            {s.is_preferred && <Star01 className="w-3.5 h-3.5 text-amber-500" aria-label={tr("Preferred")} />}
                           </div>
                           {s.company_name && (
                             <div className="text-xs text-[#8a8a85]">{s.company_name}</div>

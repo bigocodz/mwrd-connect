@@ -21,8 +21,10 @@ import {
   ORDER_STATUS_COLOR,
   ORDER_STATUS_LABEL,
 } from "@/components/orders/orderStatus";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminDisputes = () => {
+  const { tr } = useLanguage();
   const ordersData = useQuery(api.orders.listDisputed);
   const resolveDispute = useMutation(api.orders.resolveDispute);
   const loading = ordersData === undefined;
@@ -40,11 +42,11 @@ const AdminDisputes = () => {
     setBusy(true);
     try {
       await resolveDispute({ id: active._id, resolution: resolution.trim(), outcome });
-      toast.success("Dispute updated");
+      toast.success(tr("Dispute updated"));
       setActive(null);
       setResolution("");
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -82,11 +84,11 @@ const AdminDisputes = () => {
       <TableCell>
         {order.dispute_status === "OPEN" ? (
           <Button size="sm" onClick={() => { setActive(order); setResolution(""); setOutcome("RESOLVED"); }}>
-            Resolve
+            {tr("Resolve")}
           </Button>
         ) : (
           <Button size="sm" variant="ghost" asChild>
-            <Link to={`/admin/orders/${order._id}`}>View</Link>
+            <Link to={`/admin/orders/${order._id}`}>{tr("View")}</Link>
           </Button>
         )}
       </TableCell>
@@ -97,14 +99,14 @@ const AdminDisputes = () => {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Order</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Supplier</TableHead>
-          <TableHead>Order status</TableHead>
-          <TableHead>Dispute</TableHead>
-          <TableHead>Reason / resolution</TableHead>
-          <TableHead>Total</TableHead>
-          <TableHead>Opened</TableHead>
+          <TableHead>{tr("Order")}</TableHead>
+          <TableHead>{tr("Client")}</TableHead>
+          <TableHead>{tr("Supplier")}</TableHead>
+          <TableHead>{tr("Order status")}</TableHead>
+          <TableHead>{tr("Dispute")}</TableHead>
+          <TableHead>{tr("Reason / resolution")}</TableHead>
+          <TableHead>{tr("Total")}</TableHead>
+          <TableHead>{tr("Opened")}</TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
@@ -116,17 +118,17 @@ const AdminDisputes = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Disputes</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Disputes")}</h1>
           <p className="text-muted-foreground mt-1">
-            Resolve open disputes and review past dispute outcomes.
+            {tr("Resolve open disputes and review past dispute outcomes.")}
           </p>
         </div>
 
         <section className="space-y-3">
-          <h2 className="font-display text-lg font-medium">Open ({open.length})</h2>
+          <h2 className="font-display text-lg font-medium">{tr("Open")} ({open.length})</h2>
           {loading ? <TableSkeleton rows={3} cols={9} /> : open.length === 0 ? (
             <Card><CardContent className="p-0">
-              <EmptyState icon="audit" title="No open disputes" description="Everything is currently resolved." />
+              <EmptyState icon="audit" title={tr("No open disputes")} description={tr("Everything is currently resolved.")} />
             </CardContent></Card>
           ) : (
             renderTable(open)
@@ -134,9 +136,9 @@ const AdminDisputes = () => {
         </section>
 
         <section className="space-y-3">
-          <h2 className="font-display text-lg font-medium">Closed ({closed.length})</h2>
+          <h2 className="font-display text-lg font-medium">{tr("Closed")} ({closed.length})</h2>
           {loading ? null : closed.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No prior disputes yet.</p>
+            <p className="text-sm text-muted-foreground">{tr("No prior disputes yet.")}</p>
           ) : (
             renderTable(closed)
           )}
@@ -145,36 +147,36 @@ const AdminDisputes = () => {
 
       <Dialog open={active !== null} onOpenChange={(o) => !o && setActive(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Resolve dispute</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Resolve dispute")}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             {active?.dispute_reason && (
               <div className="rounded-md border border-border p-3 text-sm">
-                <p className="text-muted-foreground text-xs uppercase mb-1">Client said</p>
+                <p className="text-muted-foreground text-xs uppercase mb-1">{tr("Client said")}</p>
                 <p>{active.dispute_reason}</p>
               </div>
             )}
             <div>
-              <Label>Outcome</Label>
+              <Label>{tr("Outcome")}</Label>
               <Select value={outcome} onValueChange={(v) => setOutcome(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="RESOLVED">Resolved in client favor</SelectItem>
-                  <SelectItem value="REJECTED">Closed without action</SelectItem>
+                  <SelectItem value="RESOLVED">{tr("Resolved in client favor")}</SelectItem>
+                  <SelectItem value="REJECTED">{tr("Closed without action")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Resolution notes</Label>
+              <Label>{tr("Resolution notes")}</Label>
               <Textarea
                 value={resolution}
                 onChange={(e) => setResolution(e.target.value)}
-                placeholder="Refund issued, replacement scheduled, claim closed…"
+                placeholder={tr("Refund issued, replacement scheduled, claim closed…")}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActive(null)}>Close</Button>
-            <Button disabled={busy || !resolution.trim()} onClick={handleResolve}>Save</Button>
+            <Button variant="outline" onClick={() => setActive(null)}>{tr("Close")}</Button>
+            <Button disabled={busy || !resolution.trim()} onClick={handleResolve}>{tr("Save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

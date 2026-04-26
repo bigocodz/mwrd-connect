@@ -10,8 +10,10 @@ import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Star01 } from "@untitledui/icons";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminPreferredSuppliers = () => {
+  const { tr } = useLanguage();
   const data = useQuery(api.users.listPreferredSuppliers);
   const setPreferred = useMutation(api.users.setPreferredSupplier);
   const loading = data === undefined;
@@ -20,9 +22,9 @@ const AdminPreferredSuppliers = () => {
   const removePreferred = async (id: string) => {
     try {
       await setPreferred({ id: id as any, is_preferred: false });
-      toast.success("Removed from preferred");
+      toast.success(tr("Removed from preferred"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     }
   };
 
@@ -31,10 +33,10 @@ const AdminPreferredSuppliers = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-            <Star01 className="w-6 h-6 text-amber-600" /> Preferred Suppliers
+            <Star01 className="w-6 h-6 text-amber-600" /> {tr("Preferred Suppliers")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Curated suppliers prioritized for new RFQs and surfaced in client suggestions.
+            {tr("Curated suppliers prioritized for new RFQs and surfaced in client suggestions.")}
           </p>
         </div>
 
@@ -42,18 +44,18 @@ const AdminPreferredSuppliers = () => {
           <Card><CardContent className="p-0">
             <EmptyState
               icon="users"
-              title="No preferred suppliers yet"
-              description="Open a supplier profile and toggle Preferred to add them here."
+              title={tr("No preferred suppliers yet")}
+              description={tr("Open a supplier profile and toggle Preferred to add them here.")}
             />
           </CardContent></Card>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Note</TableHead>
-                <TableHead>Marked</TableHead>
+                <TableHead>{tr("Supplier")}</TableHead>
+                <TableHead>{tr("Status")}</TableHead>
+                <TableHead>{tr("Note")}</TableHead>
+                <TableHead>{tr("Marked")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -79,7 +81,7 @@ const AdminPreferredSuppliers = () => {
                   </TableCell>
                   <TableCell>
                     <Button size="sm" variant="ghost" onClick={() => removePreferred(s._id)}>
-                      Remove
+                      {tr("Remove")}
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -19,10 +19,12 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { INVOICE_STATUS_COLOR, INVOICE_STATUS_LABEL } from "@/components/orders/invoiceStatus";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const STATUS_FILTERS = ["ALL", "SUBMITTED", "APPROVED", "REJECTED", "PAID"];
 
 const AdminSupplierInvoices = () => {
+  const { tr } = useLanguage();
   const invoicesData = useQuery(api.supplierInvoices.listAll);
   const approve = useMutation(api.supplierInvoices.approve);
   const reject = useMutation(api.supplierInvoices.reject);
@@ -47,7 +49,7 @@ const AdminSupplierInvoices = () => {
       await fn();
       toast.success(label);
     } catch (err: any) {
-      toast.error(err.message || "Action failed");
+      toast.error(err.message || tr("Action failed"));
     } finally {
       setBusy(false);
     }
@@ -58,8 +60,8 @@ const AdminSupplierInvoices = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Supplier Invoices</h1>
-            <p className="text-muted-foreground mt-1">Review, approve, and mark supplier invoices as paid.</p>
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Supplier Invoices")}</h1>
+            <p className="text-muted-foreground mt-1">{tr("Review, approve, and mark supplier invoices as paid.")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -97,13 +99,13 @@ const AdminSupplierInvoices = () => {
                 downloadCsv(`mwrd-supplier-invoices-${new Date().toISOString().slice(0, 10)}.csv`, [header, ...rows]);
               }}
             >
-              <Download01 className="w-4 h-4 me-2" /> Export CSV
+              <Download01 className="w-4 h-4 me-2" /> {tr("Export CSV")}
             </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STATUS_FILTERS.map((s) => (
-                  <SelectItem key={s} value={s}>{s === "ALL" ? "All statuses" : INVOICE_STATUS_LABEL[s] ?? s}</SelectItem>
+                  <SelectItem key={s} value={s}>{s === "ALL" ? tr("All statuses") : INVOICE_STATUS_LABEL[s] ?? s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -112,21 +114,21 @@ const AdminSupplierInvoices = () => {
 
         {loading ? <TableSkeleton rows={5} cols={8} /> : filtered.length === 0 ? (
           <Card><CardContent className="p-0">
-            <EmptyState icon="payments" title="No invoices" description="Suppliers can submit invoices once orders are delivered." />
+            <EmptyState icon="payments" title={tr("No invoices")} description={tr("Suppliers can submit invoices once orders are delivered.")} />
           </CardContent></Card>
         ) : (
           <>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Order</TableHead>
-                  <TableHead>Issued</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>File</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{tr("Invoice #")}</TableHead>
+                  <TableHead>{tr("Supplier")}</TableHead>
+                  <TableHead>{tr("Order")}</TableHead>
+                  <TableHead>{tr("Issued")}</TableHead>
+                  <TableHead>{tr("Total")}</TableHead>
+                  <TableHead>{tr("Status")}</TableHead>
+                  <TableHead>{tr("File")}</TableHead>
+                  <TableHead>{tr("Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -150,7 +152,7 @@ const AdminSupplierInvoices = () => {
                     <TableCell>
                       {inv.file_url ? (
                         <a className="underline text-sm" href={inv.file_url} target="_blank" rel="noreferrer">
-                          {inv.file_name || "Download"}
+                          {inv.file_name || tr("Download")}
                         </a>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
@@ -160,17 +162,17 @@ const AdminSupplierInvoices = () => {
                       <div className="flex flex-wrap gap-1">
                         {inv.status === "SUBMITTED" && (
                           <>
-                            <Button size="sm" onClick={() => wrap("Approved", () => approve({ id: inv._id }))} disabled={busy}>
-                              <CheckCircle className="w-3 h-3 me-1" /> Approve
+                            <Button size="sm" onClick={() => wrap(tr("Approved"), () => approve({ id: inv._id }))} disabled={busy}>
+                              <CheckCircle className="w-3 h-3 me-1" /> {tr("Approve")}
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => { setRejectId(inv._id); setRejectReason(""); }} disabled={busy}>
-                              <XCircle className="w-3 h-3 me-1" /> Reject
+                              <XCircle className="w-3 h-3 me-1" /> {tr("Reject")}
                             </Button>
                           </>
                         )}
                         {inv.status === "APPROVED" && (
                           <Button size="sm" onClick={() => { setPaidId(inv._id); setPaidRef(""); }} disabled={busy}>
-                            Mark Paid
+                            {tr("Mark Paid")}
                           </Button>
                         )}
                       </div>
@@ -186,24 +188,24 @@ const AdminSupplierInvoices = () => {
 
       <Dialog open={rejectId !== null} onOpenChange={(open) => !open && setRejectId(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Reject invoice</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Reject invoice")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Reason</Label>
-            <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Tell the supplier what to fix." />
+            <Label>{tr("Reason")}</Label>
+            <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder={tr("Tell the supplier what to fix.")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectId(null)}>Close</Button>
+            <Button variant="outline" onClick={() => setRejectId(null)}>{tr("Close")}</Button>
             <Button
               variant="destructive"
               disabled={busy || !rejectReason.trim()}
               onClick={async () => {
                 if (!rejectId) return;
-                await wrap("Rejected", () => reject({ id: rejectId as any, reason: rejectReason.trim() }));
+                await wrap(tr("Rejected"), () => reject({ id: rejectId as any, reason: rejectReason.trim() }));
                 setRejectId(null);
                 setRejectReason("");
               }}
             >
-              Reject
+              {tr("Reject")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -211,25 +213,25 @@ const AdminSupplierInvoices = () => {
 
       <Dialog open={paidId !== null} onOpenChange={(open) => !open && setPaidId(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Mark invoice paid</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{tr("Mark invoice paid")}</DialogTitle></DialogHeader>
           <div className="space-y-2">
-            <Label>Payment reference (optional)</Label>
-            <Input value={paidRef} onChange={(e) => setPaidRef(e.target.value)} placeholder="Bank ref or transfer number" />
+            <Label>{tr("Payment reference (optional)")}</Label>
+            <Input value={paidRef} onChange={(e) => setPaidRef(e.target.value)} placeholder={tr("Bank ref or transfer number")} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaidId(null)}>Close</Button>
+            <Button variant="outline" onClick={() => setPaidId(null)}>{tr("Close")}</Button>
             <Button
               disabled={busy}
               onClick={async () => {
                 if (!paidId) return;
-                await wrap("Marked paid", () =>
+                await wrap(tr("Marked paid"), () =>
                   markPaid({ id: paidId as any, reference: paidRef.trim() || undefined }),
                 );
                 setPaidId(null);
                 setPaidRef("");
               }}
             >
-              Confirm
+              {tr("Confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

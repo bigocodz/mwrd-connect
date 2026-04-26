@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Star01 } from "@untitledui/icons";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Props = {
   profile: {
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export const PreferredSupplierCard = ({ profile }: Props) => {
+  const { tr } = useLanguage();
   const setPreferred = useMutation(api.users.setPreferredSupplier);
   const [enabled, setEnabled] = useState(!!profile.is_preferred);
   const [note, setNote] = useState(profile.preferred_note ?? "");
@@ -34,10 +36,10 @@ export const PreferredSupplierCard = ({ profile }: Props) => {
     setBusy(true);
     try {
       await setPreferred({ id: profile._id as any, is_preferred: next, note: next ? note.trim() || undefined : undefined });
-      toast.success(next ? "Marked as preferred" : "Removed from preferred");
+      toast.success(next ? tr("Marked as preferred") : tr("Removed from preferred"));
     } catch (err: any) {
       setEnabled(!next);
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -47,9 +49,9 @@ export const PreferredSupplierCard = ({ profile }: Props) => {
     setBusy(true);
     try {
       await setPreferred({ id: profile._id as any, is_preferred: true, note: note.trim() || undefined });
-      toast.success("Note saved");
+      toast.success(tr("Note saved"));
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(err.message || tr("Failed"));
     } finally {
       setBusy(false);
     }
@@ -60,10 +62,10 @@ export const PreferredSupplierCard = ({ profile }: Props) => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <Star01 className="w-4 h-4" /> Preferred Supplier
+            <Star01 className="w-4 h-4" /> {tr("Preferred Supplier")}
           </CardTitle>
           {profile.is_preferred && (
-            <Badge variant="outline" className="bg-amber-100 text-amber-800">Preferred</Badge>
+            <Badge variant="outline" className="bg-amber-100 text-amber-800">{tr("Preferred")}</Badge>
           )}
         </div>
       </CardHeader>
@@ -71,7 +73,7 @@ export const PreferredSupplierCard = ({ profile }: Props) => {
         <div className="flex items-center gap-3">
           <Switch checked={enabled} onCheckedChange={handleToggle} disabled={busy} />
           <span className="text-sm text-muted-foreground">
-            Preferred suppliers are surfaced first in client suggestions and admin leaderboards.
+            {tr("Preferred suppliers are surfaced first in client suggestions and admin leaderboards.")}
           </span>
         </div>
         {enabled && (
@@ -79,13 +81,13 @@ export const PreferredSupplierCard = ({ profile }: Props) => {
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Optional context (why preferred, categories, terms)…"
+              placeholder={tr("Optional context (why preferred, categories, terms)…")}
             />
             <div className="flex items-center gap-3">
-              <Button size="sm" onClick={handleSaveNote} disabled={busy}>Save note</Button>
+              <Button size="sm" onClick={handleSaveNote} disabled={busy}>{tr("Save note")}</Button>
               {profile.preferred_at && (
                 <span className="text-xs text-muted-foreground">
-                  Marked {new Date(profile.preferred_at).toLocaleDateString()}
+                  {tr("Marked")} {new Date(profile.preferred_at).toLocaleDateString()}
                 </span>
               )}
             </div>

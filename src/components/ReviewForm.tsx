@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Star } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReviewFormProps {
   supplierId: string;
@@ -15,6 +16,7 @@ interface ReviewFormProps {
 }
 
 const ReviewForm = ({ supplierId, orderId, onSubmitted }: ReviewFormProps) => {
+  const { tr } = useLanguage();
   const createReview = useMutation(api.reviews.create);
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
@@ -23,7 +25,7 @@ const ReviewForm = ({ supplierId, orderId, onSubmitted }: ReviewFormProps) => {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast.error("Please select a rating");
+      toast.error(tr("Please select a rating"));
       return;
     }
     setSubmitting(true);
@@ -34,10 +36,10 @@ const ReviewForm = ({ supplierId, orderId, onSubmitted }: ReviewFormProps) => {
         rating,
         comment: comment || undefined,
       });
-      toast.success("Review submitted! Thank you.");
+      toast.success(tr("Review submitted! Thank you."));
       onSubmitted?.();
     } catch (err: any) {
-      toast.error("Error: " + err.message);
+      toast.error(tr("Error:") + " " + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -46,11 +48,11 @@ const ReviewForm = ({ supplierId, orderId, onSubmitted }: ReviewFormProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Rate your experience</CardTitle>
+        <CardTitle className="text-sm">{tr("Rate your experience")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <Label>Rating</Label>
+          <Label>{tr("Rating")}</Label>
           <div className="flex gap-1 mt-1">
             {[1, 2, 3, 4, 5].map((i) => (
               <button
@@ -71,15 +73,15 @@ const ReviewForm = ({ supplierId, orderId, onSubmitted }: ReviewFormProps) => {
           </div>
         </div>
         <div>
-          <Label>Comment (optional)</Label>
+          <Label>{tr("Comment (optional)")}</Label>
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Share your experience…"
+            placeholder={tr("Share your experience…")}
           />
         </div>
         <Button onClick={handleSubmit} disabled={submitting || rating === 0}>
-          {submitting ? "Submitting…" : "Submit Review"}
+          {submitting ? tr("Submitting…") : tr("Submit Review")}
         </Button>
       </CardContent>
     </Card>

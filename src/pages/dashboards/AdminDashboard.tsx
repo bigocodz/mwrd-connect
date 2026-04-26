@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import {
@@ -9,6 +10,7 @@ import {
   PackageSearch,
   Percent03,
   Receipt,
+  ShieldTick,
   Star01,
   Users01,
 } from "@untitledui/icons";
@@ -21,6 +23,9 @@ const AdminDashboard = () => {
   const { tr, lang, dir } = useLanguage();
   const stats = useQuery(api.dashboard.adminStats);
   const loading = stats === undefined;
+  const pendingTotal = stats ? stats.pendingProducts + stats.pendingQuotes + stats.pendingPayouts : 0;
+  const topSupplier = stats?.topSuppliers[0];
+  const creditWatchCount = stats?.creditAlerts.length ?? 0;
 
   const fmt = (n: number) =>
     new Intl.NumberFormat(lang === "ar" ? "ar-SA" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }).format(n);
@@ -44,6 +49,40 @@ const AdminDashboard = () => {
         <MetricCard icon={Users01} label={tr("Active Clients")} value={stats ? String(stats.activeClients) : ""} loading={loading} />
         <MetricCard icon={Users01} label={tr("Active Suppliers")} value={stats ? String(stats.activeSuppliers) : ""} loading={loading} />
       </div>
+
+      <Panel
+        className="mt-6"
+        title={tr("Control Room")}
+        description={tr("Fast operational signals before you open a queue.")}
+        icon={ShieldTick}
+      >
+        <div className="grid gap-3 md:grid-cols-3">
+          <AdminPulseCard
+            label={tr("Open queue")}
+            value={String(pendingTotal)}
+            helper={tr("Products, quotes, and payouts waiting for admin action.")}
+            icon={ClockCheck}
+            loading={loading}
+            tone="carrot"
+          />
+          <AdminPulseCard
+            label={tr("Credit watch")}
+            value={String(creditWatchCount)}
+            helper={tr("Clients above the utilization threshold.")}
+            icon={Percent03}
+            loading={loading}
+            tone="cyan"
+          />
+          <AdminPulseCard
+            label={tr("Supplier quality")}
+            value={topSupplier ? `${topSupplier.avg_rating.toFixed(1)} / 5` : tr("No reviews")}
+            helper={topSupplier ? topSupplier.company_name : tr("Ratings will appear as reviews arrive.")}
+            icon={Star01}
+            loading={loading}
+            tone="sun"
+          />
+        </div>
+      </Panel>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Panel title={tr("Top 5 Suppliers by Rating")} icon={Star01}>
@@ -134,6 +173,7 @@ const AdminDashboard = () => {
             href="/admin/products/pending"
             loading={loading}
             icon={PackageSearch}
+            dir={dir}
           />
           <PendingAction
             label={tr("Quote Reviews")}
@@ -141,6 +181,7 @@ const AdminDashboard = () => {
             href="/admin/quotes/pending"
             loading={loading}
             icon={Receipt}
+            dir={dir}
           />
           <PendingAction
             label={tr("Pending Payouts")}
@@ -148,6 +189,7 @@ const AdminDashboard = () => {
             href="/admin/payouts"
             loading={loading}
             icon={BankNote01}
+            dir={dir}
           />
         </div>
       </Panel>
@@ -164,33 +206,72 @@ const TableSkeleton = () => (
   </div>
 );
 
+const pulseTone = {
+  carrot: "bg-[#fff1eb] text-[#ba4424] shadow-[inset_0_0_0_1px_rgba(255,109,67,0.22)]",
+  cyan: "bg-[#eef7f8] text-[#1a1a1a] shadow-[inset_0_0_0_1px_rgba(117,218,234,0.34)]",
+  sun: "bg-[#fff7d6] text-[#8c5f00] shadow-[inset_0_0_0_1px_rgba(248,200,67,0.34)]",
+};
+
+const AdminPulseCard = ({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  loading,
+  tone,
+}: {
+  label: string;
+  value: ReactNode;
+  helper: ReactNode;
+  icon: AppIcon;
+  loading: boolean;
+  tone: keyof typeof pulseTone;
+}) => (
+  <div className="relative overflow-hidden rounded-lg bg-[#fbfcfc] p-4 shadow-[inset_0_0_0_1px_rgba(190,184,174,0.36)]">
+    <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)]" />
+    <div className="flex items-start justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-[#6c6f6c]">{label}</p>
+        {loading ? <SkeletonLine className="mt-2 h-7 w-24" /> : <p className="mt-2 text-2xl font-semibold leading-tight text-[#1a1a1a]">{value}</p>}
+      </div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${pulseTone[tone]}`}>
+        <Icon className="h-5 w-5" />
+      </span>
+    </div>
+    {!loading && <p className="mt-2 text-sm leading-relaxed text-[#5f625f]">{helper}</p>}
+  </div>
+);
+
 const PendingAction = ({
   label,
   count,
   href,
   loading,
   icon: Icon,
+  dir,
 }: {
   label: string;
   count: number;
   href: string;
   loading: boolean;
   icon: AppIcon;
+  dir: "ltr" | "rtl";
 }) => (
   <Link
     to={href}
-    className="group flex items-center justify-between gap-4 rounded-lg border border-border-primary bg-bg-primary p-4 shadow-xs transition-colors hover:border-border-brand hover:bg-brand-25"
+    className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-[0_0_0_1px_rgba(190,184,174,0.36)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(26,26,26,0.08),0_0_0_1px_rgba(255,109,67,0.32)]"
   >
+    <span className="absolute inset-y-0 start-0 w-1 bg-[#ff6d43] opacity-0 transition-opacity group-hover:opacity-100" />
     <div className="flex min-w-0 items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-bg-secondary text-text-secondary group-hover:bg-brand-50 group-hover:text-brand-700">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1a1a1a] text-white shadow-[0_10px_22px_rgba(26,26,26,0.14)] transition-colors group-hover:bg-[#ff6d43]">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-text-secondary">{label}</p>
-        {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-text-primary">{count}</p>}
+        <p className="truncate text-sm font-semibold text-[#5f625f]">{label}</p>
+        {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-[#1a1a1a]">{count}</p>}
       </div>
     </div>
-    <ArrowRight className={`h-4 w-4 shrink-0 text-text-tertiary group-hover:text-brand-700 ${dir === "rtl" ? "rotate-180" : ""}`} />
+    <ArrowRight className={`h-4 w-4 shrink-0 text-[#8a8a85] transition-colors group-hover:text-[#ff6d43] ${dir === "rtl" ? "rotate-180" : ""}`} />
   </Link>
 );
 

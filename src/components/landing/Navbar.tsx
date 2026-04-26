@@ -7,7 +7,7 @@ const Navbar = () => {
   const { lang, setLang, t } = useLanguage();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+    <nav className="fixed top-0 inset-x-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" className="flex items-center gap-2">
           <img src="/logo.png" alt="MWRD" className="w-9 h-9 rounded-lg object-cover" />
