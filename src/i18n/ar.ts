@@ -806,4 +806,15 @@ export const arStrings: Record<string, string> = {
   "Savings": "التوفير",
   "Secure access for clients, suppliers, and admins with portal-level controls.":
     "وصول آمن للعملاء والموردين والإدارة مع صلاحيات على مستوى البوابة.",
+
+  // Login marketing panel (dark side)
+  "Procurement control that stays human.":
+    "تحكم في المشتريات بلمسة إنسانية.",
+  "Managed B2B Marketplace": "سوق B2B مُدار",
+  "RFQs": "طلبات التسعير",
+
+  // Language toggle
+  "Switch to Arabic": "التبديل إلى العربية",
+  "Switch to English": "Switch to English",
+  "Language": "اللغة",
 };

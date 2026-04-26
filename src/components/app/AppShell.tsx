@@ -35,13 +35,12 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
     <div className="min-h-screen bg-[#f7f8f7] text-[#1a1a1a] lg:flex">
       <aside className="hidden w-72 shrink-0 border-e border-black bg-[#1a1a1a] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
         <div className="border-b border-white/10 px-5 py-5">
-          <Link to={navItems[0]?.href ?? "/"} className="flex items-center gap-3">
-            <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-lg object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.18)]" />
-            <div className="min-w-0">
-              <p className="font-display text-xl font-semibold leading-6 text-white">MWRD</p>
-              <p className="text-xs leading-5 text-white/60">{tr("Procurement workspace")}</p>
-            </div>
+          <Link to={navItems[0]?.href ?? "/"} className="block">
+            <span className="inline-flex rounded-lg bg-white px-3 py-2.5 shadow-[0_14px_30px_rgba(0,0,0,0.22),inset_0_0_0_1px_rgba(190,184,174,0.45)]">
+              <img src="/logos/asset-2.svg" alt="MWRD" className="h-9 w-auto max-w-[150px]" />
+            </span>
           </Link>
+          <p className="mt-3 text-xs leading-5 text-white/60">{tr("Procurement workspace")}</p>
           <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tracking-normal ${toneClasses[portalTone]}`}>
             {tr(portalLabel)}
           </span>
@@ -92,9 +91,8 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
         <header className="sticky top-0 z-30 border-b border-[#ded8d0] bg-white/92 backdrop-blur-xl">
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
-              <img src="/logo.png" alt="MWRD" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
               <div className="min-w-0">
-                <p className="truncate font-display text-base font-semibold text-[#1a1a1a]">MWRD</p>
+                <img src="/logos/asset-2.svg" alt="MWRD" className="h-8 w-auto max-w-[118px]" />
                 <p className="truncate text-xs text-[#5f625f]">{tr(portalLabel)}</p>
               </div>
             </div>
