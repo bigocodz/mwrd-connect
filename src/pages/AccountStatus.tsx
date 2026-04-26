@@ -10,31 +10,31 @@ const statusConfig: Record<string, { icon: React.ReactNode; title: string; desc:
     icon: <Clock className="w-16 h-16" />,
     title: "Account Under Review",
     desc: "Your account is being reviewed by our team. You'll receive an email once approved. This usually takes 1–2 business days.",
-    color: "text-[#9d5f2b]",
+    color: "text-[#8c5f00]",
   },
   REJECTED: {
     icon: <XCircle className="w-16 h-16" />,
     title: "Account Rejected",
     desc: "Unfortunately, your account application was not approved. Please contact support@mwrd.com for more information.",
-    color: "text-[#b53333]",
+    color: "text-[#eb4f5d]",
   },
   FROZEN: {
     icon: <Snowflake className="w-16 h-16" />,
     title: "Account Frozen",
     desc: "Your account has been temporarily frozen. Please contact support@mwrd.com to resolve this.",
-    color: "text-[#5e5d59]",
+    color: "text-[#5f625f]",
   },
   DEACTIVATED: {
     icon: <ShieldOff className="w-16 h-16" />,
     title: "Account Deactivated",
     desc: "Your account has been deactivated. Please contact support@mwrd.com if you'd like to reactivate it.",
-    color: "text-[#87867f]",
+    color: "text-[#8a8a85]",
   },
   REQUIRES_ATTENTION: {
     icon: <AlertTriangle className="w-16 h-16" />,
     title: "Action Required",
     desc: "Your account needs attention. Please contact support@mwrd.com or check your email for instructions.",
-    color: "text-[#c96442]",
+    color: "text-[#ff6d43]",
   },
 };
 
@@ -51,14 +51,14 @@ const AccountStatus = () => {
   const config = statusConfig[profile.status] || statusConfig.PENDING;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f7f8f7] px-4">
       <Card className="max-w-md w-full text-center">
         <CardContent className="pt-10 pb-8">
           <div className={`mx-auto mb-4 ${config.color}`}>{config.icon}</div>
-          <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">{tr(config.title)}</h2>
-          <p className="mb-2 leading-relaxed text-[#5e5d59]">{tr(config.desc)}</p>
+          <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#1a1a1a]">{tr(config.title)}</h2>
+          <p className="mb-2 leading-relaxed text-[#5f625f]">{tr(config.desc)}</p>
           {profile.status === "FROZEN" && profile.freeze_reason && (
-            <p className="mb-4 text-sm text-[#5e5d59]">{tr("Reason:")} {profile.freeze_reason}</p>
+            <p className="mb-4 text-sm text-[#5f625f]">{tr("Reason:")} {profile.freeze_reason}</p>
           )}
           <div className="mt-6">
             <Button variant="outline" onClick={signOut}>{tr("Sign out")}</Button>

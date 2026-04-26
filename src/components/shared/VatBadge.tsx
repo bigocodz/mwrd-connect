@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export const VatBadge = ({ className }: { className?: string }) => (
-  <Badge variant="outline" className={`text-[10px] font-normal text-[#5e5d59] ${className || ""}`}>
+  <Badge variant="outline" className={`text-[10px] font-normal text-[#5f625f] ${className || ""}`}>
     <VatBadgeText />
   </Badge>
 );

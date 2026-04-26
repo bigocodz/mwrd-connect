@@ -16,8 +16,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Plus Jakarta Sans", "Arial", "system-ui", "sans-serif"],
-        display: ["Georgia", "Times New Roman", "serif"],
-        serif: ["Georgia", "Times New Roman", "serif"],
+        display: ["Plus Jakarta Sans", "Arial", "system-ui", "sans-serif"],
+        serif: ["Plus Jakarta Sans", "Arial", "system-ui", "sans-serif"],
         arabic: ["IBM Plex Sans Arabic", "Plus Jakarta Sans", "Arial", "system-ui", "sans-serif"],
       },
       colors: {

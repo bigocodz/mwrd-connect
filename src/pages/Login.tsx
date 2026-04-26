@@ -44,165 +44,136 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f4ed] px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center">
-        <div className="w-full overflow-hidden rounded-[28px] bg-[#1f1e1c] shadow-[0_30px_120px_rgba(0,0,0,0.18)]">
-          <div className="grid lg:grid-cols-2">
-            <div className="relative hidden flex-col justify-between p-12 text-[#faf9f5] lg:flex">
-              <div className="relative z-10">
-                <p className="max-w-sm text-sm text-[#c9c7be]">
-                  {tr("Managed RFQs, verified suppliers, and commercial control across every order.")}
-                </p>
-              </div>
+    <div className="min-h-screen bg-[#f7f8f7] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl overflow-hidden rounded-[24px] bg-white shadow-[0_34px_90px_rgba(26,26,26,0.12),0_0_0_1px_rgba(190,184,174,0.36)] lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="relative hidden min-h-full flex-col justify-between overflow-hidden bg-[#1a1a1a] p-10 text-white lg:flex">
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(198,228,238,0.18)_0%,rgba(190,184,174,0.10)_42%,rgba(255,109,67,0.24)_100%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(0deg,rgba(26,26,26,0.96),rgba(26,26,26,0))]" />
+          <img src="/logos/asset-2.svg" alt="" className="pointer-events-none absolute -end-28 top-20 w-[520px] opacity-[0.08] invert" />
 
-              <div className="relative z-10">
-                <div className="pointer-events-none absolute -left-14 -top-12 h-[420px] w-[420px] rounded-full border border-[#faf9f5]/10" />
-                <div className="pointer-events-none absolute -left-4 -top-2 h-[280px] w-[280px] rounded-full border border-[#faf9f5]/10" />
-                <h2 className="font-display text-[68px] font-semibold leading-[0.95] tracking-tight">
-                  {tr("Manage")}
-                  <br />
-                  {tr("your spend")}
-                </h2>
-              </div>
-
-              <div className="relative z-10 mt-12 flex items-end justify-between gap-8">
-                <div className="relative h-[340px] w-[220px] rotate-[-11deg] overflow-hidden rounded-[34px] bg-[#0f0f0e] shadow-[0_40px_100px_rgba(0,0,0,0.55)]">
-                  <div className="absolute left-1/2 top-4 h-3 w-16 -translate-x-1/2 rounded-full bg-[#1a1a19]" />
-                  <div className="px-6 pb-6 pt-12">
-                    <p className="text-xs text-[#c9c7be]">{tr("Weekly spend")}</p>
-                    <p className="mt-1 text-2xl font-semibold tracking-tight">897.00</p>
-                    <p className="text-xs text-[#87867f]">{tr("SAR")}</p>
-
-                    <div className="mt-7 grid grid-cols-7 items-end gap-1">
-                      {[9, 12, 10, 18, 16, 20, 14].map((value, index) => (
-                        <div
-                          key={index}
-                          className="rounded-full bg-gradient-to-t from-[#ff4d2d] to-[#ff3d7f]"
-                          style={{ height: `${value * 6}px` }}
-                        />
-                      ))}
-                    </div>
-
-                    <div className="mt-6 grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl bg-[#171716] p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-[#87867f]">{tr("RFQs")}</p>
-                        <p className="mt-1 text-sm font-medium">18</p>
-                      </div>
-                      <div className="rounded-2xl bg-[#171716] p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-[#87867f]">{tr("Savings")}</p>
-                        <p className="mt-1 text-sm font-medium">12%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="hidden max-w-[180px] pb-4 text-xs text-[#c9c7be] xl:block">
-                  {tr("Secure access for clients, suppliers, and admins with portal-level controls.")}
-                </div>
-              </div>
-
-              <div className="pointer-events-none absolute inset-0 opacity-70">
-                <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-[#faf9f5]/5 blur-3xl" />
-                <div className="absolute bottom-0 end-0 h-80 w-80 rounded-full bg-[#faf9f5]/5 blur-3xl" />
-              </div>
+          <div className="relative z-10 flex items-center gap-3">
+            <img src="/logo.png" alt="MWRD" className="h-11 w-11 rounded-lg object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.18)]" />
+            <div>
+              <p className="font-display text-xl font-semibold">MWRD</p>
+              <p className="text-xs text-white/60">{tr("Procurement workspace")}</p>
             </div>
+          </div>
 
-            <div className="bg-white px-6 py-10 sm:px-10 sm:py-12 lg:rounded-s-[84px] lg:px-14 lg:py-14">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-2xl object-cover" />
-                  <span className="font-display text-lg font-semibold text-[#141413]">MWRD</span>
-                </div>
+          <div className="relative z-10 max-w-[460px]">
+            <p className="mb-5 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-[#c6e4ee] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]">
+              {tr("Managed B2B Marketplace")}
+            </p>
+            <h2 className="font-display text-[56px] font-semibold leading-[1.02] tracking-normal">
+              {tr("Procurement control that stays human.")}
+            </h2>
+            <p className="mt-5 max-w-sm text-sm leading-6 text-white/70">
+              {tr("Managed RFQs, verified suppliers, and commercial control across every order.")}
+            </p>
+          </div>
 
-                <div className="flex items-center gap-4">
-                  <Link
-                    to="/"
-                    className="inline-flex items-center gap-2 text-sm text-[#5e5d59] hover:text-[#141413]"
+          <div className="relative z-10 grid gap-3 xl:grid-cols-3">
+            {[
+              { label: tr("RFQs"), value: "18" },
+              { label: tr("Savings"), value: "12%" },
+              { label: tr("Weekly spend"), value: "897 SAR" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg bg-white/[0.08] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
+                <p className="text-xs font-semibold text-white/60">{item.label}</p>
+                <p className="mt-2 text-xl font-semibold text-white">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="flex flex-col bg-white px-6 py-8 sm:px-10 sm:py-10 lg:px-14">
+          <div className="flex items-center justify-between gap-4">
+            <Link to="/" className="flex items-center gap-3">
+              <img src="/logos/asset-2.svg" alt="MWRD" className="h-9 w-auto max-w-[128px]" />
+            </Link>
+
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-[#5f625f] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
+            >
+              <User className="h-4 w-4" />
+              {tr("Sign Up")}
+            </Link>
+          </div>
+
+          <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
+            <div className="mb-8 h-1 w-11 rounded-full bg-[#ff6d43]" />
+            <h1 className="font-display text-4xl font-semibold tracking-normal text-[#1a1a1a] sm:text-5xl">
+              {signInHeadline}
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-[#5f625f]">
+              {tr("Secure access for clients, suppliers, and admins with portal-level controls.")}
+            </p>
+
+            <form onSubmit={handleLogin} className="mt-10 space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="sr-only">{tr("Email or Username")}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder={tr("Email or Username")}
+                  className="h-12 px-4 text-base"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="sr-only">{tr("Password")}</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder={tr("Password")}
+                    className="h-12 ps-4 pe-12 text-base"
+                  />
+                  <button
+                    type="button"
+                    className="absolute end-4 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#8a8a85] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? tr("Hide password") : tr("Show password")}
                   >
-                    <User className="h-4 w-4" />
-                    {tr("Sign Up")}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <div className="flex justify-start">
+                  <Link to="/forgot-password" className="text-sm font-semibold text-[#ff6d43] hover:underline">
+                    {tr("Forgot password?")}
                   </Link>
                 </div>
               </div>
 
-              <div className="mx-auto mt-14 w-full max-w-md">
-                <h1 className="font-display text-5xl font-semibold tracking-tight text-[#141413] sm:text-6xl">
-                  {signInHeadline}
-                </h1>
+              <Button type="submit" disabled={loading} className="h-12 w-full">
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    {tr("Sign In")}
+                    {dir === "rtl" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                  </>
+                )}
+              </Button>
 
-                <form onSubmit={handleLogin} className="mt-12 space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="sr-only">{tr("Email or Username")}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      placeholder={tr("Email or Username")}
-                      className="h-14 rounded-full border-[#d1cfc5] bg-white px-6 text-base shadow-none focus-visible:ring-[#ff4d2d]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="sr-only">{tr("Password")}</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        placeholder={tr("Password")}
-                        className="h-14 rounded-full border-[#d1cfc5] bg-white ps-6 pe-14 text-base shadow-none focus-visible:ring-[#ff4d2d]"
-                      />
-                      <button
-                        type="button"
-                        className="absolute end-5 top-1/2 -translate-y-1/2 text-[#87867f] transition-colors hover:text-[#141413]"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        aria-label={showPassword ? tr("Hide password") : tr("Show password")}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                    <div className="flex justify-start">
-                      <Link to="/forgot-password" className="text-sm text-[#c96442] hover:underline">
-                        {tr("Forgot password?")}
-                      </Link>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="h-14 w-full rounded-full bg-gradient-to-r from-[#ff4d2d] to-[#ff3d7f] text-[#faf9f5] shadow-[0_18px_50px_rgba(255,61,127,0.25)] hover:from-[#ff3f22] hover:to-[#ff2f73]"
-                  >
-                    {loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
-                          {dir === "rtl" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
-                        </span>
-                        {tr("Sign In")}
-                      </>
-                    )}
-                  </Button>
-
-                  <div className="pt-2">
-                    <Link
-                      to="/"
-                      className="inline-flex items-center gap-1 text-sm text-[#5e5d59] hover:text-[#141413]"
-                    >
-                      {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
-                      {tr("Back to Home")}
-                    </Link>
-                  </div>
-                </form>
+              <div className="pt-2">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-[#5f625f] hover:text-[#1a1a1a]"
+                >
+                  {dir === "rtl" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+                  {tr("Back to Home")}
+                </Link>
               </div>
-            </div>
+            </form>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

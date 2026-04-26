@@ -210,11 +210,11 @@ const AdminLifecycle = () => {
                 return (
                   <div key={stage.label}>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-[#5e5d59]">{stage.label}</span>
-                      <span className="font-medium text-[#141413]">{stage.value}</span>
+                      <span className="text-[#5f625f]">{stage.label}</span>
+                      <span className="font-medium text-[#1a1a1a]">{stage.value}</span>
                     </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#f0eee6]">
-                      <div className="h-full rounded-full bg-[#c96442]" style={{ width: `${pct}%` }} />
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-[#ece7e1]">
+                      <div className="h-full rounded-full bg-[#ff6d43]" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
@@ -229,20 +229,20 @@ const AdminLifecycle = () => {
           ) : (
             <dl className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <dt className="text-[#87867f]">Supplier response rate</dt>
-                <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtPct(data?.supplierResponseRate)}</dd>
+                <dt className="text-[#8a8a85]">Supplier response rate</dt>
+                <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtPct(data?.supplierResponseRate)}</dd>
               </div>
               <div>
-                <dt className="text-[#87867f]">Quote revision rate</dt>
-                <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtPct(data?.revisionRate)}</dd>
+                <dt className="text-[#8a8a85]">Quote revision rate</dt>
+                <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtPct(data?.revisionRate)}</dd>
               </div>
               <div>
-                <dt className="text-[#87867f]">Open disputes</dt>
-                <dd className="mt-1 text-lg font-medium text-[#141413]">{data?.openDisputes ?? "—"}</dd>
+                <dt className="text-[#8a8a85]">Open disputes</dt>
+                <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{data?.openDisputes ?? "—"}</dd>
               </div>
               <div>
-                <dt className="text-[#87867f]">Late deliveries</dt>
-                <dd className="mt-1 text-lg font-medium text-[#141413]">{data?.lateDeliveries ?? "—"}</dd>
+                <dt className="text-[#8a8a85]">Late deliveries</dt>
+                <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{data?.lateDeliveries ?? "—"}</dd>
               </div>
             </dl>
           )}
@@ -260,7 +260,7 @@ const AdminLifecycle = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead>
-                    <tr className="border-b border-[#e8e6dc] text-start text-xs font-semibold uppercase text-[#87867f]">
+                    <tr className="border-b border-[#e9eef0] text-start text-xs font-semibold uppercase text-[#8a8a85]">
                       <th className="pb-3">Supplier</th>
                       <th className="pb-3 text-end">Assigned</th>
                       <th className="pb-3 text-end">Quoted</th>
@@ -272,14 +272,14 @@ const AdminLifecycle = () => {
                   </thead>
                   <tbody>
                     {data.supplierLeaderboard.map((s) => (
-                      <tr key={s.id} className="border-b border-[#f0eee6] last:border-0">
+                      <tr key={s.id} className="border-b border-[#ece7e1] last:border-0">
                         <td className="py-3">
-                          <div className="flex items-center gap-1.5 font-medium text-[#141413]">
+                          <div className="flex items-center gap-1.5 font-medium text-[#1a1a1a]">
                             {s.public_id}
                             {s.is_preferred && <Star01 className="w-3.5 h-3.5 text-amber-500" aria-label="Preferred" />}
                           </div>
                           {s.company_name && (
-                            <div className="text-xs text-[#87867f]">{s.company_name}</div>
+                            <div className="text-xs text-[#8a8a85]">{s.company_name}</div>
                           )}
                         </td>
                         <td className="py-3 text-end">{s.assigned}</td>

@@ -131,12 +131,12 @@ const SupplierAnalytics = () => {
               <div className="space-y-4">
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-sm text-[#87867f]">{tr("Pending total")}</p>
-                    <p className="font-display text-[1.6rem] font-medium text-[#141413]">
+                    <p className="text-sm text-[#8a8a85]">{tr("Pending total")}</p>
+                    <p className="font-display text-[1.6rem] font-medium text-[#1a1a1a]">
                       {formatSAR(data.payoutPending.total)}
                     </p>
                   </div>
-                  <p className="text-sm text-[#5e5d59]">
+                  <p className="text-sm text-[#5f625f]">
                     {tr("{count} pending · {amount} paid (30d)", {
                       count: fmtNumber(data.payoutPending.count),
                       amount: formatSAR(data.paidLast30),
@@ -145,9 +145,9 @@ const SupplierAnalytics = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {(["0-7", "8-14", "15-30", "30+"] as const).map((bucket) => (
-                    <div key={bucket} className="rounded-lg bg-[#f5f4ed] p-3 shadow-[inset_0_0_0_1px_#e8e6dc]">
-                      <p className="text-xs text-[#87867f]">{tr("{bucket} days", { bucket })}</p>
-                      <p className="mt-1 text-sm font-medium text-[#141413]">
+                    <div key={bucket} className="rounded-lg bg-[#f7f8f7] p-3 shadow-[inset_0_0_0_1px_#e9eef0]">
+                      <p className="text-xs text-[#8a8a85]">{tr("{bucket} days", { bucket })}</p>
+                      <p className="mt-1 text-sm font-medium text-[#1a1a1a]">
                         {formatSAR(data.payoutPending.buckets[bucket])}
                       </p>
                     </div>
@@ -165,20 +165,20 @@ const SupplierAnalytics = () => {
             data && (
               <dl className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="text-[#87867f]">{tr("Submitted")}</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.submitted)}</dd>
+                  <dt className="text-[#8a8a85]">{tr("Submitted")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtNumber(data.invoiceCounts.submitted)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[#87867f]">{tr("Approved")}</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.approved)}</dd>
+                  <dt className="text-[#8a8a85]">{tr("Approved")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtNumber(data.invoiceCounts.approved)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[#87867f]">{tr("Paid")}</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.paid)}</dd>
+                  <dt className="text-[#8a8a85]">{tr("Paid")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtNumber(data.invoiceCounts.paid)}</dd>
                 </div>
                 <div>
-                  <dt className="text-[#87867f]">{tr("Rejected")}</dt>
-                  <dd className="mt-1 text-lg font-medium text-[#141413]">{fmtNumber(data.invoiceCounts.rejected)}</dd>
+                  <dt className="text-[#8a8a85]">{tr("Rejected")}</dt>
+                  <dd className="mt-1 text-lg font-medium text-[#1a1a1a]">{fmtNumber(data.invoiceCounts.rejected)}</dd>
                 </div>
               </dl>
             )

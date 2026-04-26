@@ -1,13 +1,83 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
-
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 @plugin "tailwindcss-react-aria-components";
 
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/mwrd/PlusJakartaSans-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/mwrd/PlusJakartaSans-Medium.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/mwrd/PlusJakartaSans-SemiBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/mwrd/PlusJakartaSans-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/mwrd/PlusJakartaSans-ExtraBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("/fonts/mwrd/IBMPlexSansArabic-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("/fonts/mwrd/IBMPlexSansArabic-Medium.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("/fonts/mwrd/IBMPlexSansArabic-SemiBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Sans Arabic";
+  src: url("/fonts/mwrd/IBMPlexSansArabic-Bold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Plus Jakarta Sans", Arial, system-ui, sans-serif;
-  --font-display: Georgia, "Times New Roman", serif;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-display: "Plus Jakarta Sans", Arial, system-ui, sans-serif;
+  --font-serif: "Plus Jakarta Sans", Arial, system-ui, sans-serif;
   --font-arabic: "IBM Plex Sans Arabic", "Plus Jakarta Sans", Arial, system-ui, sans-serif;
 
   --color-background: hsl(var(--background));
@@ -50,8 +120,8 @@
   --color-bg-brand-primary: hsl(var(--primary));
   --color-bg-brand-solid: hsl(var(--primary));
   --color-bg-error-primary: hsl(var(--destructive));
-  --color-bg-warning-primary: #fff6e5;
-  --color-bg-success-primary: #eef4e8;
+  --color-bg-warning-primary: #fff7d6;
+  --color-bg-success-primary: #e7f8f2;
 
   --color-text-primary: hsl(var(--foreground));
   --color-text-secondary: hsl(var(--muted-foreground));
@@ -60,37 +130,37 @@
   --color-text-brand-secondary: hsl(var(--foreground));
   --color-text-white: hsl(var(--primary-foreground));
   --color-text-error-primary: hsl(var(--destructive));
-  --color-text-warning-primary: #9d5f2b;
-  --color-text-success-primary: #556b45;
+  --color-text-warning-primary: #8c5f00;
+  --color-text-success-primary: #246b55;
 
   --color-border-primary: hsl(var(--border));
   --color-border-secondary: hsl(var(--input));
   --color-border-brand: hsl(var(--primary));
   --color-border-error: hsl(var(--destructive));
 
-  --color-brand-25: #fbf3ef;
-  --color-brand-50: #f7e9e1;
-  --color-brand-100: #eed1c5;
-  --color-brand-200: #e5b49f;
-  --color-brand-300: #d99776;
-  --color-brand-400: #cf7b57;
-  --color-brand-500: #c96442;
-  --color-brand-600: #ad5235;
-  --color-brand-700: #8d422d;
-  --color-brand-800: #6f3527;
-  --color-brand-900: #542a20;
-  --color-brand-950: #2e1712;
+  --color-brand-25: #fff8f5;
+  --color-brand-50: #fff1eb;
+  --color-brand-100: #ffe2d7;
+  --color-brand-200: #ffc8b7;
+  --color-brand-300: #ffab92;
+  --color-brand-400: #ff8b6a;
+  --color-brand-500: #ff6d43;
+  --color-brand-600: #e85d35;
+  --color-brand-700: #ba4424;
+  --color-brand-800: #8f341f;
+  --color-brand-900: #5f2419;
+  --color-brand-950: #1a1a1a;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: 0.75rem;
-  --radius-2xl: 1rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
 
-  --shadow-xs: 0px 0px 0px 1px rgba(209, 207, 197, 0.75);
-  --shadow-sm: 0px 0px 0px 1px rgba(209, 207, 197, 0.85);
-  --shadow-md: 0px 4px 24px rgba(20, 20, 19, 0.05), 0px 0px 0px 1px rgba(232, 230, 220, 0.9);
-  --shadow-lg: 0px 12px 36px rgba(20, 20, 19, 0.08), 0px 0px 0px 1px rgba(232, 230, 220, 0.95);
+  --shadow-xs: 0px 0px 0px 1px rgba(190, 184, 174, 0.45);
+  --shadow-sm: 0px 0px 0px 1px rgba(190, 184, 174, 0.55);
+  --shadow-md: 0px 16px 40px rgba(26, 26, 26, 0.06), 0px 0px 0px 1px rgba(190, 184, 174, 0.32);
+  --shadow-lg: 0px 24px 70px rgba(26, 26, 26, 0.1), 0px 0px 0px 1px rgba(190, 184, 174, 0.36);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -116,85 +186,84 @@
 
 @layer base {
   :root {
-    /* Claude-inspired warm editorial app tokens from DESIGN.md */
-    --background: 53 29% 95%; /* Parchment #f5f4ed */
-    --foreground: 60 3% 8%; /* Anthropic Near Black #141413 */
+    --background: 120 7% 97%; /* Porcelain #f7f8f7 */
+    --foreground: 0 0% 10%; /* Rich Black #1a1a1a */
 
-    --card: 50 33% 97%; /* Ivory #faf9f5 */
-    --card-foreground: 60 3% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 50 33% 97%;
-    --popover-foreground: 60 3% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 60 3% 8%;
-    --primary-foreground: 50 33% 97%;
+    --primary: 13 100% 63%; /* Vibrant Carrot #ff6d43 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 45 18% 89%; /* Warm Sand #e8e6dc */
-    --secondary-foreground: 50 3% 29%; /* Charcoal Warm #4d4c48 */
+    --secondary: 195 54% 85%; /* Interactive Cyan #c6e4ee */
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 45 18% 89%;
-    --muted-foreground: 50 3% 36%; /* Olive Gray #5e5d59 */
+    --muted: 180 11% 94%;
+    --muted-foreground: 120 2% 38%;
 
-    --accent: 15 53% 52%; /* Terracotta #c96442 */
-    --accent-foreground: 50 33% 97%;
+    --accent: 188 74% 69%; /* Frosted Blue #75daea */
+    --accent-foreground: 0 0% 10%;
 
-    --destructive: 0 55% 45%; /* Error Crimson #b53333 */
-    --destructive-foreground: 50 33% 97%;
+    --destructive: 355 80% 62%; /* Lobster Red #eb4f5d */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 45 31% 92%; /* Border Cream #f0eee6 */
-    --input: 45 18% 89%;
-    --ring: 207 82% 57%; /* Focus Blue #3898ec */
+    --border: 38 11% 84%;
+    --input: 38 11% 84%;
+    --ring: 187 65% 48%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --navy: 60 3% 8%;
-    --navy-light: 50 3% 36%;
-    --navy-dark: 60 3% 8%;
-    --sky: 15 53% 52%;
-    --sky-light: 15 48% 93%;
+    --navy: 0 0% 10%;
+    --navy-light: 120 2% 38%;
+    --navy-dark: 0 0% 6%;
+    --sky: 188 74% 69%;
+    --sky-light: 195 54% 85%;
 
-    --sidebar-background: 50 33% 97%;
-    --sidebar-foreground: 60 3% 8%;
-    --sidebar-primary: 60 3% 8%;
-    --sidebar-primary-foreground: 50 33% 97%;
-    --sidebar-accent: 45 18% 89%;
-    --sidebar-accent-foreground: 50 3% 29%;
-    --sidebar-border: 45 31% 92%;
-    --sidebar-ring: 207 82% 57%;
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 13 100% 63%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 187 65% 48%;
   }
 
   .dark {
-    --background: 60 3% 8%;
-    --foreground: 50 33% 97%;
-    --card: 60 2% 18%;
-    --card-foreground: 50 33% 97%;
-    --popover: 60 2% 18%;
-    --popover-foreground: 50 33% 97%;
+    --background: 0 0% 10%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 50 33% 97%;
-    --primary-foreground: 60 3% 8%;
+    --primary: 13 100% 63%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 60 2% 18%;
-    --secondary-foreground: 50 33% 97%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 60 2% 18%;
-    --muted-foreground: 49 6% 67%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 38 11% 71%;
 
-    --accent: 15 53% 52%;
-    --accent-foreground: 50 33% 97%;
+    --accent: 188 74% 69%;
+    --accent-foreground: 0 0% 10%;
 
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 50 33% 97%;
+    --destructive: 355 80% 62%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 60 2% 18%;
-    --input: 60 2% 18%;
-    --ring: 207 82% 57%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 187 65% 48%;
 
-    --navy: 50 33% 97%;
-    --navy-light: 49 6% 67%;
-    --navy-dark: 50 33% 97%;
-    --sky: 15 53% 52%;
-    --sky-light: 15 30% 30%;
+    --navy: 0 0% 100%;
+    --navy-light: 38 11% 71%;
+    --navy-dark: 0 0% 100%;
+    --sky: 188 74% 69%;
+    --sky-light: 195 54% 26%;
 
     --sidebar-background: 60 3% 8%;
     --sidebar-foreground: 50 33% 97%;
@@ -213,8 +282,8 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    color: #141413;
-    background: #f5f4ed;
+    color: #1a1a1a;
+    background: #f7f8f7;
   }
   /* Arabic text uses IBM Plex Sans Arabic when direction is RTL */
   [dir="rtl"] body,
@@ -224,7 +293,6 @@
 }
 
 .font-display {
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 500 !important;
+  font-family: "Plus Jakarta Sans", Arial, system-ui, sans-serif;
   letter-spacing: 0;
 }

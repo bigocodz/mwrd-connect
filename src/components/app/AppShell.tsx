@@ -21,9 +21,9 @@ type AppShellProps = {
 };
 
 const toneClasses = {
-  client: "bg-[#f7e9e1] text-[#8d422d] shadow-[0_0_0_1px_#eed1c5]",
-  supplier: "bg-[#eef4e8] text-[#556b45] shadow-[0_0_0_1px_#d9e4cf]",
-  admin: "bg-[#f7e9e1] text-[#8d422d] shadow-[0_0_0_1px_#eed1c5]",
+  client: "bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.5)]",
+  supplier: "bg-[#e7f8f2] text-[#246b55] shadow-[0_0_0_1px_rgba(36,107,85,0.16)]",
+  admin: "bg-[#fff1eb] text-[#ba4424] shadow-[0_0_0_1px_rgba(255,109,67,0.22)]",
 };
 
 const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps) => {
@@ -32,17 +32,17 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-[#f5f4ed] text-[#141413] lg:flex">
-      <aside className="hidden w-72 shrink-0 bg-[#faf9f5] border-e border-[#e8e6dc] lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
-        <div className="border-b border-[#f0eee6] px-5 py-5">
+    <div className="min-h-screen bg-[#f7f8f7] text-[#1a1a1a] lg:flex">
+      <aside className="hidden w-72 shrink-0 border-e border-black bg-[#1a1a1a] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+        <div className="border-b border-white/10 px-5 py-5">
           <Link to={navItems[0]?.href ?? "/"} className="flex items-center gap-3">
-            <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-xl object-cover" />
+            <img src="/logo.png" alt="MWRD" className="h-10 w-10 rounded-lg object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.18)]" />
             <div className="min-w-0">
-              <p className="font-display text-xl font-medium leading-6 text-[#141413]">MWRD</p>
-              <p className="text-xs leading-5 text-[#5e5d59]">{tr("Procurement workspace")}</p>
+              <p className="font-display text-xl font-semibold leading-6 text-white">MWRD</p>
+              <p className="text-xs leading-5 text-white/60">{tr("Procurement workspace")}</p>
             </div>
           </Link>
-          <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-medium tracking-[0.12px] ${toneClasses[portalTone]}`}>
+          <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tracking-normal ${toneClasses[portalTone]}`}>
             {tr(portalLabel)}
           </span>
         </div>
@@ -54,10 +54,10 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               <Link
                 key={item.href}
                 to={item.href}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                   isActive
-                    ? "bg-[#30302e] text-[#faf9f5] shadow-[0_0_0_1px_#30302e]"
-                    : "text-[#5e5d59] hover:bg-[#e8e6dc] hover:text-[#141413]"
+                    ? "bg-white text-[#1a1a1a] shadow-[0_12px_26px_rgba(0,0,0,0.22)]"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
@@ -67,20 +67,20 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
           })}
         </nav>
 
-        <div className="border-t border-[#f0eee6] p-4">
-          <div className="mb-3 flex items-center gap-3 rounded-xl bg-[#f5f4ed] p-3 shadow-[0_0_0_1px_#e8e6dc]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8e6dc] text-sm font-medium text-[#4d4c48]">
+        <div className="border-t border-white/10 p-4">
+          <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/[0.06] p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#ff6d43] text-sm font-semibold text-white">
               {(profile?.company_name || profile?.public_id || "M").slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-[#141413]">{profile?.company_name || tr("MWRD account")}</p>
-              <p className="truncate text-xs text-[#87867f]">{profile?.public_id}</p>
+              <p className="truncate text-sm font-semibold text-white">{profile?.company_name || tr("MWRD account")}</p>
+              <p className="truncate text-xs text-white/50">{profile?.public_id}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={signOut}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#5e5d59] transition-colors hover:bg-[#e8e6dc] hover:text-[#141413]"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut01 className="h-5 w-5" />
             {tr("Sign out")}
@@ -89,24 +89,24 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-[#e8e6dc] bg-[#faf9f5]/95 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-[#ded8d0] bg-white/92 backdrop-blur-xl">
           <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
-              <img src="/logo.png" alt="MWRD" className="h-9 w-9 shrink-0 rounded-xl object-cover" />
+              <img src="/logo.png" alt="MWRD" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
               <div className="min-w-0">
-                <p className="truncate font-display text-base font-medium text-[#141413]">MWRD</p>
-                <p className="truncate text-xs text-[#5e5d59]">{tr(portalLabel)}</p>
+                <p className="truncate font-display text-base font-semibold text-[#1a1a1a]">MWRD</p>
+                <p className="truncate text-xs text-[#5f625f]">{tr(portalLabel)}</p>
               </div>
             </div>
             <div className="hidden min-w-0 lg:block">
-              <p className="text-sm font-medium text-[#141413]">{profile?.company_name || tr(portalLabel)}</p>
-              <p className="text-xs text-[#87867f]">{profile?.public_id}</p>
+              <p className="text-sm font-semibold text-[#1a1a1a]">{profile?.company_name || tr(portalLabel)}</p>
+              <p className="text-xs text-[#8a8a85]">{profile?.public_id}</p>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setLang(lang === "en" ? "ar" : "en")}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-[#f5f4ed] px-3 text-sm font-medium text-[#5e5d59] shadow-[0_0_0_1px_#e8e6dc] transition-colors hover:bg-[#e8e6dc] hover:text-[#141413]"
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#f7f8f7] px-3 text-sm font-semibold text-[#5f625f] shadow-[inset_0_0_0_1px_rgba(190,184,174,0.48)] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
                 aria-label={tr("Toggle language")}
               >
                 <Globe01 className="h-5 w-5" />
@@ -115,15 +115,15 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               <NotificationBell />
             </div>
           </div>
-          <nav className="flex gap-2 overflow-x-auto border-t border-[#f0eee6] px-4 py-2 lg:hidden">
+          <nav className="flex gap-2 overflow-x-auto border-t border-[#ece7e1] px-4 py-2 lg:hidden">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}
                   to={item.href}
-                  className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-                    isActive ? "bg-[#30302e] text-[#faf9f5]" : "text-[#5e5d59]"
+                  className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold ${
+                    isActive ? "bg-[#1a1a1a] text-white" : "text-[#5f625f]"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />

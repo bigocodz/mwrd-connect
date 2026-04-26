@@ -22,8 +22,8 @@ const ChangePassword = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#c96442]" />
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f8f7]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#ff6d43]" />
       </div>
     );
   }
@@ -70,10 +70,10 @@ const ChangePassword = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f7f8f7] px-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f7e9e1] text-[#c96442] shadow-[0_0_0_1px_#eed1c5]">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#fff1eb] text-[#ff6d43] shadow-[0_0_0_1px_#ffc8b7]">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <CardTitle>{tr("Set your password")}</CardTitle>

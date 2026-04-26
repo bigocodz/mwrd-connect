@@ -32,12 +32,12 @@ const ForgotPassword = () => {
 
   if (sent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f8f7] px-4">
         <Card className="max-w-md w-full text-center">
           <CardContent className="pt-10 pb-8">
-            <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-[#c96442]" />
-            <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#141413]">{tr("Check your email")}</h2>
-            <p className="mb-6 leading-relaxed text-[#5e5d59]">
+            <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-[#ff6d43]" />
+            <h2 className="mb-2 font-display text-[1.6rem] font-medium text-[#1a1a1a]">{tr("Check your email")}</h2>
+            <p className="mb-6 leading-relaxed text-[#5f625f]">
               {tr("We sent a verification code to")} <strong>{email}</strong>. {tr("Enter it on the next page.")}
             </p>
             <Button onClick={() => navigate(`/reset-password?email=${encodeURIComponent(email)}`)}>
@@ -50,9 +50,9 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f4ed] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#f7f8f7] px-4">
       <div className="w-full max-w-md">
-        <Link to="/login" className="mb-6 inline-flex items-center gap-1 text-sm text-[#5e5d59] hover:text-[#141413]">
+        <Link to="/login" className="mb-6 inline-flex items-center gap-1 text-sm text-[#5f625f] hover:text-[#1a1a1a]">
           {dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />} {tr("Back to Login")}
         </Link>
         <Card>

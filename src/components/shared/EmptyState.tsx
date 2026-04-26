@@ -25,11 +25,11 @@ export const EmptyState = ({
   const Icon = typeof icon === "string" ? icons[icon] || FileText : icon;
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e8e6dc] text-[#4d4c48] shadow-[0_0_0_1px_#d1cfc5]">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.45)]">
         <Icon className="h-8 w-8" />
       </div>
-      <h3 className="mb-1 font-display text-[1.3rem] font-medium text-[#141413]">{title}</h3>
-      {description && <p className="max-w-sm text-center text-sm leading-relaxed text-[#5e5d59]">{description}</p>}
+      <h3 className="mb-1 font-display text-[1.2rem] font-semibold text-[#1a1a1a]">{title}</h3>
+      {description && <p className="max-w-sm text-center text-sm leading-relaxed text-[#5f625f]">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

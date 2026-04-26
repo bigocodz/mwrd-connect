@@ -4,14 +4,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium tracking-[0.12px] transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold tracking-normal transition-colors focus:outline-none focus:ring-2 focus:ring-[#2bb6c8] focus:ring-offset-2",
   {
     variants: {
       variant: {
-        default: "bg-[#30302e] text-[#faf9f5] shadow-[0_0_0_1px_#30302e]",
-        secondary: "bg-[#e8e6dc] text-[#4d4c48] shadow-[0_0_0_1px_#d1cfc5]",
-        destructive: "bg-[#f7e9e1] text-[#b53333] shadow-[0_0_0_1px_#eed1c5]",
-        outline: "bg-[#faf9f5] text-[#4d4c48] shadow-[0_0_0_1px_#d1cfc5]",
+        default: "bg-[#1a1a1a] text-white shadow-[0_0_0_1px_#1a1a1a]",
+        secondary: "bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.45)]",
+        destructive: "bg-[#ffe9ec] text-[#b91f2e] shadow-[0_0_0_1px_rgba(235,79,93,0.22)]",
+        outline: "bg-white text-[#42423f] shadow-[0_0_0_1px_rgba(190,184,174,0.68)]",
       },
     },
     defaultVariants: {
