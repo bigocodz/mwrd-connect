@@ -33,8 +33,10 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
 
   return (
     <div className="min-h-screen bg-[#f7f8f7] text-[#1a1a1a] lg:flex">
-      <aside className="hidden w-72 shrink-0 border-e border-black bg-[#1a1a1a] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
-        <div className="border-b border-white/10 px-5 py-5">
+      <aside className="relative hidden w-72 shrink-0 overflow-hidden border-e border-black bg-[#1a1a1a] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[linear-gradient(135deg,rgba(198,228,238,0.13),rgba(255,109,67,0.16))]" />
+        <div className="pointer-events-none absolute -end-32 top-10 h-72 w-72 rounded-full border border-white/10" />
+        <div className="relative border-b border-white/10 px-5 py-5">
           <Link to={navItems[0]?.href ?? "/"} className="block">
             <span className="inline-flex rounded-lg bg-white px-3 py-2.5 shadow-[0_14px_30px_rgba(0,0,0,0.22),inset_0_0_0_1px_rgba(190,184,174,0.45)]">
               <img src="/logos/asset-2.svg" alt="MWRD" className="h-9 w-auto max-w-[150px]" />
@@ -46,28 +48,39 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
           </span>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="relative flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}
                 to={item.href}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
+                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                   isActive
                     ? "bg-white text-[#1a1a1a] shadow-[0_12px_26px_rgba(0,0,0,0.22)]"
                     : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
+                <span
+                  className={`absolute start-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-e-full transition-opacity ${
+                    isActive ? "bg-[#ff6d43] opacity-100" : "bg-white/30 opacity-0 group-hover:opacity-100"
+                  }`}
+                />
+                <span
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                    isActive ? "bg-[#fff1eb] text-[#ff6d43]" : "bg-white/[0.06] text-white/70 group-hover:text-white"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                </span>
                 <span className="truncate">{tr(item.label)}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="border-t border-white/10 p-4">
-          <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/[0.06] p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+        <div className="relative border-t border-white/10 p-4">
+          <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/[0.07] p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#ff6d43] text-sm font-semibold text-white">
               {(profile?.company_name || profile?.public_id || "M").slice(0, 1).toUpperCase()}
             </div>
@@ -89,7 +102,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b border-[#ded8d0] bg-white/92 backdrop-blur-xl">
-          <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="flex h-[4.35rem] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
               <div className="min-w-0">
                 <img src="/logos/asset-2.svg" alt="MWRD" className="h-8 w-auto max-w-[118px]" />
@@ -97,8 +110,8 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               </div>
             </div>
             <div className="hidden min-w-0 lg:block">
-              <p className="text-sm font-semibold text-[#1a1a1a]">{profile?.company_name || tr(portalLabel)}</p>
-              <p className="text-xs text-[#8a8a85]">{profile?.public_id}</p>
+              <p className="text-xs font-semibold uppercase tracking-normal text-[#8a8a85]">{tr(portalLabel)}</p>
+              <p className="mt-0.5 text-sm font-semibold text-[#1a1a1a]">{profile?.company_name || tr("MWRD account")}</p>
             </div>
             <div className="flex items-center gap-2">
               <button

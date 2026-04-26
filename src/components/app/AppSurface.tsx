@@ -13,13 +13,17 @@ type PageHeaderProps = {
 };
 
 export const PageHeader = ({ title, description, actions }: PageHeaderProps) => (
-  <div className="mb-8 flex flex-col gap-4 border-b border-[#ded8d0] pb-6 sm:flex-row sm:items-start sm:justify-between">
+  <div className="relative mb-8 overflow-hidden border-b border-[#ded8d0] pb-7 sm:flex sm:items-start sm:justify-between sm:gap-6">
+    <div className="pointer-events-none absolute end-0 top-0 hidden h-24 w-72 bg-[linear-gradient(90deg,rgba(198,228,238,0),rgba(198,228,238,0.55),rgba(255,109,67,0.13))] lg:block" />
     <div className="min-w-0">
-      <div className="mb-3 h-1 w-11 rounded-full bg-[#ff6d43]" />
-      <h1 className="font-display text-[2rem] font-semibold leading-tight tracking-normal text-[#1a1a1a] sm:text-[2.35rem]">{title}</h1>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="h-1.5 w-9 rounded-full bg-[#ff6d43]" />
+        <span className="h-1.5 w-3 rounded-full bg-[#75daea]" />
+      </div>
+      <h1 className="font-display text-[2.05rem] font-semibold leading-tight tracking-normal text-[#1a1a1a] sm:text-[2.55rem]">{title}</h1>
       {description && <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-[#5f625f]">{description}</p>}
     </div>
-    {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+    {actions && <div className="relative mt-4 flex shrink-0 items-center gap-2 sm:mt-0">{actions}</div>}
   </div>
 );
 
@@ -33,12 +37,13 @@ type PanelProps = {
 };
 
 export const Panel = ({ children, title, description, icon: Icon, className, actions }: PanelProps) => (
-  <section className={cn("rounded-lg bg-white shadow-[0_18px_44px_rgba(26,26,26,0.045),0_0_0_1px_rgba(190,184,174,0.34)]", className)}>
+  <section className={cn("overflow-hidden rounded-lg bg-white shadow-[0_20px_54px_rgba(26,26,26,0.055),0_0_0_1px_rgba(190,184,174,0.34)]", className)}>
     {(title || description || actions) && (
-      <div className="flex flex-col gap-3 border-b border-[#ece7e1] px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="relative flex flex-col gap-3 border-b border-[#ece7e1] bg-[linear-gradient(180deg,#ffffff,#fbfcfc)] px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea,rgba(198,228,238,0))]" />
         <div className="flex min-w-0 gap-3">
           {Icon && (
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.45)]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1a1a1a] text-white shadow-[0_10px_22px_rgba(26,26,26,0.16)]">
               <Icon className="h-5 w-5" />
             </span>
           )}
@@ -71,13 +76,15 @@ const metricTone = {
 };
 
 export const MetricCard = ({ label, value, icon: Icon, helper, loading, tone = "default" }: MetricCardProps) => (
-  <div className="rounded-lg bg-white p-6 shadow-[0_18px_44px_rgba(26,26,26,0.045),0_0_0_1px_rgba(190,184,174,0.34)]">
+  <div className="group relative overflow-hidden rounded-lg bg-white p-6 shadow-[0_18px_44px_rgba(26,26,26,0.05),0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(26,26,26,0.09),0_0_0_1px_rgba(255,109,67,0.25)]">
+    <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)] opacity-80" />
+    <div className="pointer-events-none absolute -end-8 -top-8 h-24 w-24 rounded-full bg-[#c6e4ee]/35 transition-transform group-hover:scale-125" />
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="text-xs font-semibold tracking-normal text-[#6c6f6c]">{label}</p>
         {loading ? <SkeletonLine className="mt-3 h-8 w-28" /> : <div className="mt-2 font-display text-[2rem] font-semibold leading-tight text-[#1a1a1a]">{value}</div>}
       </div>
-      <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", metricTone[tone])}>
+      <span className={cn("relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", metricTone[tone])}>
         <Icon className="h-5 w-5" />
       </span>
     </div>
@@ -96,8 +103,9 @@ type LinkCardProps = {
 export const LinkCard = ({ title, description, href, icon: Icon, meta }: LinkCardProps) => (
   <Link
     to={href}
-    className="group flex h-full items-start gap-4 rounded-lg bg-white p-5 shadow-[0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(26,26,26,0.08),0_0_0_1px_rgba(255,109,67,0.36)]"
+    className="group relative flex h-full items-start gap-4 overflow-hidden rounded-lg bg-white p-5 shadow-[0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(26,26,26,0.08),0_0_0_1px_rgba(255,109,67,0.36)]"
   >
+    <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)] opacity-0 transition-opacity group-hover:opacity-100" />
     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.45)] transition-colors group-hover:bg-[#ff6d43] group-hover:text-white">
       <Icon className="h-5 w-5" />
     </span>
