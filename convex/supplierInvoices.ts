@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAdmin, requireSupplier, getAuthenticatedProfile } from "./lib";
+import { logAction } from "./audit";
 
 const notify = async (
   ctx: any,
@@ -144,6 +145,17 @@ export const submit = mutation({
       `Invoice ${args.invoice_number} submitted for review.`,
       `/admin/supplier-invoices/${invoiceId}`,
     );
+    await logAction(ctx, {
+      action: "supplier_invoice.submit",
+      target_type: "supplier_invoice",
+      target_id: invoiceId,
+      after: { status: "SUBMITTED" },
+      details: {
+        invoice_number: args.invoice_number,
+        order_id: args.order_id,
+        total_amount: args.total_amount,
+      },
+    });
     return invoiceId;
   },
 });
@@ -173,6 +185,14 @@ export const approve = mutation({
       `Invoice ${invoice.invoice_number} was approved.`,
       `/supplier/invoices`,
     );
+    await logAction(ctx, {
+      action: "supplier_invoice.approve",
+      target_type: "supplier_invoice",
+      target_id: args.id,
+      before: { status: "SUBMITTED" },
+      after: { status: "APPROVED" },
+      details: { invoice_number: invoice.invoice_number },
+    });
   },
 });
 
@@ -195,6 +215,14 @@ export const reject = mutation({
       args.reason,
       `/supplier/invoices`,
     );
+    await logAction(ctx, {
+      action: "supplier_invoice.reject",
+      target_type: "supplier_invoice",
+      target_id: args.id,
+      before: { status: "SUBMITTED" },
+      after: { status: "REJECTED" },
+      details: { invoice_number: invoice.invoice_number, reason: args.reason },
+    });
   },
 });
 
@@ -217,5 +245,13 @@ export const markPaid = mutation({
       `Invoice ${invoice.invoice_number} was paid.`,
       `/supplier/invoices`,
     );
+    await logAction(ctx, {
+      action: "supplier_invoice.mark_paid",
+      target_type: "supplier_invoice",
+      target_id: args.id,
+      before: { status: "APPROVED" },
+      after: { status: "PAID" },
+      details: { invoice_number: invoice.invoice_number, reference: args.reference },
+    });
   },
 });

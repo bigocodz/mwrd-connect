@@ -2,6 +2,8 @@ import { query, mutation, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAdmin, requireClient } from "./lib";
+import { logAction } from "./audit";
+import { api } from "./_generated/api";
 
 const enrich = async (ctx: any, invoice: any) => {
   const [client, order] = await Promise.all([
@@ -121,6 +123,22 @@ export const createForOrder = mutation({
       link: "/client/invoices",
       read: false,
     });
+    await logAction(ctx, {
+      action: "client_invoice.create",
+      target_type: "client_invoice",
+      target_id: id,
+      after: { status: "PENDING_PAYMENT" },
+      details: {
+        invoice_number,
+        order_id: args.order_id,
+        client_id: order.client_id,
+        total_amount: order.total_with_vat ?? 0,
+      },
+    });
+    // Fire-and-forget Wafeq submission (PRD §8.1). Mutations can't call
+    // actions synchronously; the scheduler runs it on the next tick. Mock
+    // mode kicks in automatically when WAFEQ_API_KEY is unset.
+    await ctx.scheduler.runAfter(0, api.wafeq.submitClientInvoice, { invoice_id: id });
     return id;
   },
 });
@@ -160,6 +178,18 @@ export const createManual = mutation({
       link: "/client/invoices",
       read: false,
     });
+    await logAction(ctx, {
+      action: "client_invoice.create_manual",
+      target_type: "client_invoice",
+      target_id: id,
+      after: { status: "PENDING_PAYMENT" },
+      details: {
+        invoice_number,
+        client_id: args.client_id,
+        total_amount: args.subtotal + args.vat_amount,
+      },
+    });
+    await ctx.scheduler.runAfter(0, api.wafeq.submitClientInvoice, { invoice_id: id });
     return id;
   },
 });
@@ -184,6 +214,14 @@ export const markPaid = mutation({
       link: "/client/invoices",
       read: false,
     });
+    await logAction(ctx, {
+      action: "client_invoice.mark_paid",
+      target_type: "client_invoice",
+      target_id: args.id,
+      before: { status: invoice.status },
+      after: { status: "PAID" },
+      details: { invoice_number: invoice.invoice_number, reference: args.reference },
+    });
   },
 });
 
@@ -195,6 +233,14 @@ export const markOverdue = mutation({
     if (!invoice) throw new ConvexError("Not found");
     if (invoice.status !== "PENDING_PAYMENT") throw new ConvexError("Only pending invoices can be flagged");
     await ctx.db.patch(args.id, { status: "OVERDUE" });
+    await logAction(ctx, {
+      action: "client_invoice.mark_overdue",
+      target_type: "client_invoice",
+      target_id: args.id,
+      before: { status: "PENDING_PAYMENT" },
+      after: { status: "OVERDUE" },
+      details: { invoice_number: invoice.invoice_number },
+    });
     await ctx.db.insert("notifications", {
       user_id: invoice.client_id,
       title: "Invoice overdue",
@@ -272,6 +318,14 @@ export const voidInvoice = mutation({
       message: `${invoice.invoice_number} has been voided.`,
       link: "/client/invoices",
       read: false,
+    });
+    await logAction(ctx, {
+      action: "client_invoice.void",
+      target_type: "client_invoice",
+      target_id: args.id,
+      before: { status: invoice.status },
+      after: { status: "VOID" },
+      details: { invoice_number: invoice.invoice_number, reason: args.reason },
     });
   },
 });

@@ -13,15 +13,10 @@ type PageHeaderProps = {
 };
 
 export const PageHeader = ({ title, description, actions }: PageHeaderProps) => (
-  <div className="relative mb-8 overflow-hidden border-b border-[#ded8d0] pb-7 sm:flex sm:items-start sm:justify-between sm:gap-6">
-    <div className="pointer-events-none absolute end-0 top-0 hidden h-24 w-72 bg-[linear-gradient(90deg,rgba(198,228,238,0),rgba(198,228,238,0.55),rgba(255,109,67,0.13))] lg:block" />
+  <div className="relative mb-5 sm:flex sm:items-start sm:justify-between sm:gap-6">
     <div className="min-w-0">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="h-1.5 w-9 rounded-full bg-[#ff6d43]" />
-        <span className="h-1.5 w-3 rounded-full bg-[#75daea]" />
-      </div>
-      <h1 className="font-display text-[2.05rem] font-semibold leading-tight tracking-normal text-[#1a1a1a] sm:text-[2.55rem]">{title}</h1>
-      {description && <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-[#5f625f]">{description}</p>}
+      <h1 className="font-display text-[1.65rem] font-semibold leading-tight tracking-normal text-[#1d2939] sm:text-[2rem]">{title}</h1>
+      {description && <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-[#667085]">{description}</p>}
     </div>
     {actions && <div className="relative mt-4 flex shrink-0 items-center gap-2 sm:mt-0">{actions}</div>}
   </div>
@@ -37,25 +32,24 @@ type PanelProps = {
 };
 
 export const Panel = ({ children, title, description, icon: Icon, className, actions }: PanelProps) => (
-  <section className={cn("overflow-hidden rounded-md bg-white shadow-[0_20px_54px_rgba(26,26,26,0.055),0_0_0_1px_rgba(190,184,174,0.34)]", className)}>
+  <section className={cn("overflow-hidden rounded-xl border-2 border-white bg-white/80", className)}>
     {(title || description || actions) && (
-      <div className="relative flex flex-col gap-3 border-b border-[#ece7e1] bg-[linear-gradient(180deg,#ffffff,#fbfcfc)] px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea,rgba(198,228,238,0))]" />
+      <div className="relative flex flex-col gap-3 border-b border-[#eef0f3] px-5 py-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-3">
           {Icon && (
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1a1a1a] text-white shadow-[0_10px_22px_rgba(26,26,26,0.16)]">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43]">
               <Icon className="h-5 w-5" />
             </span>
           )}
           <div className="min-w-0">
-            {title && <h2 className="font-display text-[1.15rem] font-semibold leading-tight text-[#1a1a1a]">{title}</h2>}
-            {description && <p className="mt-1 text-[15px] leading-relaxed text-[#5f625f]">{description}</p>}
+            {title && <h2 className="font-display text-[1.2rem] font-semibold leading-tight text-[#1d2939]">{title}</h2>}
+            {description && <p className="mt-1 text-[15px] leading-relaxed text-[#667085]">{description}</p>}
           </div>
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
     )}
-    <div className="p-6 [&_table]:w-full [&_table]:text-sm [&_thead]:bg-[#fbfcfc] [&_thead_tr]:border-b [&_thead_tr]:border-[#ded8d0] [&_tbody_tr]:border-b [&_tbody_tr]:border-[#ece7e1] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-[#fbfcfc] [&_td]:px-4 [&_td]:py-4 [&_th]:h-12 [&_th]:whitespace-nowrap [&_th]:px-4 [&_th]:py-3 [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:text-[#6c6f6c]">{children}</div>
+    <div className="p-5 [&_table]:w-full [&_table]:text-sm [&_thead_tr]:border-b [&_thead_tr]:border-[#eef0f3] [&_tbody_tr]:border-b [&_tbody_tr]:border-[#eef0f3] [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-white/70 [&_td]:px-4 [&_td]:py-4 [&_th]:h-12 [&_th]:whitespace-nowrap [&_th]:px-4 [&_th]:py-3 [&_th]:text-xs [&_th]:font-medium [&_th]:text-[#667085]">{children}</div>
   </section>
 );
 
@@ -69,26 +63,24 @@ type MetricCardProps = {
 };
 
 const metricTone = {
-  default: "bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.45)]",
-  success: "bg-[#e7f8f2] text-[#246b55] shadow-[0_0_0_1px_rgba(36,107,85,0.14)]",
-  warning: "bg-[#fff7d6] text-[#8c5f00] shadow-[0_0_0_1px_rgba(248,200,67,0.34)]",
-  danger: "bg-[#ffe9ec] text-[#b91f2e] shadow-[0_0_0_1px_rgba(235,79,93,0.22)]",
+  default: "bg-[#eaf8fb] text-[#1a1a1a]",
+  success: "bg-[#e7f8f2] text-[#246b55]",
+  warning: "bg-[#fff7d6] text-[#8c5f00]",
+  danger: "bg-[#ffe9ec] text-[#b91f2e]",
 };
 
 export const MetricCard = ({ label, value, icon: Icon, helper, loading, tone = "default" }: MetricCardProps) => (
-  <div className="group relative overflow-hidden rounded-md bg-white p-6 shadow-[0_18px_44px_rgba(26,26,26,0.05),0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(26,26,26,0.09),0_0_0_1px_rgba(255,109,67,0.25)]">
-    <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)] opacity-80" />
-    <div className="pointer-events-none absolute -end-8 -top-8 h-24 w-24 rounded-full bg-[#c6e4ee]/35 transition-transform group-hover:scale-125" />
+  <div className="group relative overflow-hidden rounded-xl border-2 border-white bg-white/80 p-5 transition-colors hover:bg-white">
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-xs font-semibold tracking-normal text-[#6c6f6c]">{label}</p>
-        {loading ? <SkeletonLine className="mt-3 h-8 w-28" /> : <div className="mt-2 font-display text-[2rem] font-semibold leading-tight text-[#1a1a1a]">{value}</div>}
+        <p className="text-sm font-medium tracking-normal text-[#344054]">{label}</p>
+        {loading ? <SkeletonLine className="mt-5 h-8 w-28" /> : <div className="mt-5 font-display text-[2.25rem] font-semibold leading-none text-[#1d2939]">{value}</div>}
       </div>
       <span className={cn("relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", metricTone[tone])}>
         <Icon className="h-5 w-5" />
       </span>
     </div>
-    {helper && !loading && <div className="mt-3 text-sm leading-relaxed text-[#5f625f]">{helper}</div>}
+    {helper && !loading && <div className="mt-3 text-sm leading-relaxed text-[#667085]">{helper}</div>}
   </div>
 );
 
@@ -103,19 +95,18 @@ type LinkCardProps = {
 export const LinkCard = ({ title, description, href, icon: Icon, meta }: LinkCardProps) => (
   <Link
     to={href}
-    className="group relative flex h-full items-start gap-4 overflow-hidden rounded-lg bg-white p-5 shadow-[0_0_0_1px_rgba(190,184,174,0.34)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(26,26,26,0.08),0_0_0_1px_rgba(255,109,67,0.36)]"
+    className="group relative flex h-full items-start gap-4 overflow-hidden rounded-xl border-2 border-white bg-white/70 p-5 transition-colors hover:bg-white"
   >
-    <span className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)] opacity-0 transition-opacity group-hover:opacity-100" />
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#c6e4ee] text-[#1a1a1a] shadow-[0_0_0_1px_rgba(117,218,234,0.45)] transition-colors group-hover:bg-[#ff6d43] group-hover:text-white">
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43] transition-colors group-hover:bg-[#ff6d43] group-hover:text-white">
       <Icon className="h-5 w-5" />
     </span>
     <span className="min-w-0 flex-1">
       <span className="flex items-center justify-between gap-3">
-        <span className="font-display text-[1.15rem] font-semibold leading-tight text-[#1a1a1a]">{title}</span>
+        <span className="font-display text-[1.05rem] font-semibold leading-tight text-[#1d2939]">{title}</span>
         <DirectionalArrow />
       </span>
-      <span className="mt-2 block text-[15px] leading-relaxed text-[#5f625f]">{description}</span>
-      {meta && <span className="mt-3 block text-sm font-semibold text-[#1a1a1a]">{meta}</span>}
+      <span className="mt-2 block text-[15px] leading-relaxed text-[#667085]">{description}</span>
+      {meta && <span className="mt-3 block text-sm font-semibold text-[#1d2939]">{meta}</span>}
     </span>
   </Link>
 );
@@ -137,11 +128,11 @@ type SkeletonLineProps = {
 };
 
 export const SkeletonLine = ({ className }: SkeletonLineProps) => (
-  <div className={cn("animate-pulse rounded-lg bg-[#e9eef0]", className)} />
+  <div className={cn("animate-pulse rounded-lg bg-[#e4e7ec]", className)} />
 );
 
 export const EmptyMessage = ({ children }: { children: ReactNode }) => (
-  <p className="rounded-md bg-[#f7f8f7] px-4 py-6 text-center text-sm leading-relaxed text-[#5f625f] shadow-[inset_0_0_0_1px_rgba(190,184,174,0.38)]">
+  <p className="rounded-xl bg-white px-4 py-6 text-center text-sm leading-relaxed text-[#667085]">
     {children}
   </p>
 );

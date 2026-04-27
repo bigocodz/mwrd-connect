@@ -2,6 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAdmin, getAuthenticatedProfile } from "./lib";
+import { logAction } from "./audit";
 
 const documentType = v.union(
   v.literal("CR_CERTIFICATE"),
@@ -106,6 +107,18 @@ export const submit = mutation({
         }),
       ),
     );
+    await logAction(ctx, {
+      action: "kyc.submit",
+      target_type: "kyc_document",
+      target_id: id,
+      after: { status: "PENDING" },
+      details: {
+        document_type: args.document_type,
+        name: args.name,
+        profile_id: profile._id,
+        expiry_date: args.expiry_date,
+      },
+    });
     return id;
   },
 });
@@ -132,6 +145,17 @@ export const remove = mutation({
     }
     await ctx.db.delete(args.id);
     await recomputeKycStatus(ctx, doc.profile_id);
+    await logAction(ctx, {
+      action: "kyc.remove",
+      target_type: "kyc_document",
+      target_id: args.id,
+      before: {
+        status: doc.status,
+        document_type: doc.document_type,
+        name: doc.name,
+      },
+      details: { profile_id: doc.profile_id, removed_by_role: profile.role },
+    });
   },
 });
 
@@ -155,6 +179,18 @@ export const approve = mutation({
       link: "/supplier/kyc",
       read: false,
     });
+    await logAction(ctx, {
+      action: "kyc.approve",
+      target_type: "kyc_document",
+      target_id: args.id,
+      before: { status: doc.status },
+      after: { status: "APPROVED" },
+      details: {
+        document_type: doc.document_type,
+        name: doc.name,
+        profile_id: doc.profile_id,
+      },
+    });
   },
 });
 
@@ -177,6 +213,19 @@ export const reject = mutation({
       message: args.reason,
       link: "/supplier/kyc",
       read: false,
+    });
+    await logAction(ctx, {
+      action: "kyc.reject",
+      target_type: "kyc_document",
+      target_id: args.id,
+      before: { status: doc.status },
+      after: { status: "REJECTED" },
+      details: {
+        document_type: doc.document_type,
+        name: doc.name,
+        profile_id: doc.profile_id,
+        reason: args.reason,
+      },
     });
   },
 });

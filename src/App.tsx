@@ -22,6 +22,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminCreateUser from "./pages/admin/AdminCreateUser";
 import AdminPendingProducts from "./pages/admin/AdminPendingProducts";
+import AdminCategories from "./pages/admin/AdminCategories";
 import AdminMarginSettings from "./pages/admin/AdminMarginSettings";
 import SupplierProducts from "./pages/supplier/SupplierProducts";
 import SupplierProductForm from "./pages/supplier/SupplierProductForm";
@@ -187,6 +188,9 @@ const App = () => (
                 } />
                 <Route path="/admin/products/pending" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPendingProducts /></ProtectedRoute>
+                } />
+                <Route path="/admin/categories" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminCategories /></ProtectedRoute>
                 } />
                 <Route path="/admin/margin-settings" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminMarginSettings /></ProtectedRoute>

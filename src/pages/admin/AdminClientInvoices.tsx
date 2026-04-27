@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@cvx/api";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { WafeqPanel, InvoiceWafeqStatus } from "@/components/admin/WafeqPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,6 +45,7 @@ const AdminClientInvoices = () => {
   const markOverdue = useMutation(api.clientInvoices.markOverdue);
   const sendReminder = useMutation(api.clientInvoices.sendReminder);
   const voidInvoice = useMutation(api.clientInvoices.voidInvoice);
+  const submitToWafeq = useAction(api.wafeq.submitClientInvoice);
 
   const loading = invoicesData === undefined;
   const invoices = invoicesData ?? [];
@@ -159,6 +161,8 @@ const AdminClientInvoices = () => {
           </div>
         </div>
 
+        <WafeqPanel />
+
         {loading ? <TableSkeleton rows={5} cols={9} /> : filtered.length === 0 ? (
           <Card><CardContent className="p-0">
             <EmptyState icon="payments" title={tr("No invoices")} description={tr("Issue one from a delivered or completed order.")} />
@@ -194,9 +198,12 @@ const AdminClientInvoices = () => {
                     <TableCell className="text-sm">{inv.due_date}</TableCell>
                     <TableCell className="font-medium">{formatSAR(inv.total_amount)}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={CLIENT_INVOICE_STATUS_COLOR[inv.status] || ""}>
-                        {tr(CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status)}
-                      </Badge>
+                      <div className="flex flex-col items-start gap-1">
+                        <Badge variant="outline" className={CLIENT_INVOICE_STATUS_COLOR[inv.status] || ""}>
+                          {tr(CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status)}
+                        </Badge>
+                        <InvoiceWafeqStatus invoice={inv} />
+                      </div>
                       {inv.status === "VOID" && inv.void_reason && (
                         <p className="text-xs text-muted-foreground mt-1 max-w-xs truncate" title={inv.void_reason}>{inv.void_reason}</p>
                       )}
@@ -244,6 +251,30 @@ const AdminClientInvoices = () => {
                         {inv.status !== "PAID" && inv.status !== "VOID" && (
                           <Button size="sm" variant="destructive" onClick={() => { setVoidId(inv._id); setVoidReason(""); }} disabled={busy}>
                             <XCircle className="w-3 h-3 me-1" /> {tr("Void")}
+                          </Button>
+                        )}
+                        {inv.status !== "VOID" && inv.zatca_status !== "CLEARED" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={async () => {
+                              setBusy(true);
+                              try {
+                                const r = await submitToWafeq({ invoice_id: inv._id });
+                                if (r.ok) {
+                                  toast.success(tr("Submitted to Wafeq"));
+                                } else {
+                                  toast.error(r.errorMessage || tr("Wafeq submission failed"));
+                                }
+                              } catch (err: any) {
+                                toast.error(err.message || tr("Wafeq submission failed"));
+                              } finally {
+                                setBusy(false);
+                              }
+                            }}
+                            disabled={busy}
+                          >
+                            {tr("Send to Wafeq")}
                           </Button>
                         )}
                       </div>

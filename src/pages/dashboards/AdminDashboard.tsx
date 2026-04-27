@@ -7,8 +7,11 @@ import {
   BarChartSquareUp,
   ClockCheck,
   CreditCard01,
+  FileQuestion02,
+  PackageCheck,
   PackageSearch,
   Percent03,
+  Inbox01,
   Receipt,
   ShieldTick,
   Star01,
@@ -81,6 +84,30 @@ const AdminDashboard = () => {
             loading={loading}
             tone="sun"
           />
+        </div>
+      </Panel>
+
+      <Panel className="mt-6" title={tr("Managed Marketplace Loop")} description={tr("The PRD transaction backbone from lead capture to Wafeq-cleared invoice.")}>
+        <div className="grid gap-3 md:grid-cols-6">
+          {[
+            { label: tr("Lead"), value: tr("Qualify account"), icon: Inbox01 },
+            { label: tr("Catalog"), value: tr("Approve supply"), icon: PackageSearch },
+            { label: tr("RFQ"), value: tr("Route demand"), icon: FileQuestion02 },
+            { label: tr("Margin"), value: tr("Assemble offer"), icon: Percent03 },
+            { label: tr("PO"), value: tr("Dispatch order"), icon: PackageCheck },
+            { label: tr("Invoice"), value: tr("Clear in Wafeq"), icon: Receipt },
+          ].map((step, index) => (
+            <div key={step.label} className="rounded-xl border-2 border-white bg-white/70 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43]">
+                  <step.icon className="h-5 w-5" />
+                </span>
+                <span className="text-xs font-semibold text-[#98a2b3]">{String(index + 1).padStart(2, "0")}</span>
+              </div>
+              <p className="text-sm font-semibold text-[#1d2939]">{step.label}</p>
+              <p className="mt-1 text-xs leading-5 text-[#667085]">{step.value}</p>
+            </div>
+          ))}
         </div>
       </Panel>
 
@@ -207,9 +234,9 @@ const TableSkeleton = () => (
 );
 
 const pulseTone = {
-  carrot: "bg-[#fff1eb] text-[#ba4424] shadow-[inset_0_0_0_1px_rgba(255,109,67,0.22)]",
-  cyan: "bg-[#eef7f8] text-[#1a1a1a] shadow-[inset_0_0_0_1px_rgba(117,218,234,0.34)]",
-  sun: "bg-[#fff7d6] text-[#8c5f00] shadow-[inset_0_0_0_1px_rgba(248,200,67,0.34)]",
+  carrot: "bg-[#fff1eb] text-[#ba4424]",
+  cyan: "bg-[#eaf8fb] text-[#1a1a1a]",
+  sun: "bg-[#fff7d6] text-[#8c5f00]",
 };
 
 const AdminPulseCard = ({
@@ -227,18 +254,17 @@ const AdminPulseCard = ({
   loading: boolean;
   tone: keyof typeof pulseTone;
 }) => (
-  <div className="relative overflow-hidden rounded-lg bg-[#fbfcfc] p-4 shadow-[inset_0_0_0_1px_rgba(190,184,174,0.36)]">
-    <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,#ff6d43,#75daea)]" />
+  <div className="relative overflow-hidden rounded-xl border-2 border-white bg-white/70 p-4">
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-xs font-semibold text-[#6c6f6c]">{label}</p>
-        {loading ? <SkeletonLine className="mt-2 h-7 w-24" /> : <p className="mt-2 text-2xl font-semibold leading-tight text-[#1a1a1a]">{value}</p>}
+        <p className="text-xs font-semibold text-[#667085]">{label}</p>
+        {loading ? <SkeletonLine className="mt-2 h-7 w-24" /> : <p className="mt-2 text-2xl font-semibold leading-tight text-[#1d2939]">{value}</p>}
       </div>
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${pulseTone[tone]}`}>
         <Icon className="h-5 w-5" />
       </span>
     </div>
-    {!loading && <p className="mt-2 text-sm leading-relaxed text-[#5f625f]">{helper}</p>}
+    {!loading && <p className="mt-2 text-sm leading-relaxed text-[#667085]">{helper}</p>}
   </div>
 );
 
@@ -259,16 +285,15 @@ const PendingAction = ({
 }) => (
   <Link
     to={href}
-    className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-[0_0_0_1px_rgba(190,184,174,0.36)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(26,26,26,0.08),0_0_0_1px_rgba(255,109,67,0.32)]"
+    className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border-2 border-white bg-white/70 p-4 transition-colors hover:bg-white"
   >
-    <span className="absolute inset-y-0 start-0 w-1 bg-[#ff6d43] opacity-0 transition-opacity group-hover:opacity-100" />
     <div className="flex min-w-0 items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#1a1a1a] text-white shadow-[0_10px_22px_rgba(26,26,26,0.14)] transition-colors group-hover:bg-[#ff6d43]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43] transition-colors group-hover:bg-[#ff6d43] group-hover:text-white">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-[#5f625f]">{label}</p>
-        {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-[#1a1a1a]">{count}</p>}
+        <p className="truncate text-sm font-semibold text-[#667085]">{label}</p>
+        {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-[#1d2939]">{count}</p>}
       </div>
     </div>
     <ArrowRight className={`h-4 w-4 shrink-0 text-[#8a8a85] transition-colors group-hover:text-[#ff6d43] ${dir === "rtl" ? "rotate-180" : ""}`} />

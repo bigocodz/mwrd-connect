@@ -14,11 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Search, Loader2, Package, Star, StarOff, Plus, Pin, EyeOff, Eye, Trash2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCategoryNames } from "@/components/categories/useCategoryNames";
 
 type Tab = "ALL" | "MINE";
 
 const ClientCatalog = () => {
   const { tr } = useLanguage();
+  const { localize } = useCategoryNames();
   const productsData = useQuery(api.products.listApproved);
   const myEntriesData = useQuery(api.clientCatalog.listMine);
   const myMeta = useQuery(api.clientCatalog.myProductIds);
@@ -150,7 +152,7 @@ const ClientCatalog = () => {
           )}
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description || tr("No description")}</p>
           <div className="flex items-center justify-between mt-3">
-            <Badge variant="outline" className="text-xs">{p.category}</Badge>
+            <Badge variant="outline" className="text-xs">{localize((p as any).category_id, p.category)}</Badge>
             <span className="text-xs text-muted-foreground">{tr("Lead: {days} days", { days: p.lead_time_days })}</span>
           </div>
           {p.availability_status === "LIMITED_STOCK" && (
@@ -201,7 +203,7 @@ const ClientCatalog = () => {
             {entry.notes && <p className="text-xs text-muted-foreground mt-1">{entry.notes}</p>}
           </div>
           <div className="flex items-center justify-between text-xs">
-            <Badge variant="outline">{p.category}</Badge>
+            <Badge variant="outline">{localize((p as any).category_id, p.category)}</Badge>
             <span className="text-muted-foreground">{tr("Lead: {days} d", { days: p.lead_time_days })}</span>
           </div>
           <div className="flex flex-wrap items-center gap-1">
@@ -235,7 +237,13 @@ const ClientCatalog = () => {
           <SelectTrigger className="w-[180px]"><SelectValue placeholder={tr("Category")} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">{tr("All Categories")}</SelectItem>
-            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {categories.map((c) => {
+              // For products linked to the master tree, find a representative
+              // category_id so we can localize the label.
+              const sample = products.find((p) => p.category === c) as any;
+              const label = localize(sample?.category_id, c);
+              return <SelectItem key={c} value={c}>{label}</SelectItem>;
+            })}
           </SelectContent>
         </Select>
         {subcategories.length > 0 && (
@@ -243,7 +251,11 @@ const ClientCatalog = () => {
             <SelectTrigger className="w-[180px]"><SelectValue placeholder={tr("Subcategory")} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">{tr("All Subcategories")}</SelectItem>
-              {subcategories.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {subcategories.map((s) => {
+                const sample = products.find((p) => p.subcategory === s) as any;
+                const label = localize(sample?.subcategory_id, s);
+                return <SelectItem key={s} value={s}>{label}</SelectItem>;
+              })}
             </SelectContent>
           </Select>
         )}

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { requireAdmin, requireClient, requireSupplier } from "./lib";
 import { createFromQuote as createOrderFromQuote } from "./orders";
 import { checkApprovalForQuote } from "./approvals";
+import { logAction } from "./audit";
 
 const attachmentInput = v.object({
   document_type: v.union(
@@ -368,6 +369,13 @@ export const submit = mutation({
         }),
       ),
     );
+    await logAction(ctx, {
+      action: "quote.submit",
+      target_type: "quote",
+      target_id: quoteId,
+      after: { status: "PENDING_ADMIN" },
+      details: { rfq_id: args.rfq_id, item_count: args.items.length },
+    });
     return quoteId;
   },
 });
@@ -429,6 +437,14 @@ export const sendToClient = mutation({
         read: false,
       });
     }
+    await logAction(ctx, {
+      action: "quote.send_to_client",
+      target_type: "quote",
+      target_id: args.id,
+      before: { status: quote.status },
+      after: { status: "SENT_TO_CLIENT" },
+      details: { rfq_id: quote.rfq_id, item_count: args.items.length },
+    });
   },
 });
 
@@ -452,6 +468,14 @@ export const respond = mutation({
         await createOrderFromQuote(ctx, args.id, profile._id);
       }
     }
+    await logAction(ctx, {
+      action: args.status === "ACCEPTED" ? "quote.accept" : "quote.reject",
+      target_type: "quote",
+      target_id: args.id,
+      before: { status: "SENT_TO_CLIENT" },
+      after: { status: args.status },
+      details: { rfq_id: quote.rfq_id },
+    });
   },
 });
 

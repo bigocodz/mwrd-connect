@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 @plugin "tailwindcss-react-aria-components";
+@plugin "@tailwindcss/forms";
 
 @font-face {
   font-family: "Plus Jakarta Sans";
@@ -151,6 +152,35 @@
   --color-brand-900: #5f2419;
   --color-brand-950: #1a1a1a;
 
+  /* TailGrids-compatible token names mapped to the MWRD brand system. */
+  --color-primary-50: #fff1eb;
+  --color-primary-100: #ffe2d7;
+  --color-primary-200: #ffc8b7;
+  --color-primary-300: #ffab92;
+  --color-primary-400: #ff8b6a;
+  --color-primary-500: #ff6d43;
+  --color-primary-600: #e85d35;
+  --color-primary-700: #ba4424;
+  --color-primary-800: #8f341f;
+  --color-primary-900: #5f2419;
+  --color-primary-950: #1a1a1a;
+  --color-title-50: #1d2939;
+  --color-text-50: #667085;
+  --color-text-100: #475467;
+  --color-text-200: #344054;
+  --color-text-300: #1d2939;
+  --color-background-50: #f5f6f8;
+  --color-background-100: #ffffff;
+  --color-background-soft-50: #ffffff;
+  --color-background-soft-100: #f9fafb;
+  --color-background-soft-200: #eef0f3;
+  --color-foreground-50: #ffffff;
+  --color-foreground-100: #f9fafb;
+  --border-color-base-50: #eef0f3;
+  --border-color-base-100: #e4e7ec;
+  --border-color-base-200: #d0d5dd;
+  --border-color-base-300: #bfc5ce;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -283,7 +313,11 @@
   body {
     @apply bg-background text-foreground font-sans;
     color: #1a1a1a;
-    background: #f7f8f7;
+    background: #f5f6f8;
+  }
+  ::selection {
+    color: #ffffff;
+    background: #ff6d43;
   }
   /* Arabic text uses IBM Plex Sans Arabic when direction is RTL */
   [dir="rtl"] body,

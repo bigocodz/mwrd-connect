@@ -3,6 +3,7 @@ import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAdmin, requireClient } from "./lib";
 import { createFromQuote as createOrderFromQuote } from "./orders";
+import { logAction } from "./audit";
 
 const computeQuoteTotal = async (ctx: any, quoteId: Id<"quotes">) => {
   const items = await ctx.db
@@ -222,6 +223,19 @@ export const approve = mutation({
       link: "/client/orders",
       read: false,
     });
+    await logAction(ctx, {
+      action: "approval_request.approve",
+      target_type: "approval_request",
+      target_id: args.id,
+      before: { status: "PENDING" },
+      after: { status: "APPROVED" },
+      details: {
+        quote_id: request.quote_id,
+        client_id: request.client_id,
+        rule_name: request.rule_name,
+        note: args.note,
+      },
+    });
   },
 });
 
@@ -248,6 +262,18 @@ export const reject = mutation({
       message: args.note,
       link: "/client/quotes",
       read: false,
+    });
+    await logAction(ctx, {
+      action: "approval_request.reject",
+      target_type: "approval_request",
+      target_id: args.id,
+      before: { status: "PENDING" },
+      after: { status: "REJECTED" },
+      details: {
+        quote_id: request.quote_id,
+        client_id: request.client_id,
+        note: args.note,
+      },
     });
   },
 });

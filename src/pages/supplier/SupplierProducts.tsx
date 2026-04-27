@@ -18,6 +18,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCategoryNames } from "@/components/categories/useCategoryNames";
+import { ProposeCategoryDialog } from "@/components/categories/ProposeCategoryDialog";
 
 const statusColors: Record<string, string> = {
   AVAILABLE: "bg-green-100 text-green-800",
@@ -40,6 +42,7 @@ const STOCK_FILTERS = [
 
 const SupplierProducts = () => {
   const { tr, lang } = useLanguage();
+  const { localize } = useCategoryNames();
   const locale = lang === "ar" ? "ar-SA" : "en-SA";
   const fmtNumber = (n: number) => new Intl.NumberFormat(locale).format(n);
   const enumLabel = (value?: string) => {
@@ -54,6 +57,7 @@ const SupplierProducts = () => {
   const navigate = useNavigate();
   const productsData = useQuery(api.products.listMine);
   const alertsData = useQuery(api.products.stockAlerts);
+  const myProposals = useQuery(api.categories.myProposals, {}) ?? [];
   const updateStock = useMutation(api.products.updateStock);
   const loading = productsData === undefined;
   const products = productsData ?? [];
@@ -149,6 +153,66 @@ const SupplierProducts = () => {
         </Card>
       )}
 
+      {myProposals.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <p className="font-medium">{tr("My category proposals")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {tr("Categories you suggested to admin. Status updates here when reviewed.")}
+                </p>
+              </div>
+              <ProposeCategoryDialog />
+            </div>
+            <ul className="space-y-2">
+              {myProposals.slice(0, 5).map((p: any) => {
+                const proposalStatusClass =
+                  p.status === "ACTIVE"
+                    ? "bg-green-100 text-green-800"
+                    : p.status === "REJECTED"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-amber-100 text-amber-800";
+                const statusLabel =
+                  p.status === "ACTIVE"
+                    ? tr("Approved")
+                    : p.status === "REJECTED"
+                      ? tr("Rejected")
+                      : tr("Pending review");
+                const parentLabel = p.parent_id
+                  ? lang === "ar"
+                    ? p.parent_name_ar
+                    : p.parent_name_en
+                  : tr("(Top-level — no parent)");
+                return (
+                  <li key={p._id} className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">
+                        {lang === "ar" ? p.name_ar : p.name_en}
+                        <span className="ms-2 text-xs text-muted-foreground">
+                          {lang === "ar" ? p.name_en : p.name_ar}
+                        </span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {tr("Under")}: {parentLabel}
+                      </p>
+                      {p.status === "REJECTED" && p.decision_note && (
+                        <p className="mt-1 rounded bg-red-50 p-2 text-xs text-red-900">
+                          {tr("Reason")}: {p.decision_note}
+                        </p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${proposalStatusClass}`}>
+                      {statusLabel}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       {loading ? <TableSkeleton rows={5} cols={6} /> : products.length === 0 ? (
         <EmptyState icon="products" title={tr("No products yet")} description={tr("Add your first product to get started.")} action={
           <Button asChild><Link to="/supplier/products/add">{tr("Add Product")}</Link></Button>
@@ -173,7 +237,7 @@ const SupplierProducts = () => {
                 {paginated.map((p: any) => (
                   <TableRow key={p._id}>
                     <TableCell className="font-medium cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{p.name}</TableCell>
-                    <TableCell className="text-muted-foreground cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{p.category}{p.subcategory ? ` / ${p.subcategory}` : ""}</TableCell>
+                    <TableCell className="text-muted-foreground cursor-pointer" onClick={() => navigate(`/supplier/products/${p._id}`)}>{localize((p as any).category_id, p.category)}{p.subcategory ? ` / ${localize((p as any).subcategory_id, p.subcategory)}` : ""}</TableCell>
                     <TableCell>
                       <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${approvalColors[p.approval_status]}`}>{enumLabel(p.approval_status)}</span>
                       {p.approval_status === "REJECTED" && p.rejection_reason && <p className="text-xs text-destructive mt-0.5">{p.rejection_reason}</p>}

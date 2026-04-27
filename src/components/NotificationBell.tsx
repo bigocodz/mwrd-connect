@@ -23,7 +23,7 @@ const NotificationBell = () => {
     <div className="relative" ref={ref}>
       <button
         type="button"
-        className="relative flex h-10 w-10 items-center justify-center rounded-md text-[#5f625f] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2bb6c8]"
+        className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#667085] transition-colors hover:bg-[#fff1eb] hover:text-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2bb6c8]"
         onClick={() => setOpen(!open)}
         aria-label={tr("Notifications")}
       >

@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { auth } from "./auth";
 
 const http = httpRouter();
@@ -61,6 +61,50 @@ http.route({
   handler: httpAction(
     async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
   ),
+});
+
+// Wafeq webhook receiver (PRD §8.1.5). Handles invoice.cleared,
+// invoice.paid, invoice.voided, and zatca_status_change events.
+//
+// Auth: when WAFEQ_WEBHOOK_SECRET is set, the request must include a
+// matching X-Wafeq-Signature header. We do a constant-time string compare
+// for now; HMAC-SHA256 over the raw body is a follow-on once Wafeq's exact
+// signing scheme is confirmed against their plan-specific docs.
+http.route({
+  path: "/wafeq/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const secret = process.env.WAFEQ_WEBHOOK_SECRET;
+    if (secret) {
+      const sig = req.headers.get("X-Wafeq-Signature") ?? "";
+      // Constant-time compare to avoid timing side-channels.
+      if (sig.length !== secret.length) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      let diff = 0;
+      for (let i = 0; i < sig.length; i++) {
+        diff |= sig.charCodeAt(i) ^ secret.charCodeAt(i);
+      }
+      if (diff !== 0) return new Response("Forbidden", { status: 403 });
+    }
+
+    let event: any;
+    try {
+      event = await req.json();
+    } catch {
+      return new Response("Invalid JSON", { status: 400 });
+    }
+
+    const result = await ctx.runAction(internal.wafeq.handleWebhookEvent, {
+      event,
+      raw_signature: req.headers.get("X-Wafeq-Signature") ?? undefined,
+    });
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }),
 });
 
 export default http;

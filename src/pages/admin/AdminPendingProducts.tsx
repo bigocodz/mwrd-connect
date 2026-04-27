@@ -11,9 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Check, X, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCategoryNames } from "@/components/categories/useCategoryNames";
 
 const AdminPendingProducts = () => {
   const { tr } = useLanguage();
+  const { localize } = useCategoryNames();
   const productsData = useQuery(api.products.listPending);
   const approve = useMutation(api.products.approve);
   const reject = useMutation(api.products.reject);
@@ -87,7 +89,7 @@ const AdminPendingProducts = () => {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="font-display text-lg font-bold text-foreground">{p.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{p.category}{p.subcategory ? ` / ${p.subcategory}` : ""}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{localize((p as any).category_id, p.category)}{p.subcategory ? ` / ${localize((p as any).subcategory_id, p.subcategory)}` : ""}</p>
                       </div>
                       <Badge variant="outline" className="flex-shrink-0">{(p as any).supplier_public_id}</Badge>
                     </div>

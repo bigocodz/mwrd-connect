@@ -1,7 +1,7 @@
 import SupplierLayout from "@/components/supplier/SupplierLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { LinkCard, MetricCard, PageHeader, Panel } from "@/components/app/AppSurface";
-import { BankNote01, CheckCircle, FileCheck02, Package, ShieldTick, Star01 } from "@untitledui/icons";
+import { BankNote01, CheckCircle, FileCheck02, Package, PackageCheck, Receipt, ShieldTick, Star01 } from "@untitledui/icons";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SupplierDashboard = () => {
@@ -54,24 +54,47 @@ const SupplierDashboard = () => {
         icon={CheckCircle}
       >
         <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-lg bg-[#f7f8f7] p-4 shadow-[inset_0_0_0_1px_rgba(190,184,174,0.36)]">
+          <div className="rounded-xl border-2 border-white bg-white/70 p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-[#6c6f6c]">{tr("Readiness")}</p>
+              <p className="text-xs font-semibold text-[#667085]">{tr("Readiness")}</p>
               <span className="rounded-full bg-[#e7f8f2] px-2 py-1 text-xs font-semibold text-[#246b55]">{tr("LIVE")}</span>
             </div>
-            <p className="text-lg font-semibold text-[#1a1a1a]">{tr("Profile, products, and payouts")}</p>
-            <p className="mt-1 text-sm leading-relaxed text-[#5f625f]">{tr("Keep the basics sharp so MWRD can match you faster.")}</p>
+            <p className="text-lg font-semibold text-[#1d2939]">{tr("Profile, products, and payouts")}</p>
+            <p className="mt-1 text-sm leading-relaxed text-[#667085]">{tr("Keep the basics sharp so MWRD can match you faster.")}</p>
           </div>
-          <div className="rounded-lg bg-[#eef7f8] p-4 shadow-[inset_0_0_0_1px_rgba(117,218,234,0.38)]">
-            <p className="text-xs font-semibold text-[#6c6f6c]">{tr("Response posture")}</p>
-            <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">{tr("Fast quotes win attention")}</p>
-            <p className="mt-1 text-sm leading-relaxed text-[#5f625f]">{tr("Open assigned RFQs before price and stock details age out.")}</p>
+          <div className="rounded-xl bg-[#eaf8fb] p-4">
+            <p className="text-xs font-semibold text-[#667085]">{tr("Response posture")}</p>
+            <p className="mt-2 text-lg font-semibold text-[#1d2939]">{tr("Fast quotes win attention")}</p>
+            <p className="mt-1 text-sm leading-relaxed text-[#667085]">{tr("Open assigned RFQs before price and stock details age out.")}</p>
           </div>
-          <div className="rounded-lg bg-[#fff1eb] p-4 shadow-[inset_0_0_0_1px_rgba(255,109,67,0.2)]">
-            <p className="text-xs font-semibold text-[#6c6f6c]">{tr("Service signal")}</p>
-            <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">{tr("Ratings, delivery, and disputes")}</p>
-            <p className="mt-1 text-sm leading-relaxed text-[#5f625f]">{tr("Use reviews and performance data to protect your supplier score.")}</p>
+          <div className="rounded-xl bg-[#fff1eb] p-4">
+            <p className="text-xs font-semibold text-[#667085]">{tr("Service signal")}</p>
+            <p className="mt-2 text-lg font-semibold text-[#1d2939]">{tr("Ratings, delivery, and disputes")}</p>
+            <p className="mt-1 text-sm leading-relaxed text-[#667085]">{tr("Use reviews and performance data to protect your supplier score.")}</p>
           </div>
+        </div>
+      </Panel>
+
+      <Panel className="mt-6" title={tr("Supplier RFQ Flow")} description={tr("How anonymized client demand moves through your supplier workspace.")}>
+        <div className="grid gap-3 md:grid-cols-5">
+          {[
+            { label: tr("Assigned"), value: tr("RFQ arrives"), icon: FileCheck02 },
+            { label: tr("Quote"), value: tr("Price and terms"), icon: Receipt },
+            { label: tr("PO"), value: tr("MWRD dispatch"), icon: PackageCheck },
+            { label: tr("Delivery"), value: tr("Status and GRN"), icon: CheckCircle },
+            { label: tr("Payout"), value: tr("Finance queue"), icon: BankNote01 },
+          ].map((step, index) => (
+            <div key={step.label} className="rounded-xl border-2 border-white bg-white/70 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43]">
+                  <step.icon className="h-5 w-5" />
+                </span>
+                <span className="text-xs font-semibold text-[#98a2b3]">{String(index + 1).padStart(2, "0")}</span>
+              </div>
+              <p className="text-sm font-semibold text-[#1d2939]">{step.label}</p>
+              <p className="mt-1 text-xs leading-5 text-[#667085]">{step.value}</p>
+            </div>
+          ))}
         </div>
       </Panel>
 

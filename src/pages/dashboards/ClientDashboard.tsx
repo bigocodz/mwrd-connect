@@ -2,7 +2,7 @@ import ClientLayout from "@/components/client/ClientLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { formatSAR } from "@/components/shared/VatBadge";
 import { LinkCard, MetricCard, PageHeader, Panel } from "@/components/app/AppSurface";
-import { CheckDone01, CreditCard01, FileQuestion02, Receipt, ShoppingBag03, Wallet02 } from "@untitledui/icons";
+import { CheckDone01, CreditCard01, FileQuestion02, PackageCheck, Receipt, ShoppingBag03, Wallet02 } from "@untitledui/icons";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const ClientDashboard = () => {
@@ -40,25 +40,48 @@ const ClientDashboard = () => {
         icon={CheckDone01}
       >
         <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-lg bg-[#f7f8f7] p-4 shadow-[inset_0_0_0_1px_rgba(190,184,174,0.36)]">
-            <p className="text-xs font-semibold text-[#6c6f6c]">{tr("Credit health")}</p>
-            <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">
+          <div className="rounded-xl border-2 border-white bg-white/70 p-4">
+            <p className="text-xs font-semibold text-[#667085]">{tr("Credit health")}</p>
+            <p className="mt-2 text-lg font-semibold text-[#1d2939]">
               {creditLimit > 0 ? `${Math.round(creditHealthPct)}% ${tr("available")}` : tr("Prepaid")}
             </p>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#e9eef0]">
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eef0f3]">
               <div className="h-full rounded-full bg-[#ff6d43]" style={{ width: `${creditHealthPct}%` }} />
             </div>
           </div>
-          <div className="rounded-lg bg-[#eef7f8] p-4 shadow-[inset_0_0_0_1px_rgba(117,218,234,0.38)]">
-            <p className="text-xs font-semibold text-[#6c6f6c]">{tr("Next best action")}</p>
-            <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">{tr("Create RFQ")}</p>
-            <p className="mt-1 text-sm text-[#5f625f]">{tr("Convert demand into a controlled supplier request.")}</p>
+          <div className="rounded-xl bg-[#eaf8fb] p-4">
+            <p className="text-xs font-semibold text-[#667085]">{tr("Next best action")}</p>
+            <p className="mt-2 text-lg font-semibold text-[#1d2939]">{tr("Create RFQ")}</p>
+            <p className="mt-1 text-sm text-[#667085]">{tr("Convert demand into a controlled supplier request.")}</p>
           </div>
-          <div className="rounded-lg bg-[#fff1eb] p-4 shadow-[inset_0_0_0_1px_rgba(255,109,67,0.2)]">
-            <p className="text-xs font-semibold text-[#6c6f6c]">{tr("Portal status")}</p>
-            <p className="mt-2 text-lg font-semibold text-[#1a1a1a]">{tr(profile?.status ?? "ACTIVE")}</p>
-            <p className="mt-1 text-sm text-[#5f625f]">{tr("Company workspace is ready for procurement activity.")}</p>
+          <div className="rounded-xl bg-[#fff1eb] p-4">
+            <p className="text-xs font-semibold text-[#667085]">{tr("Portal status")}</p>
+            <p className="mt-2 text-lg font-semibold text-[#1d2939]">{tr(profile?.status ?? "ACTIVE")}</p>
+            <p className="mt-1 text-sm text-[#667085]">{tr("Company workspace is ready for procurement activity.")}</p>
           </div>
+        </div>
+      </Panel>
+
+      <Panel className="mt-6" title={tr("RFQ to PO Flow")} description={tr("The managed path every client request follows through MWRD.")}>
+        <div className="grid gap-3 md:grid-cols-5">
+          {[
+            { label: tr("RFQ"), value: tr("Demand captured"), icon: FileQuestion02 },
+            { label: tr("Routing"), value: tr("MWRD shortlists"), icon: CheckDone01 },
+            { label: tr("Offers"), value: tr("Anonymized options"), icon: Receipt },
+            { label: tr("Approval"), value: tr("PO signed"), icon: PackageCheck },
+            { label: tr("Invoice"), value: tr("Wafeq cleared"), icon: Wallet02 },
+          ].map((step, index) => (
+            <div key={step.label} className="rounded-xl border-2 border-white bg-white/70 p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43]">
+                  <step.icon className="h-5 w-5" />
+                </span>
+                <span className="text-xs font-semibold text-[#98a2b3]">{String(index + 1).padStart(2, "0")}</span>
+              </div>
+              <p className="text-sm font-semibold text-[#1d2939]">{step.label}</p>
+              <p className="mt-1 text-xs leading-5 text-[#667085]">{step.value}</p>
+            </div>
+          ))}
         </div>
       </Panel>
 

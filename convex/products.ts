@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { getAuthenticatedProfile, requireAdmin, requireSupplier } from "./lib";
+import { logAction } from "./audit";
 
 const deriveAvailability = (
   current: "AVAILABLE" | "LIMITED_STOCK" | "OUT_OF_STOCK",
@@ -76,6 +77,8 @@ export const create = mutation({
     description: v.optional(v.string()),
     category: v.string(),
     subcategory: v.optional(v.string()),
+    category_id: v.optional(v.id("categories")),
+    subcategory_id: v.optional(v.id("categories")),
     sku: v.optional(v.string()),
     brand: v.optional(v.string()),
     images: v.array(v.string()),
@@ -96,7 +99,7 @@ export const create = mutation({
       args.stock_quantity,
       args.low_stock_threshold,
     );
-    return ctx.db.insert("products", {
+    const id = await ctx.db.insert("products", {
       ...args,
       availability_status: availability,
       supplier_id: profile._id,
@@ -104,6 +107,13 @@ export const create = mutation({
       updated_at: Date.now(),
       stock_updated_at: args.stock_quantity !== undefined ? Date.now() : undefined,
     });
+    await logAction(ctx, {
+      action: "product.create",
+      target_type: "product",
+      target_id: id,
+      details: { name: args.name, sku: args.sku, category: args.category },
+    });
+    return id;
   },
 });
 
@@ -114,6 +124,8 @@ export const update = mutation({
     description: v.optional(v.string()),
     category: v.string(),
     subcategory: v.optional(v.string()),
+    category_id: v.optional(v.id("categories")),
+    subcategory_id: v.optional(v.id("categories")),
     sku: v.optional(v.string()),
     brand: v.optional(v.string()),
     images: v.array(v.string()),
@@ -147,6 +159,12 @@ export const update = mutation({
           ? Date.now()
           : product.stock_updated_at,
     });
+    await logAction(ctx, {
+      action: "product.update",
+      target_type: "product",
+      target_id: id,
+      details: { name: args.name, requeued_for_review: true },
+    });
   },
 });
 
@@ -154,7 +172,16 @@ export const approve = mutation({
   args: { id: v.id("products") },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const before = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, { approval_status: "APPROVED", rejection_reason: undefined });
+    await logAction(ctx, {
+      action: "product.approve",
+      target_type: "product",
+      target_id: args.id,
+      before: { approval_status: before?.approval_status },
+      after: { approval_status: "APPROVED" },
+      details: { name: before?.name, supplier_id: before?.supplier_id },
+    });
   },
 });
 
@@ -162,7 +189,16 @@ export const reject = mutation({
   args: { id: v.id("products"), rejection_reason: v.string() },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const before = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, { approval_status: "REJECTED", rejection_reason: args.rejection_reason });
+    await logAction(ctx, {
+      action: "product.reject",
+      target_type: "product",
+      target_id: args.id,
+      before: { approval_status: before?.approval_status },
+      after: { approval_status: "REJECTED" },
+      details: { name: before?.name, reason: args.rejection_reason },
+    });
   },
 });
 
@@ -184,6 +220,22 @@ export const updateStock = mutation({
       low_stock_threshold: threshold,
       availability_status: availability,
       stock_updated_at: Date.now(),
+    });
+    await logAction(ctx, {
+      action: "product.stock.update",
+      target_type: "product",
+      target_id: args.id,
+      before: {
+        stock_quantity: product.stock_quantity,
+        low_stock_threshold: product.low_stock_threshold,
+        availability_status: product.availability_status,
+      },
+      after: {
+        stock_quantity: args.stock_quantity,
+        low_stock_threshold: threshold,
+        availability_status: availability,
+      },
+      details: { sku: product.sku },
     });
   },
 });
@@ -264,6 +316,11 @@ export const bulkCreate = mutation({
       });
       ids.push(id);
     }
+    await logAction(ctx, {
+      action: "product.bulk_create",
+      target_type: "product",
+      details: { count: ids.length, ids },
+    });
     return { count: ids.length };
   },
 });

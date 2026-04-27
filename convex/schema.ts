@@ -36,6 +36,44 @@ export default defineSchema({
     preferred_note: v.optional(v.string()),
     preferred_at: v.optional(v.number()),
     preferred_by: v.optional(v.id("profiles")),
+    // Wafeq integration (PRD §8.1) — Wafeq Contact ID for this org. Populated
+    // on first invoice submission and reused thereafter.
+    wafeq_contact_id: v.optional(v.string()),
+    wafeq_contact_synced_at: v.optional(v.number()),
+    // Legal entity fields (PRD §3.2.1, §11.1, §8.3). These mirror the
+    // Organization model from the PRD onto the existing profiles table to
+    // avoid a disruptive split today. Bilingual legal name takes precedence
+    // over `company_name` for invoices and tax documents.
+    legal_name_ar: v.optional(v.string()),
+    legal_name_en: v.optional(v.string()),
+    cr_number: v.optional(v.string()), // Saudi Commercial Registration
+    vat_number: v.optional(v.string()), // VAT registration (15-digit)
+    national_address: v.optional(
+      v.object({
+        building_number: v.optional(v.string()),
+        street: v.optional(v.string()),
+        district: v.optional(v.string()),
+        city: v.optional(v.string()),
+        postal_code: v.optional(v.string()),
+        additional_number: v.optional(v.string()),
+      }),
+    ),
+    // Banking (suppliers — PRD §5.3.2). Verified via bank-letter at KYC.
+    iban: v.optional(v.string()),
+    bank_name: v.optional(v.string()),
+    bank_account_holder: v.optional(v.string()),
+    // Wathq verification trail (PRD §8.3) — populated by Wathq lookup action
+    // when implemented; for now manual edits are allowed.
+    wathq_status: v.optional(
+      v.union(
+        v.literal("UNVERIFIED"),
+        v.literal("VERIFIED"),
+        v.literal("MISMATCH"),
+        v.literal("EXPIRED"),
+      ),
+    ),
+    wathq_verified_at: v.optional(v.number()),
+    wathq_verified_legal_name: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_role", ["role"])
@@ -45,8 +83,13 @@ export default defineSchema({
     supplier_id: v.id("profiles"),
     name: v.string(),
     description: v.optional(v.string()),
+    // Legacy plain-text category (kept for backward compat with existing rows).
+    // New code should prefer category_id pointing at the master tree.
     category: v.string(),
     subcategory: v.optional(v.string()),
+    // Master-tree references (PRD §5.4) — optional during migration.
+    category_id: v.optional(v.id("categories")),
+    subcategory_id: v.optional(v.id("categories")),
     sku: v.optional(v.string()),
     brand: v.optional(v.string()),
     images: v.array(v.string()),
@@ -69,7 +112,8 @@ export default defineSchema({
     stock_updated_at: v.optional(v.number()),
   })
     .index("by_supplier", ["supplier_id"])
-    .index("by_approval", ["approval_status"]),
+    .index("by_approval", ["approval_status"])
+    .index("by_category_id", ["category_id"]),
 
   rfqs: defineTable({
     client_id: v.id("profiles"),
@@ -522,10 +566,25 @@ export default defineSchema({
     last_reminder_at: v.optional(v.number()),
     reminder_count: v.optional(v.number()),
     matched_payment_id: v.optional(v.id("payments")),
+    // Wafeq / ZATCA tracking (PRD §8.1) — populated when invoice is pushed
+    // through Wafeq for ZATCA Phase 2 clearance.
+    wafeq_invoice_id: v.optional(v.string()),
+    wafeq_environment: v.optional(
+      v.union(v.literal("simulation"), v.literal("production"), v.literal("mock")),
+    ),
+    zatca_uuid: v.optional(v.string()),
+    zatca_status: v.optional(v.string()), // e.g. CLEARED, REPORTED, PENDING, REJECTED
+    zatca_hash: v.optional(v.string()),
+    zatca_qr: v.optional(v.string()),
+    zatca_pdf_url: v.optional(v.string()),
+    zatca_pdf_storage_id: v.optional(v.id("_storage")),
+    zatca_cleared_at: v.optional(v.number()),
+    zatca_last_error: v.optional(v.string()),
   })
     .index("by_client", ["client_id"])
     .index("by_status", ["status"])
-    .index("by_order", ["order_id"]),
+    .index("by_order", ["order_id"])
+    .index("by_zatca_status", ["zatca_status"]),
 
   payment_allocations: defineTable({
     payment_id: v.id("payments"),
@@ -559,10 +618,78 @@ export default defineSchema({
     reviewed_at: v.optional(v.number()),
     paid_at: v.optional(v.number()),
     paid_reference: v.optional(v.string()),
+    // AP-side bookkeeping in Wafeq (PRD §8.1.3). Supplier remains seller of
+    // record; this is just MWRD's bill ledger.
+    wafeq_bill_id: v.optional(v.string()),
+    wafeq_environment: v.optional(
+      v.union(v.literal("simulation"), v.literal("production"), v.literal("mock")),
+    ),
+    // Supplier may have its own ZATCA submission — record those refs here.
+    supplier_zatca_uuid: v.optional(v.string()),
+    supplier_zatca_pdf_url: v.optional(v.string()),
   })
     .index("by_supplier", ["supplier_id"])
     .index("by_order", ["order_id"])
     .index("by_status", ["status"]),
+
+  // Wathq (Saudi Business Center) verification sync log (PRD §8.3) — every
+  // CR lookup attempt with the result. Mirrors the Wafeq sync-log shape so
+  // the admin viewer pattern stays uniform.
+  wathq_sync_log: defineTable({
+    operation: v.string(), // verifyByCR | refreshLegalName
+    environment: v.union(v.literal("production"), v.literal("mock")),
+    target_type: v.string(), // profile
+    target_id: v.string(),
+    cr_number: v.optional(v.string()),
+    status: v.union(
+      v.literal("VERIFIED"),
+      v.literal("MISMATCH"),
+      v.literal("NOT_FOUND"),
+      v.literal("API_ERROR"),
+      v.literal("NETWORK_ERROR"),
+      v.literal("CONFIG_ERROR"),
+    ),
+    http_status: v.optional(v.number()),
+    error_code: v.optional(v.string()),
+    error_message: v.optional(v.string()),
+    response_summary: v.optional(v.any()),
+    duration_ms: v.optional(v.number()),
+    actor_profile_id: v.optional(v.id("profiles")),
+  })
+    .index("by_target", ["target_type", "target_id"])
+    .index("by_status", ["status"]),
+
+  // Wafeq integration sync log (PRD §8.1.5) — every API attempt with the
+  // idempotency key, environment, latency, success/error category, and the
+  // raw response snippet for debugging. Append-only.
+  wafeq_sync_log: defineTable({
+    operation: v.string(), // ensureContact | submitClientInvoice | submitSupplierBill | voidInvoice | reconcile
+    idempotency_key: v.string(),
+    environment: v.union(
+      v.literal("simulation"),
+      v.literal("production"),
+      v.literal("mock"),
+    ),
+    target_type: v.string(), // client_invoice | supplier_invoice | profile
+    target_id: v.string(),
+    status: v.union(
+      v.literal("SUCCESS"),
+      v.literal("API_ERROR"),
+      v.literal("ZATCA_ERROR"),
+      v.literal("NETWORK_ERROR"),
+      v.literal("CONFIG_ERROR"),
+    ),
+    http_status: v.optional(v.number()),
+    error_code: v.optional(v.string()),
+    error_message: v.optional(v.string()),
+    request_summary: v.optional(v.any()),
+    response_summary: v.optional(v.any()),
+    duration_ms: v.optional(v.number()),
+    actor_profile_id: v.optional(v.id("profiles")),
+  })
+    .index("by_target", ["target_type", "target_id"])
+    .index("by_status", ["status"])
+    .index("by_operation", ["operation"]),
 
   interest_submissions: defineTable({
     full_name: v.string(),
@@ -580,4 +707,73 @@ export default defineSchema({
       v.literal("REJECTED"),
     ),
   }).index("by_status", ["status"]),
+
+  // Append-only audit trail (PRD §13.4) — every privileged mutation
+  // writes one row here via logAction(). Kept separate from admin_audit_log
+  // (legacy admin-only table) so we can grow toward 10-year ZATCA retention.
+  audit_log: defineTable({
+    actor_user_id: v.optional(v.id("users")),
+    actor_profile_id: v.optional(v.id("profiles")),
+    actor_role: v.optional(
+      v.union(
+        v.literal("CLIENT"),
+        v.literal("SUPPLIER"),
+        v.literal("ADMIN"),
+        v.literal("SYSTEM"),
+      ),
+    ),
+    actor_public_id: v.optional(v.string()),
+    action: v.string(),
+    target_type: v.string(),
+    target_id: v.optional(v.string()),
+    before: v.optional(v.any()),
+    after: v.optional(v.any()),
+    details: v.optional(v.any()),
+    ip: v.optional(v.string()),
+    user_agent: v.optional(v.string()),
+  })
+    .index("by_actor", ["actor_profile_id"])
+    .index("by_target", ["target_type", "target_id"])
+    .index("by_action", ["action"]),
+
+  // Master category tree (PRD §5.4.1) — bilingual, up to 4 levels
+  // level 0=Category, 1=Subcategory, 2=Family, 3=Item-class
+  categories: defineTable({
+    parent_id: v.optional(v.id("categories")),
+    level: v.number(), // 0..3
+    slug: v.string(),
+    name_ar: v.string(),
+    name_en: v.string(),
+    description_ar: v.optional(v.string()),
+    description_en: v.optional(v.string()),
+    default_uom: v.optional(v.string()), // e.g. PCS, KG, BOX
+    tax_class: v.optional(
+      v.union(
+        v.literal("STANDARD"),
+        v.literal("ZERO_RATED"),
+        v.literal("EXEMPT"),
+      ),
+    ),
+    // Optional JSON-encoded attribute schema for the leaf
+    attribute_schema: v.optional(v.string()),
+    display_order: v.optional(v.number()),
+    is_active: v.boolean(),
+    // Proposal lifecycle (PRD §5.4.2). ACTIVE = curated, PROPOSED = supplier-suggested awaiting review.
+    status: v.union(
+      v.literal("ACTIVE"),
+      v.literal("PROPOSED"),
+      v.literal("REJECTED"),
+      v.literal("ARCHIVED"),
+    ),
+    proposed_by: v.optional(v.id("profiles")),
+    proposed_justification: v.optional(v.string()),
+    decided_by: v.optional(v.id("profiles")),
+    decided_at: v.optional(v.number()),
+    decision_note: v.optional(v.string()),
+    created_by: v.optional(v.id("profiles")),
+  })
+    .index("by_parent", ["parent_id"])
+    .index("by_status", ["status"])
+    .index("by_level", ["level"])
+    .index("by_slug", ["slug"]),
 });

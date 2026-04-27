@@ -3,6 +3,7 @@ import { v, ConvexError } from "convex/values";
 import { modifyAccountCredentials } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
 import { getAuthenticatedProfile, requireAdmin } from "./lib";
+import { logAction, diffShallow } from "./audit";
 
 export const getMyProfile = query({
   handler: async (ctx) => {
@@ -107,6 +108,12 @@ export const setPreferredSupplier = mutation({
         preferred_by: undefined,
       });
     }
+    await logAction(ctx, {
+      action: args.is_preferred ? "user.preferred.set" : "user.preferred.unset",
+      target_type: "user",
+      target_id: args.id,
+      details: { public_id: profile.public_id, note: args.note },
+    });
   },
 });
 
@@ -121,14 +128,48 @@ export const updateProfile = mutation({
     frozen_at: v.optional(v.union(v.number(), v.null())),
     freeze_reason: v.optional(v.union(v.string(), v.null())),
     frozen_by: v.optional(v.union(v.id("profiles"), v.null())),
+    // Legal entity (PRD §3.2.1, §11.1, §8.3)
+    company_name: v.optional(v.string()),
+    legal_name_ar: v.optional(v.union(v.string(), v.null())),
+    legal_name_en: v.optional(v.union(v.string(), v.null())),
+    cr_number: v.optional(v.union(v.string(), v.null())),
+    vat_number: v.optional(v.union(v.string(), v.null())),
+    national_address: v.optional(
+      v.union(
+        v.object({
+          building_number: v.optional(v.string()),
+          street: v.optional(v.string()),
+          district: v.optional(v.string()),
+          city: v.optional(v.string()),
+          postal_code: v.optional(v.string()),
+          additional_number: v.optional(v.string()),
+        }),
+        v.null(),
+      ),
+    ),
+    iban: v.optional(v.union(v.string(), v.null())),
+    bank_name: v.optional(v.union(v.string(), v.null())),
+    bank_account_holder: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, { id, ...updates }) => {
     await requireAdmin(ctx);
+    const before = await ctx.db.get(id);
     const patch: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(updates)) {
-      if (v !== undefined) patch[k] = v === null ? undefined : v;
+    for (const [k, val] of Object.entries(updates)) {
+      if (val !== undefined) patch[k] = val === null ? undefined : val;
     }
     await ctx.db.patch(id, patch);
+    const after = await ctx.db.get(id);
+    const diff = diffShallow(before as any, after as any);
+    if (diff) {
+      await logAction(ctx, {
+        action: "user.update_profile",
+        target_type: "user",
+        target_id: id,
+        before: diff.before,
+        after: diff.after,
+      });
+    }
   },
 });
 
@@ -139,11 +180,20 @@ export const freezeAccount = mutation({
   },
   handler: async (ctx, args) => {
     const admin = await requireAdmin(ctx);
+    const before = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, {
       status: "FROZEN",
       frozen_at: Date.now(),
       freeze_reason: args.freeze_reason,
       frozen_by: admin._id,
+    });
+    await logAction(ctx, {
+      action: "user.freeze",
+      target_type: "user",
+      target_id: args.id,
+      before: { status: before?.status },
+      after: { status: "FROZEN" },
+      details: { reason: args.freeze_reason, public_id: before?.public_id },
     });
   },
 });
@@ -152,11 +202,20 @@ export const unfreezeAccount = mutation({
   args: { id: v.id("profiles") },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const before = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, {
       status: "ACTIVE",
       frozen_at: undefined,
       freeze_reason: undefined,
       frozen_by: undefined,
+    });
+    await logAction(ctx, {
+      action: "user.unfreeze",
+      target_type: "user",
+      target_id: args.id,
+      before: { status: before?.status, freeze_reason: before?.freeze_reason },
+      after: { status: "ACTIVE" },
+      details: { public_id: before?.public_id },
     });
   },
 });
@@ -168,7 +227,16 @@ export const updateCreditLimit = mutation({
   },
   handler: async (ctx, args) => {
     await requireAdmin(ctx);
+    const before = await ctx.db.get(args.id);
     await ctx.db.patch(args.id, { credit_limit: args.credit_limit });
+    await logAction(ctx, {
+      action: "user.credit_limit.update",
+      target_type: "user",
+      target_id: args.id,
+      before: { credit_limit: before?.credit_limit },
+      after: { credit_limit: args.credit_limit },
+      details: { public_id: before?.public_id },
+    });
   },
 });
 
@@ -181,8 +249,17 @@ export const adjustBalance = mutation({
     await requireAdmin(ctx);
     const profile = await ctx.db.get(args.id);
     if (!profile) throw new Error("Profile not found");
-    const newBalance = (profile.current_balance ?? 0) + args.adjustment;
+    const oldBalance = profile.current_balance ?? 0;
+    const newBalance = oldBalance + args.adjustment;
     await ctx.db.patch(args.id, { current_balance: newBalance });
+    await logAction(ctx, {
+      action: "user.balance.adjust",
+      target_type: "user",
+      target_id: args.id,
+      before: { current_balance: oldBalance },
+      after: { current_balance: newBalance },
+      details: { adjustment: args.adjustment, public_id: profile.public_id },
+    });
     return { newBalance };
   },
 });

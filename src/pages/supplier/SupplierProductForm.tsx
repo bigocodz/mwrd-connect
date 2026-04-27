@@ -12,8 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CategoryPicker } from "@/components/categories/CategoryPicker";
+import { ProposeCategoryDialog } from "@/components/categories/ProposeCategoryDialog";
+import type { Id } from "@cvx/dataModel";
 
-const CATEGORIES = [
+const LEGACY_CATEGORIES = [
   "Building Materials", "Electrical", "Plumbing", "HVAC",
   "Safety Equipment", "Tools & Hardware", "Chemicals", "Packaging", "Office Supplies", "Other",
 ];
@@ -35,6 +38,10 @@ const SupplierProductForm = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
+  const [categoryId, setCategoryId] = useState<Id<"categories"> | undefined>(undefined);
+  const [subcategoryId, setSubcategoryId] = useState<Id<"categories"> | undefined>(undefined);
+  const tree = useQuery(api.categories.tree, {}) as any[] | undefined;
+  const hasTree = (tree?.length ?? 0) > 0;
   const [sku, setSku] = useState("");
   const [brand, setBrand] = useState("");
   const [images, setImages] = useState("");
@@ -50,6 +57,8 @@ const SupplierProductForm = () => {
       setDescription(productData.description || "");
       setCategory(productData.category);
       setSubcategory(productData.subcategory || "");
+      setCategoryId((productData as any).category_id ?? undefined);
+      setSubcategoryId((productData as any).subcategory_id ?? undefined);
       setSku(productData.sku || "");
       setBrand(productData.brand || "");
       setImages(((productData.images as string[]) || []).join("\n"));
@@ -76,6 +85,8 @@ const SupplierProductForm = () => {
       description: description.trim() || undefined,
       category,
       subcategory: subcategory.trim() || undefined,
+      category_id: categoryId,
+      subcategory_id: subcategoryId,
       sku: sku.trim() || undefined,
       brand: brand.trim() || undefined,
       images: imageArray,
@@ -130,21 +141,56 @@ const SupplierProductForm = () => {
               <Label htmlFor="desc">{tr("Description")}</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={2000} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            {hasTree ? (
               <div className="space-y-2">
-                <Label>{tr("Category")} *</Label>
-                <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger><SelectValue placeholder={tr("Select category")} /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tr(c)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <CategoryPicker
+                  categoryId={categoryId}
+                  subcategoryId={subcategoryId}
+                  required
+                  onChange={({
+                    category_id,
+                    subcategory_id,
+                    category_name_en,
+                    subcategory_name_en,
+                  }) => {
+                    setCategoryId(category_id);
+                    setSubcategoryId(subcategory_id);
+                    // Mirror EN names into legacy string columns so existing
+                    // list/search code keeps working language-independently.
+                    // Display layers should prefer category_id → tree lookup.
+                    setCategory(category_name_en ?? "");
+                    setSubcategory(subcategory_name_en ?? "");
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {tr("Can't find a fitting category?")}{" "}
+                  <ProposeCategoryDialog
+                    defaultParentId={categoryId ?? null}
+                    trigger={
+                      <button type="button" className="font-medium text-primary underline-offset-2 hover:underline">
+                        {tr("Propose a new one")}
+                      </button>
+                    }
+                  />
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="subcat">{tr("Subcategory")}</Label>
-                <Input id="subcat" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} maxLength={100} />
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>{tr("Category")} *</Label>
+                  <Select value={category} onValueChange={setCategory} required>
+                    <SelectTrigger><SelectValue placeholder={tr("Select category")} /></SelectTrigger>
+                    <SelectContent>
+                      {LEGACY_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{tr(c)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subcat">{tr("Subcategory")}</Label>
+                  <Input id="subcat" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} maxLength={100} />
+                </div>
               </div>
-            </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="sku">{tr("SKU")}</Label>

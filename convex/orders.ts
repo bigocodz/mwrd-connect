@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { requireAdmin, requireClient, requireSupplier, getAuthenticatedProfile } from "./lib";
+import { logAction } from "./audit";
 
 const ORDER_STATUSES = [
   "PENDING_CONFIRMATION",
@@ -259,6 +260,13 @@ export const confirmBySupplier = mutation({
     expectStatus(order, ["PENDING_CONFIRMATION"]);
     await ctx.db.patch(args.id, { status: "CONFIRMED", confirmed_at: Date.now() });
     await recordEvent(ctx, args.id, { _id: profile._id, role: "SUPPLIER" }, "CONFIRMED");
+    await logAction(ctx, {
+      action: "order.confirm",
+      target_type: "order",
+      target_id: args.id,
+      before: { status: order.status },
+      after: { status: "CONFIRMED" },
+    });
     await notify(
       ctx,
       order.client_id,
@@ -276,6 +284,13 @@ export const markPreparing = mutation({
     expectStatus(order, ["CONFIRMED"]);
     await ctx.db.patch(args.id, { status: "PREPARING", preparing_at: Date.now() });
     await recordEvent(ctx, args.id, { _id: profile._id, role: "SUPPLIER" }, "PREPARING");
+    await logAction(ctx, {
+      action: "order.preparing",
+      target_type: "order",
+      target_id: args.id,
+      before: { status: order.status },
+      after: { status: "PREPARING" },
+    });
     await notify(
       ctx,
       order.client_id,
@@ -307,6 +322,14 @@ export const markDispatched = mutation({
       estimated_delivery_at: args.estimated_delivery_at,
     });
     await recordEvent(ctx, args.id, { _id: profile._id, role: "SUPPLIER" }, "DISPATCHED", args.notes);
+    await logAction(ctx, {
+      action: "order.dispatch",
+      target_type: "order",
+      target_id: args.id,
+      before: { status: order.status },
+      after: { status: "DISPATCHED" },
+      details: { carrier: args.carrier, tracking_number: args.tracking_number },
+    });
     await notify(
       ctx,
       order.client_id,
@@ -395,6 +418,13 @@ export const markDelivered = mutation({
     expectStatus(order, ["DISPATCHED"]);
     await ctx.db.patch(args.id, { status: "DELIVERED", delivered_at: Date.now() });
     await recordEvent(ctx, args.id, { _id: profile._id, role: "SUPPLIER" }, "DELIVERED", args.notes);
+    await logAction(ctx, {
+      action: "order.deliver",
+      target_type: "order",
+      target_id: args.id,
+      before: { status: order.status },
+      after: { status: "DELIVERED" },
+    });
     await notify(
       ctx,
       order.client_id,
@@ -412,6 +442,13 @@ export const confirmByClient = mutation({
     expectStatus(order, ["DELIVERED"]);
     await ctx.db.patch(args.id, { status: "COMPLETED", completed_at: Date.now() });
     await recordEvent(ctx, args.id, { _id: profile._id, role: "CLIENT" }, "COMPLETED");
+    await logAction(ctx, {
+      action: "order.complete",
+      target_type: "order",
+      target_id: args.id,
+      before: { status: order.status },
+      after: { status: "COMPLETED" },
+    });
     await notify(
       ctx,
       order.supplier_id,
@@ -448,6 +485,14 @@ export const cancel = mutation({
       cancelled_reason: args.reason,
     });
     await recordEvent(ctx, args.id, { _id: profile._id, role: profile.role }, "CANCELLED", args.reason);
+    await logAction(ctx, {
+      action: "order.cancel",
+      target_type: "order",
+      target_id: args.id,
+      before: { status: order.status },
+      after: { status: "CANCELLED" },
+      details: { reason: args.reason },
+    });
     const counterpartyId = profile._id === order.client_id ? order.supplier_id : order.client_id;
     await notify(
       ctx,
@@ -485,6 +530,13 @@ export const openDispute = mutation({
       "DISPUTE_OPENED",
       args.reason,
     );
+    await logAction(ctx, {
+      action: "order.dispute.open",
+      target_type: "order",
+      target_id: args.id,
+      after: { dispute_status: "OPEN" },
+      details: { reason: args.reason, client_id: order.client_id, supplier_id: order.supplier_id },
+    });
     await notify(
       ctx,
       order.supplier_id,
@@ -527,6 +579,14 @@ export const resolveDispute = mutation({
       args.outcome === "RESOLVED" ? "DISPUTE_RESOLVED" : "DISPUTE_REJECTED",
       args.resolution,
     );
+    await logAction(ctx, {
+      action: args.outcome === "RESOLVED" ? "order.dispute.resolve" : "order.dispute.reject",
+      target_type: "order",
+      target_id: args.id,
+      before: { dispute_status: "OPEN" },
+      after: { dispute_status: args.outcome },
+      details: { resolution: args.resolution },
+    });
     await notify(
       ctx,
       order.client_id,

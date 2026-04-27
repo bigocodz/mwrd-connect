@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { AdminKycPanel } from "@/components/kyc/AdminKycPanel";
 import { PreferredSupplierCard } from "@/components/users/PreferredSupplierCard";
 import { StatementPanel } from "@/components/invoices/StatementPanel";
+import { LegalEntityPanel } from "@/components/admin/LegalEntityPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminUserDetail = () => {
@@ -246,6 +247,10 @@ const AdminUserDetail = () => {
           {saving ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <Save className="w-4 h-4 me-1.5" />}
           {tr("Save Changes")}
         </Button>
+      </div>
+
+      <div className="mt-6">
+        <LegalEntityPanel profile={profile} />
       </div>
 
       {profile.role === "SUPPLIER" && (
