@@ -167,7 +167,7 @@ const Login = () => {
               </button>
 
               <Link
-                to="/"
+                to="/get-started"
                 className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-[#5f625f] transition-colors hover:bg-[#eef7f8] hover:text-[#1a1a1a]"
               >
                 <User className="h-4 w-4" />

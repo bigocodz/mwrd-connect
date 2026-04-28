@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ChangePassword from "./pages/ChangePassword";
 import AccountStatus from "./pages/AccountStatus";
 import Unauthorized from "./pages/Unauthorized";
+import GetStarted from "./pages/GetStarted";
 import ClientDashboard from "./pages/dashboards/ClientDashboard";
 import SupplierDashboard from "./pages/dashboards/SupplierDashboard";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
@@ -87,6 +88,9 @@ const App = () => (
             <AuthProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/landing" element={<Index />} />
+                <Route path="/landing/" element={<Index />} />
+                <Route path="/get-started" element={<GetStarted />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
