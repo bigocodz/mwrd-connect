@@ -157,11 +157,13 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
         </nav>
 
         <div className={cn("relative border-t border-[#eef0f3] p-4", collapsed && "px-3")}>
-          <div
+          <Link
+            to="/account"
             className={cn(
-              "mb-2 flex items-center rounded-xl bg-[#f9fafb]",
+              "mb-2 flex items-center rounded-xl bg-[#f9fafb] transition-colors hover:bg-[#f1f3f6]",
               collapsed ? "justify-center p-2" : "gap-3 p-2",
             )}
+            title={collapsed ? tr("My account") : undefined}
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#1a1a1a] text-sm font-semibold text-white">
               {(profile?.company_name || profile?.public_id || "M").slice(0, 1).toUpperCase()}
@@ -172,7 +174,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                 <p className="truncate text-xs text-[#667085]">{profile?.public_id || tr(portalLabel)}</p>
               </div>
             )}
-          </div>
+          </Link>
           <button
             type="button"
             onClick={signOut}
@@ -226,7 +228,11 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                 {lang === "en" ? "عربي" : "EN"}
               </button>
               <NotificationBell />
-              <div className="hidden items-center gap-3 rounded-xl bg-white p-1.5 sm:flex">
+              <Link
+                to="/account"
+                className="hidden items-center gap-3 rounded-xl bg-white p-1.5 transition-colors hover:bg-[#fff1eb] sm:flex"
+                title={tr("My account")}
+              >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#ff6d43] text-sm font-semibold text-white">
                   {(profile?.company_name || profile?.public_id || "M").slice(0, 1).toUpperCase()}
                 </div>
@@ -235,7 +241,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                   <p className="max-w-36 truncate text-xs text-[#667085]">{profile?.public_id || tr(portalLabel)}</p>
                 </div>
                 <ChevronDown className="me-2 h-4 w-4 shrink-0 text-[#667085]" />
-              </div>
+              </Link>
             </div>
           </div>
           <nav className="flex gap-2 overflow-x-auto border-t border-[#eef0f3] px-4 py-2 lg:hidden">

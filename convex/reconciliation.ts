@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin } from "./lib";
+import { requireAdmin, requireAdminRead } from "./lib";
 
 const sumAllocations = (allocations: { amount: number }[]) =>
   allocations.reduce((s, a) => s + a.amount, 0);
@@ -9,7 +9,7 @@ const sumAllocations = (allocations: { amount: number }[]) =>
 export const listOpenInvoicesForClient = query({
   args: { client_id: v.id("profiles") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const invoices = await ctx.db
       .query("client_invoices")
       .withIndex("by_client", (q) => q.eq("client_id", args.client_id))
@@ -23,7 +23,7 @@ export const listOpenInvoicesForClient = query({
 export const listPaymentAllocations = query({
   args: { payment_id: v.id("payments") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const rows = await ctx.db
       .query("payment_allocations")
       .withIndex("by_payment", (q) => q.eq("payment_id", args.payment_id))
@@ -107,7 +107,7 @@ export const allocatePayment = mutation({
 export const unallocatedTotalForPayment = query({
   args: { payment_id: v.id("payments") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const payment = await ctx.db.get(args.payment_id);
     if (!payment) return 0;
     const allocs = await ctx.db

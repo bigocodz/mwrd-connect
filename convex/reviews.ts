@@ -1,10 +1,10 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin, requireClient, requireSupplier } from "./lib";
+import { requireAdminRead, requireClient, requireSupplier } from "./lib";
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const reviews = await ctx.db.query("reviews").order("desc").collect();
     return Promise.all(
       reviews.map(async (r) => {

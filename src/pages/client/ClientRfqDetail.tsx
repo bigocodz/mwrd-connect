@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, ArrowRight, ExternalLink, GitCompare } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CommentsThread } from "@/components/comments/CommentsThread";
 
 const flexLabel: Record<string, string> = {
   EXACT_MATCH: "Exact Match",
@@ -184,6 +185,8 @@ const ClientRfqDetail = () => {
             </Table>
           </CardContent>
         </Card>
+
+        {rfqId && <CommentsThread targetType="rfq" targetId={rfqId} />}
       </div>
     </ClientLayout>
   );

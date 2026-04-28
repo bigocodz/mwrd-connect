@@ -12,6 +12,7 @@ import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DualDate } from "@/components/shared/DualDate";
 
 const AdminAuditLog = () => {
   const { tr, lang } = useLanguage();
@@ -126,7 +127,7 @@ const AdminAuditLog = () => {
                 <TableBody>
                   {paginated.map((log: any) => (
                     <TableRow key={log._id}>
-                      <TableCell className="text-xs whitespace-nowrap">{new Date(log._creationTime).toLocaleString(locale)}</TableCell>
+                      <TableCell className="text-xs whitespace-nowrap"><DualDate value={log._creationTime} withTime /></TableCell>
                       <TableCell className="font-medium text-sm">
                         <div className="flex items-center gap-1.5">
                           <Badge variant="outline" className="text-[10px] uppercase">

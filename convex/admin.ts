@@ -21,7 +21,7 @@ export const createUser = action({
   args: {
     email: v.string(),
     password: v.string(),
-    role: v.union(v.literal("CLIENT"), v.literal("SUPPLIER")),
+    role: v.union(v.literal("CLIENT"), v.literal("SUPPLIER"), v.literal("AUDITOR")),
     company_name: v.string(),
   },
   handler: async (ctx, args): Promise<string | null> => {

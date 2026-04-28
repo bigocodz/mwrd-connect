@@ -4,6 +4,7 @@ import { api } from "@cvx/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { QuoteComparisonView } from "@/components/rfqs/QuoteComparisonView";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CommentsThread } from "@/components/comments/CommentsThread";
 
 const AdminRfqQuoteComparison = () => {
   const { tr } = useLanguage();
@@ -20,7 +21,10 @@ const AdminRfqQuoteComparison = () => {
 
   return (
     <AdminLayout>
-      <QuoteComparisonView comparison={comparison} mode="admin" backHref="/admin/rfqs" />
+      <div className="space-y-6">
+        <QuoteComparisonView comparison={comparison} mode="admin" backHref="/admin/rfqs" />
+        {rfqId && <CommentsThread targetType="rfq" targetId={rfqId} />}
+      </div>
     </AdminLayout>
   );
 };

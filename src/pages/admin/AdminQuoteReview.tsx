@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { ArrowLeft, ExternalLink, FileText, MessageSquare, Send } from "lucide-react";
 import { VatBadge, formatSAR } from "@/components/shared/VatBadge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DocumentsDialog } from "@/components/admin/DocumentsDialog";
+import { CommentsThread } from "@/components/comments/CommentsThread";
 
 const documentLabel: Record<string, string> = {
   SPECIFICATION: "Specification",
@@ -162,16 +164,27 @@ const AdminQuoteReview = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/admin/quotes/pending")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-display font-bold text-foreground">Review Quote</h1>
+          <div className="flex-1">
+            <h1 className="text-2xl font-display font-bold text-foreground">{tr("Review Quote")}</h1>
             <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-              <span>Quote <span className="font-mono">{quoteId?.slice(0, 8)}</span></span>
+              <span>{tr("Quote")} <span className="font-mono">{quoteId?.slice(0, 8)}</span></span>
               <span>•</span>
-              <span>Supplier: {quoteData.supplier_public_id}</span>
+              <span>{tr("Supplier")}: {quoteData.supplier_public_id}</span>
               <span>•</span>
-              <span>Client: {quoteData.rfq?.client_public_id}</span>
+              <span>{tr("Client")}: {quoteData.rfq?.client_public_id}</span>
             </div>
           </div>
+          {quoteId && (
+            <DocumentsDialog
+              targetType="quote"
+              targetId={quoteId}
+              trigger={
+                <Button size="sm" variant="outline">
+                  {tr("Documents")}
+                </Button>
+              }
+            />
+          )}
         </div>
 
         {(quoteData.supplier_notes || attachments.length > 0) && (
@@ -366,6 +379,8 @@ const AdminQuoteReview = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {quoteId && <CommentsThread targetType="quote" targetId={quoteId} />}
       </div>
     </AdminLayout>
   );

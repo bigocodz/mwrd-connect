@@ -16,6 +16,7 @@ import {
 } from "@/components/invoices/clientInvoiceStatus";
 import { StatementPanel } from "@/components/invoices/StatementPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { CommentsDialog } from "@/components/comments/CommentsDialog";
 
 const ClientInvoices = () => {
   const { tr, lang } = useLanguage();
@@ -97,13 +98,22 @@ const ClientInvoices = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      {inv.order_id ? (
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/client/orders/${inv.order_id}`}>{tr("View order")}</Link>
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {inv.order_id ? (
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={`/client/orders/${inv.order_id}`}>{tr("View order")}</Link>
+                          </Button>
+                        ) : null}
+                        <CommentsDialog
+                          targetType="client_invoice"
+                          targetId={inv._id}
+                          trigger={
+                            <Button variant="ghost" size="sm">
+                              {tr("Comments")}
+                            </Button>
+                          }
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

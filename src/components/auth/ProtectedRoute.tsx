@@ -2,9 +2,11 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
+type Role = "CLIENT" | "SUPPLIER" | "ADMIN" | "AUDITOR";
+
 type Props = {
   children: React.ReactNode;
-  allowedRoles?: ("CLIENT" | "SUPPLIER" | "ADMIN")[];
+  allowedRoles?: Role[];
 };
 
 const ProtectedRoute = ({ children, allowedRoles }: Props) => {
@@ -31,7 +33,14 @@ const ProtectedRoute = ({ children, allowedRoles }: Props) => {
     return <Navigate to="/account-status" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(profile.role)) {
+  // AUDITOR (PRD §13.4) is a read-only mirror of ADMIN — wherever an admin
+  // route is declared, an auditor is admitted too. Mutations are blocked
+  // server-side by `requireAdmin`, so the route exposure is safe.
+  const effectiveAllowed: Role[] | undefined = allowedRoles?.includes("ADMIN")
+    ? Array.from(new Set<Role>([...allowedRoles, "AUDITOR"]))
+    : allowedRoles;
+
+  if (effectiveAllowed && !effectiveAllowed.includes(profile.role as Role)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

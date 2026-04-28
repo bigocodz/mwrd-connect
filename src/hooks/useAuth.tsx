@@ -6,7 +6,7 @@ import { api } from "@cvx/api";
 
 type Profile = {
   _id: string;
-  role: "CLIENT" | "SUPPLIER" | "ADMIN";
+  role: "CLIENT" | "SUPPLIER" | "ADMIN" | "AUDITOR";
   status: "PENDING" | "ACTIVE" | "REJECTED" | "REQUIRES_ATTENTION" | "DEACTIVATED" | "FROZEN";
   kyc_status: "INCOMPLETE" | "IN_REVIEW" | "VERIFIED" | "REJECTED";
   company_name?: string;

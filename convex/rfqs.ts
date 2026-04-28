@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getAuthenticatedProfile, requireAdmin, requireClient, requireSupplier } from "./lib";
+import { getAuthenticatedProfile, requireAdminRead, requireClient, requireSupplier } from "./lib";
 
 const attachmentInput = v.object({
   document_type: v.union(
@@ -100,8 +100,10 @@ export const getById = query({
       .withIndex("by_rfq", (q) => q.eq("rfq_id", args.id))
       .collect();
     const quotesQuery = ctx.db.query("quotes").withIndex("by_rfq", (q) => q.eq("rfq_id", args.id));
+    // ADMIN + AUDITOR (PRD §13.4) see in-flight quotes; clients/suppliers
+    // are filtered to released ones (PENDING_ADMIN is admin-internal staging).
     const quotes =
-      profile.role === "ADMIN"
+      profile.role === "ADMIN" || profile.role === "AUDITOR"
         ? await quotesQuery.collect()
         : await quotesQuery.filter((q) => q.neq(q.field("status"), "PENDING_ADMIN")).collect();
     const [costCenter, branch, department] = await Promise.all([
@@ -123,7 +125,7 @@ export const getById = query({
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const rfqs = await ctx.db.query("rfqs").order("desc").collect();
     return Promise.all(
       rfqs.map(async (rfq) => {

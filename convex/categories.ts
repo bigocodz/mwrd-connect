@@ -4,6 +4,7 @@ import { Id } from "./_generated/dataModel";
 import {
   getAuthenticatedProfile,
   requireAdmin,
+  requireAdminRead,
   requireSupplier,
 } from "./lib";
 import { logAction, diffShallow } from "./audit";
@@ -119,7 +120,7 @@ export const tree = query({
 
 export const listProposals = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const proposals = await ctx.db
       .query("categories")
       .withIndex("by_status", (q) => q.eq("status", "PROPOSED"))

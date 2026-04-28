@@ -30,6 +30,12 @@ const SectionEmpty = ({ label }: { label: string }) => (
   <p className="text-sm text-muted-foreground italic px-4 py-6 text-center">{label}</p>
 );
 
+type StepDraft = {
+  label: string;
+  parallel_group: number;
+  approver_admin_id?: string;
+};
+
 type RuleDraft = {
   id?: string;
   name: string;
@@ -41,6 +47,9 @@ type RuleDraft = {
   department_id?: string;
   enabled: boolean;
   notes?: string;
+  auto_approve_threshold: string;
+  escalation_hours: string;
+  steps: StepDraft[];
 };
 
 const emptyRule = (): RuleDraft => ({
@@ -48,6 +57,9 @@ const emptyRule = (): RuleDraft => ({
   min_amount: "",
   max_amount: "",
   enabled: true,
+  auto_approve_threshold: "",
+  escalation_hours: "",
+  steps: [],
 });
 
 const ClientOrganization = () => {
@@ -60,6 +72,24 @@ const ClientOrganization = () => {
   const deleteRule = useMutation(api.approvals.deleteRule);
   const [ruleDraft, setRuleDraft] = useState<RuleDraft | null>(null);
   const [ruleBusy, setRuleBusy] = useState(false);
+  const ruleStepsForEdit = useQuery(
+    api.approvals.listStepsForRule,
+    ruleDraft?.id ? { rule_id: ruleDraft.id as any } : "skip",
+  );
+  // When the dialog opens for an existing rule, fetched steps land via this
+  // effect — we hydrate the draft once.
+  const [stepsHydratedForId, setStepsHydratedForId] = useState<string | null>(null);
+  if (ruleDraft?.id && ruleStepsForEdit && stepsHydratedForId !== ruleDraft.id) {
+    setStepsHydratedForId(ruleDraft.id);
+    setRuleDraft({
+      ...ruleDraft,
+      steps: (ruleStepsForEdit as any[]).map((s) => ({
+        label: s.label,
+        parallel_group: s.parallel_group,
+        approver_admin_id: s.approver_admin_id ?? undefined,
+      })),
+    });
+  }
 
   const saveRule = async () => {
     if (!ruleDraft) return;
@@ -81,6 +111,28 @@ const ClientOrganization = () => {
         return;
       }
     }
+    let autoApprove: number | undefined;
+    if (ruleDraft.auto_approve_threshold.trim()) {
+      autoApprove = Number(ruleDraft.auto_approve_threshold);
+      if (!Number.isFinite(autoApprove) || autoApprove < 0) {
+        toast.error(tr("Auto-approve threshold must be non-negative"));
+        return;
+      }
+    }
+    let escalation: number | undefined;
+    if (ruleDraft.escalation_hours.trim()) {
+      escalation = Number(ruleDraft.escalation_hours);
+      if (!Number.isFinite(escalation) || escalation <= 0) {
+        toast.error(tr("Escalation hours must be positive"));
+        return;
+      }
+    }
+    for (const s of ruleDraft.steps) {
+      if (!s.label.trim()) {
+        toast.error(tr("Each step needs a label"));
+        return;
+      }
+    }
     setRuleBusy(true);
     try {
       await upsertRule({
@@ -94,9 +146,17 @@ const ClientOrganization = () => {
         department_id: ruleDraft.department_id ? (ruleDraft.department_id as any) : undefined,
         enabled: ruleDraft.enabled,
         notes: ruleDraft.notes?.trim() || undefined,
+        auto_approve_threshold: autoApprove,
+        escalation_hours: escalation,
+        steps: ruleDraft.steps.map((s) => ({
+          label: s.label.trim(),
+          parallel_group: s.parallel_group,
+          approver_admin_id: s.approver_admin_id ? (s.approver_admin_id as any) : undefined,
+        })),
       });
       toast.success(tr("Rule saved"));
       setRuleDraft(null);
+      setStepsHydratedForId(null);
     } catch (err: any) {
       toast.error(err.message || tr("Failed"));
     } finally {
@@ -399,7 +459,8 @@ const ClientOrganization = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
+                          onClick={() => {
+                            setStepsHydratedForId(null);
                             setRuleDraft({
                               id: rule._id,
                               name: rule.name,
@@ -411,8 +472,17 @@ const ClientOrganization = () => {
                               department_id: rule.department_id ?? undefined,
                               enabled: rule.enabled,
                               notes: rule.notes ?? undefined,
-                            })
-                          }
+                              auto_approve_threshold:
+                                (rule as any).auto_approve_threshold != null
+                                  ? String((rule as any).auto_approve_threshold)
+                                  : "",
+                              escalation_hours:
+                                (rule as any).escalation_hours != null
+                                  ? String((rule as any).escalation_hours)
+                                  : "",
+                              steps: [], // hydrated by listStepsForRule
+                            });
+                          }}
                         >
                           {tr("Edit")}
                         </Button>
@@ -538,10 +608,126 @@ const ClientOrganization = () => {
                   onChange={(e) => setRuleDraft({ ...ruleDraft, notes: e.target.value })}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>{tr("Auto-approve under (SAR)")}</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={ruleDraft.auto_approve_threshold}
+                    onChange={(e) =>
+                      setRuleDraft({ ...ruleDraft, auto_approve_threshold: e.target.value })
+                    }
+                    placeholder={tr("Optional — quotes ≤ this skip approval")}
+                  />
+                </div>
+                <div>
+                  <Label>{tr("Escalation after (hours)")}</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={ruleDraft.escalation_hours}
+                    onChange={(e) =>
+                      setRuleDraft({ ...ruleDraft, escalation_hours: e.target.value })
+                    }
+                    placeholder={tr("Optional — alert if step pending past N hours")}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-md border border-border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium">{tr("Approval steps")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tr("Steps with the same group number run in parallel; lower groups run first.")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const nextGroup =
+                        ruleDraft.steps.length > 0
+                          ? Math.max(...ruleDraft.steps.map((s) => s.parallel_group)) + 1
+                          : 1;
+                      setRuleDraft({
+                        ...ruleDraft,
+                        steps: [
+                          ...ruleDraft.steps,
+                          { label: "", parallel_group: nextGroup },
+                        ],
+                      });
+                    }}
+                  >
+                    {tr("+ Add step")}
+                  </Button>
+                </div>
+                {ruleDraft.steps.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">
+                    {tr("No steps — any admin can approve this in one click.")}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {ruleDraft.steps.map((step, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Input
+                          className="flex-1"
+                          value={step.label}
+                          onChange={(e) => {
+                            const next = [...ruleDraft.steps];
+                            next[idx] = { ...next[idx], label: e.target.value };
+                            setRuleDraft({ ...ruleDraft, steps: next });
+                          }}
+                          placeholder={tr("Step label, e.g. Finance review")}
+                        />
+                        <Input
+                          className="w-20"
+                          type="number"
+                          min="1"
+                          value={step.parallel_group}
+                          onChange={(e) => {
+                            const next = [...ruleDraft.steps];
+                            next[idx] = {
+                              ...next[idx],
+                              parallel_group: Math.max(1, Number(e.target.value) || 1),
+                            };
+                            setRuleDraft({ ...ruleDraft, steps: next });
+                          }}
+                          title={tr("Group")}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const next = ruleDraft.steps.filter((_, i) => i !== idx);
+                            setRuleDraft({ ...ruleDraft, steps: next });
+                          }}
+                        >
+                          <Trash01 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRuleDraft(null)}>{tr("Cancel")}</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRuleDraft(null);
+                setStepsHydratedForId(null);
+              }}
+            >
+              {tr("Cancel")}
+            </Button>
             <Button onClick={saveRule} disabled={ruleBusy}>{tr("Save rule")}</Button>
           </DialogFooter>
         </DialogContent>

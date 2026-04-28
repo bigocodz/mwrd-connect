@@ -7,7 +7,7 @@
  */
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin } from "./lib";
+import { requireAdminRead } from "./lib";
 
 export const recentSyncLog = query({
   args: {
@@ -18,7 +18,7 @@ export const recentSyncLog = query({
     status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const limit = Math.min(args.limit ?? 100, 500);
     let q;
     if (args.target_type && args.target_id) {
@@ -43,7 +43,7 @@ export const recentSyncLog = query({
 
 export const summary = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const recent = await ctx.db
       .query("wafeq_sync_log")
       .order("desc")

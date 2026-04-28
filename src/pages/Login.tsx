@@ -29,7 +29,7 @@ const Login = () => {
     const dest =
       profile.status !== "ACTIVE"
         ? "/account-status"
-        : profile.role === "ADMIN"
+        : profile.role === "ADMIN" || profile.role === "AUDITOR"
           ? "/admin/dashboard"
           : profile.role === "SUPPLIER"
             ? "/supplier/dashboard"

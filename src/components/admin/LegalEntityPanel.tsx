@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Save, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import { Save, Loader2, RefreshCw, ShieldCheck, MapPin } from "lucide-react";
+import { ImageUploadCard } from "@/components/admin/ImageUploadCard";
 
 interface LegalEntityPanelProps {
   profile: any;
@@ -32,6 +33,7 @@ export const LegalEntityPanel = ({ profile }: LegalEntityPanelProps) => {
   const updateProfile = useMutation(api.users.updateProfile);
   const submitToWafeq = useAction(api.wafeq.ensureContact);
   const verifyByCR = useAction(api.wathq.verifyByCR);
+  const validateAddress = useAction(api.spl.validateAddress);
 
   const isSupplier = profile?.role === "SUPPLIER";
 
@@ -54,6 +56,7 @@ export const LegalEntityPanel = ({ profile }: LegalEntityPanelProps) => {
   const [saving, setSaving] = useState(false);
   const [resyncing, setResyncing] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [validatingSpl, setValidatingSpl] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -178,6 +181,45 @@ export const LegalEntityPanel = ({ profile }: LegalEntityPanelProps) => {
     }
   };
 
+  const handleValidateSpl = async () => {
+    if (!profile) return;
+    // Save any pending address edits first so the action reads the version
+    // the admin actually sees on screen.
+    setValidatingSpl(true);
+    try {
+      const trimAddr = Object.fromEntries(
+        Object.entries(addr).map(([k, v]) => [k, v.trim() || undefined]),
+      );
+      const hasAddr = Object.values(trimAddr).some(Boolean);
+      const stored = profile.national_address ?? {};
+      const drift = (Object.keys(trimAddr) as Array<keyof typeof addr>).some(
+        (k) => trimAddr[k] !== stored[k],
+      );
+      if (hasAddr && drift) {
+        await updateProfile({
+          id: profile._id,
+          national_address: trimAddr as any,
+        } as any);
+      }
+      const result = await validateAddress({ profile_id: profile._id });
+      if (result.status === "VERIFIED") {
+        toast.success(
+          result.environment === "mock"
+            ? tr("Address verified (mock mode)")
+            : tr("Address verified with SPL"),
+        );
+      } else if (result.status === "NOT_FOUND") {
+        toast.error(tr("Address not found in SPL"));
+      } else {
+        toast.error(result.errorMessage ?? tr("Address validation failed"));
+      }
+    } catch (err: any) {
+      toast.error(err.message || tr("Address validation failed"));
+    } finally {
+      setValidatingSpl(false);
+    }
+  };
+
   if (!profile) return null;
 
   return (
@@ -203,6 +245,21 @@ export const LegalEntityPanel = ({ profile }: LegalEntityPanelProps) => {
                 }
               >
                 {tr("Wathq")}: {tr(profile.wathq_status)}
+              </Badge>
+            )}
+            {profile.spl_status && (
+              <Badge
+                variant="outline"
+                className={
+                  profile.spl_status === "VERIFIED"
+                    ? "bg-green-100 text-green-800"
+                    : profile.spl_status === "NOT_FOUND" || profile.spl_status === "MISMATCH"
+                      ? "bg-red-100 text-red-800"
+                      : ""
+                }
+                title={profile.spl_short_address ? `Short: ${profile.spl_short_address}` : undefined}
+              >
+                {tr("SPL")}: {tr(profile.spl_status)}
               </Badge>
             )}
             {profile.wafeq_contact_id ? (
@@ -303,6 +360,13 @@ export const LegalEntityPanel = ({ profile }: LegalEntityPanelProps) => {
           </div>
         )}
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {profile.role === "CLIENT" && (
+            <ImageUploadCard profileId={profile._id} kind="stamp" />
+          )}
+          <ImageUploadCard profileId={profile._id} kind="signature" />
+        </div>
+
         <div className="flex flex-wrap gap-2 pt-2">
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <Save className="w-4 h-4 me-1.5" />}
@@ -311,6 +375,24 @@ export const LegalEntityPanel = ({ profile }: LegalEntityPanelProps) => {
           <Button variant="outline" onClick={handleVerifyWathq} disabled={verifying || !crNumber}>
             {verifying ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <ShieldCheck className="w-4 h-4 me-1.5" />}
             {tr("Verify with Wathq")}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleValidateSpl}
+            disabled={
+              validatingSpl ||
+              !addr.building_number ||
+              !addr.postal_code ||
+              !addr.city
+            }
+            title={
+              !addr.building_number || !addr.postal_code || !addr.city
+                ? tr("Building number, city, and postal code are required")
+                : undefined
+            }
+          >
+            {validatingSpl ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <MapPin className="w-4 h-4 me-1.5" />}
+            {tr("Validate address (SPL)")}
           </Button>
           <Button variant="outline" onClick={handleResyncWafeq} disabled={resyncing}>
             {resyncing ? <Loader2 className="w-4 h-4 animate-spin me-1.5" /> : <RefreshCw className="w-4 h-4 me-1.5" />}

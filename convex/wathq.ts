@@ -12,7 +12,7 @@
  *   - Writes a sync_log row + audit_log entry on every attempt.
  */
 
-import { action, internalMutation, internalQuery } from "./_generated/server";
+import { action } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 
@@ -142,58 +142,6 @@ async function callWathq(
   }
 }
 
-// ==================== Internal queries / mutations ====================
-
-export const _getProfile = internalQuery({
-  args: { id: v.id("profiles") },
-  handler: async (ctx, args) => ctx.db.get(args.id),
-});
-
-export const _persistVerification = internalMutation({
-  args: {
-    profile_id: v.id("profiles"),
-    wathq_status: v.union(
-      v.literal("VERIFIED"),
-      v.literal("MISMATCH"),
-      v.literal("UNVERIFIED"),
-    ),
-    legal_name: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.profile_id, {
-      wathq_status: args.wathq_status,
-      wathq_verified_at: Date.now(),
-      wathq_verified_legal_name: args.legal_name,
-    });
-  },
-});
-
-export const _writeSyncLog = internalMutation({
-  args: {
-    operation: v.string(),
-    environment: v.union(v.literal("production"), v.literal("mock")),
-    target_type: v.string(),
-    target_id: v.string(),
-    cr_number: v.optional(v.string()),
-    status: v.union(
-      v.literal("VERIFIED"),
-      v.literal("MISMATCH"),
-      v.literal("NOT_FOUND"),
-      v.literal("API_ERROR"),
-      v.literal("NETWORK_ERROR"),
-      v.literal("CONFIG_ERROR"),
-    ),
-    http_status: v.optional(v.number()),
-    error_code: v.optional(v.string()),
-    error_message: v.optional(v.string()),
-    response_summary: v.optional(v.any()),
-    duration_ms: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("wathq_sync_log", args);
-  },
-});
-
 // ==================== Public action ====================
 
 export interface VerifyByCRResult {
@@ -220,7 +168,7 @@ export const verifyByCR = action({
   },
   handler: async (ctx, args): Promise<VerifyByCRResult> => {
     const config = readConfig();
-    const profile: any = await ctx.runQuery(internal.wathq._getProfile, {
+    const profile: any = await ctx.runQuery(internal.wathqHelpers._getProfile, {
       id: args.profile_id,
     });
     if (!profile) throw new ConvexError("Profile not found");
@@ -255,14 +203,14 @@ export const verifyByCR = action({
         finalStatus = "VERIFIED";
       }
       storedLegalName = ar ?? stored;
-      await ctx.runMutation(internal.wathq._persistVerification, {
+      await ctx.runMutation(internal.wathqHelpers._persistVerification, {
         profile_id: args.profile_id,
         wathq_status: finalStatus,
         legal_name: storedLegalName,
       });
     }
 
-    await ctx.runMutation(internal.wathq._writeSyncLog, {
+    await ctx.runMutation(internal.wathqHelpers._writeSyncLog, {
       operation: "verifyByCR",
       environment: config.env,
       target_type: "profile",

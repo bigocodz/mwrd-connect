@@ -3,6 +3,9 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@cvx/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { WafeqPanel, InvoiceWafeqStatus } from "@/components/admin/WafeqPanel";
+import { InvoiceAdjustmentDialog } from "@/components/admin/InvoiceAdjustmentDialog";
+import { DocumentsDialog } from "@/components/admin/DocumentsDialog";
+import { CommentsDialog } from "@/components/comments/CommentsDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +31,14 @@ import { ORDER_STATUS_LABEL } from "@/components/orders/orderStatus";
 
 const STATUS_FILTERS = ["ALL", "PENDING_PAYMENT", "OVERDUE", "PAID", "VOID"];
 
+const MATCH_TONE: Record<string, string> = {
+  MATCHED: "bg-green-100 text-green-800",
+  MISMATCH: "bg-red-100 text-red-800",
+  NO_GRN: "bg-amber-100 text-amber-800",
+  DISPUTED_GRN: "bg-red-100 text-red-800",
+  NOT_APPLICABLE: "bg-zinc-100 text-zinc-700",
+};
+
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const offsetISO = (days: number) => {
   const d = new Date();
@@ -46,12 +57,27 @@ const AdminClientInvoices = () => {
   const sendReminder = useMutation(api.clientInvoices.sendReminder);
   const voidInvoice = useMutation(api.clientInvoices.voidInvoice);
   const submitToWafeq = useAction(api.wafeq.submitClientInvoice);
+  const recomputeMatch = useMutation(api.threeWayMatch.recomputeForInvoice);
 
   const loading = invoicesData === undefined;
   const invoices = invoicesData ?? [];
 
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const filtered = statusFilter === "ALL" ? invoices : invoices.filter((i: any) => i.status === statusFilter);
+  const [matchFilter, setMatchFilter] = useState("ALL");
+  const filtered = invoices.filter((i: any) => {
+    if (statusFilter !== "ALL" && i.status !== statusFilter) return false;
+    if (matchFilter === "MISMATCH") {
+      // "Needs review" bucket — anything that's not a clean match or
+      // explicitly not-applicable.
+      if (i.match_status === "MATCHED" || i.match_status === "NOT_APPLICABLE") {
+        return false;
+      }
+      if (!i.match_status) return false; // never computed
+    } else if (matchFilter !== "ALL" && i.match_status !== matchFilter) {
+      return false;
+    }
+    return true;
+  });
   const { page, setPage, totalPages, paginated, total } = usePagination(filtered);
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -155,6 +181,16 @@ const AdminClientInvoices = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={matchFilter} onValueChange={setMatchFilter}>
+              <SelectTrigger className="w-44"><SelectValue placeholder={tr("Match")} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">{tr("All matches")}</SelectItem>
+                <SelectItem value="MISMATCH">{tr("Needs review")}</SelectItem>
+                <SelectItem value="MATCHED">{tr("Matched")}</SelectItem>
+                <SelectItem value="NO_GRN">{tr("No receipt")}</SelectItem>
+                <SelectItem value="DISPUTED_GRN">{tr("Disputed receipt")}</SelectItem>
+              </SelectContent>
+            </Select>
             <Button onClick={() => { setOrderId(""); setIssueDate(todayISO()); setDueDate(offsetISO(30)); setNotes(""); setCreateOpen(true); }}>
               <Plus className="w-4 h-4 me-2" /> {tr("Issue invoice")}
             </Button>
@@ -203,6 +239,15 @@ const AdminClientInvoices = () => {
                           {tr(CLIENT_INVOICE_STATUS_LABEL[inv.status] ?? inv.status)}
                         </Badge>
                         <InvoiceWafeqStatus invoice={inv} />
+                        {inv.match_status && (
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] ${MATCH_TONE[inv.match_status] ?? ""}`}
+                            title={inv.match_summary ?? ""}
+                          >
+                            {tr(`match.${inv.match_status}`)}
+                          </Badge>
+                        )}
                       </div>
                       {inv.status === "VOID" && inv.void_reason && (
                         <p className="text-xs text-muted-foreground mt-1 max-w-xs truncate" title={inv.void_reason}>{inv.void_reason}</p>
@@ -276,6 +321,67 @@ const AdminClientInvoices = () => {
                           >
                             {tr("Send to Wafeq")}
                           </Button>
+                        )}
+                        {inv.status !== "VOID" && (
+                          <>
+                            <InvoiceAdjustmentDialog
+                              invoice={inv}
+                              type="CREDIT"
+                              trigger={
+                                <Button size="sm" variant="ghost" disabled={busy}>
+                                  {tr("Credit note")}
+                                </Button>
+                              }
+                            />
+                            <InvoiceAdjustmentDialog
+                              invoice={inv}
+                              type="DEBIT"
+                              trigger={
+                                <Button size="sm" variant="ghost" disabled={busy}>
+                                  {tr("Debit note")}
+                                </Button>
+                              }
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy}
+                              onClick={async () => {
+                                setBusy(true);
+                                try {
+                                  const r = await recomputeMatch({ invoice_id: inv._id });
+                                  toast.success(
+                                    tr("Match: {status}", { status: tr(`match.${r.status}`) }),
+                                  );
+                                } catch (err: any) {
+                                  toast.error(err.message || tr("Failed"));
+                                } finally {
+                                  setBusy(false);
+                                }
+                              }}
+                              title={inv.match_summary ?? ""}
+                            >
+                              {tr("Recompute match")}
+                            </Button>
+                            <DocumentsDialog
+                              targetType="client_invoice"
+                              targetId={inv._id}
+                              trigger={
+                                <Button size="sm" variant="ghost" disabled={busy}>
+                                  {tr("Documents")}
+                                </Button>
+                              }
+                            />
+                            <CommentsDialog
+                              targetType="client_invoice"
+                              targetId={inv._id}
+                              trigger={
+                                <Button size="sm" variant="ghost" disabled={busy}>
+                                  {tr("Comments")}
+                                </Button>
+                              }
+                            />
+                          </>
                         )}
                       </div>
                     </TableCell>

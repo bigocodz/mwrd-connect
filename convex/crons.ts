@@ -23,4 +23,13 @@ crons.daily(
   internal.wafeq.reconcileNow,
 );
 
+// PRD §6.6.1 — escalate stale approval steps that have been pending past
+// their rule's escalation_hours threshold. Hourly cadence is plenty given
+// SLAs are typically configured in hours, not minutes.
+crons.interval(
+  "escalate stale approval steps",
+  { hours: 1 },
+  internal.approvals.escalateStaleSteps,
+);
+
 export default crons;

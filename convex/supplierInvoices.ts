@@ -1,8 +1,9 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, requireSupplier, getAuthenticatedProfile } from "./lib";
+import { requireAdmin, requireAdminRead, requireSupplier, getAuthenticatedProfile } from "./lib";
 import { logAction } from "./audit";
+import { enqueueNotification } from "./notifyHelpers";
 
 const notify = async (
   ctx: any,
@@ -10,16 +11,25 @@ const notify = async (
   title: string,
   message: string,
   link: string,
+  event_type?: string,
 ) => {
-  await ctx.db.insert("notifications", { user_id: userId, title, message, link, read: false });
+  await enqueueNotification(ctx, { user_id: userId, event_type, title, message, link });
 };
 
-const notifyAdmins = async (ctx: any, title: string, message: string, link: string) => {
+const notifyAdmins = async (
+  ctx: any,
+  title: string,
+  message: string,
+  link: string,
+  event_type?: string,
+) => {
   const admins = await ctx.db
     .query("profiles")
     .withIndex("by_role", (q: any) => q.eq("role", "ADMIN"))
     .collect();
-  await Promise.all(admins.map((admin: any) => notify(ctx, admin._id, title, message, link)));
+  await Promise.all(
+    admins.map((admin: any) => notify(ctx, admin._id, title, message, link, event_type)),
+  );
 };
 
 const enrich = async (ctx: any, invoice: any) => {
@@ -92,7 +102,7 @@ export const listMine = query({
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const invoices = await ctx.db.query("supplier_invoices").order("desc").collect();
     return Promise.all(invoices.map((inv) => enrich(ctx, inv)));
   },

@@ -29,7 +29,7 @@ export async function logAction(
 ) {
   const userId = await auth.getUserId(ctx);
   let actor_profile_id: any = undefined;
-  let actor_role: "CLIENT" | "SUPPLIER" | "ADMIN" | undefined;
+  let actor_role: "CLIENT" | "SUPPLIER" | "ADMIN" | "AUDITOR" | undefined;
   let actor_public_id: string | undefined;
   if (userId) {
     const profile = await ctx.db

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ShoppingCart, Package, Loader2, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Package, Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,7 +19,7 @@ const AdminCreateUser = () => {
   const createUser = useAction(api.admin.createUser);
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [role, setRole] = useState<"CLIENT" | "SUPPLIER">("CLIENT");
+  const [role, setRole] = useState<"CLIENT" | "SUPPLIER" | "AUDITOR">("CLIENT");
   const [tempPassword, setTempPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +61,7 @@ const AdminCreateUser = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label>{tr("Role")}</Label>
-              <RadioGroup value={role} onValueChange={(v) => setRole(v as "CLIENT" | "SUPPLIER")} className="grid grid-cols-2 gap-3">
+              <RadioGroup value={role} onValueChange={(v) => setRole(v as "CLIENT" | "SUPPLIER" | "AUDITOR")} className="grid grid-cols-3 gap-3">
                 <Label htmlFor="cr-client" className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 cursor-pointer transition-all ${role === "CLIENT" ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"}`}>
                   <RadioGroupItem value="CLIENT" id="cr-client" className="sr-only" />
                   <ShoppingCart className="w-5 h-5 text-accent" />
@@ -72,10 +72,22 @@ const AdminCreateUser = () => {
                   <Package className="w-5 h-5 text-accent" />
                   <span className="font-medium text-sm">{tr("Supplier")}</span>
                 </Label>
+                <Label htmlFor="cr-auditor" className={`flex flex-col items-center gap-2 rounded-xl border-2 p-3 cursor-pointer transition-all ${role === "AUDITOR" ? "border-accent bg-accent/5" : "border-border hover:border-accent/40"}`}>
+                  <RadioGroupItem value="AUDITOR" id="cr-auditor" className="sr-only" />
+                  <ShieldCheck className="w-5 h-5 text-accent" />
+                  <span className="font-medium text-sm">{tr("Auditor")}</span>
+                </Label>
               </RadioGroup>
+              {role === "AUDITOR" && (
+                <p className="text-xs text-muted-foreground">
+                  {tr("Read-only external audit account. Sees the same admin surfaces but cannot edit anything.")}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">{tr("Company Name")}</Label>
+              <Label htmlFor="company">
+                {role === "AUDITOR" ? tr("Auditor / Firm Name") : tr("Company Name")}
+              </Label>
               <Input id="company" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required />
             </div>
             <div className="space-y-2">

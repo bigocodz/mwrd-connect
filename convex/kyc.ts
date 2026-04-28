@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, getAuthenticatedProfile } from "./lib";
+import { requireAdmin, requireAdminRead, getAuthenticatedProfile } from "./lib";
 import { logAction } from "./audit";
 
 const documentType = v.union(
@@ -57,7 +57,7 @@ export const listMine = query({
 export const listForProfile = query({
   args: { profile_id: v.id("profiles") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const docs = await ctx.db
       .query("kyc_documents")
       .withIndex("by_profile", (q) => q.eq("profile_id", args.profile_id))

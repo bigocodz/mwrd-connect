@@ -1,11 +1,11 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin } from "./lib";
+import { requireAdmin, requireAdminRead } from "./lib";
 
 // Legacy admin-only log (kept for backward compatibility with older entries)
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const logs = await ctx.db.query("admin_audit_log").order("desc").take(200);
     return Promise.all(
       logs.map(async (log) => {
@@ -54,7 +54,7 @@ export const listAudit = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const limit = Math.min(args.limit ?? 200, 500);
     let q;
     if (args.target_type) {

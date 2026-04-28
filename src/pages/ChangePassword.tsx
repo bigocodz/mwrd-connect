@@ -33,7 +33,7 @@ const ChangePassword = () => {
   // Already changed — bounce to role dashboard
   if (!profile.must_change_password) {
     const target =
-      profile.role === "ADMIN"
+      profile.role === "ADMIN" || profile.role === "AUDITOR"
         ? "/admin/dashboard"
         : profile.role === "SUPPLIER"
           ? "/supplier/dashboard"

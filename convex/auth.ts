@@ -16,7 +16,7 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       });
 
       // Parse role/company_name from name field (used by admin-created accounts)
-      let role: "CLIENT" | "SUPPLIER" | "ADMIN" = "CLIENT";
+      let role: "CLIENT" | "SUPPLIER" | "ADMIN" | "AUDITOR" = "CLIENT";
       let company_name: string | undefined;
       let adminCreated = false;
       const profileName = args.profile.name as string | undefined;
@@ -35,14 +35,26 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         .withIndex("by_role", (q) => q.eq("role", role))
         .collect();
       const count = existing.length + 1;
-      const prefix = role === "CLIENT" ? "Client" : role === "SUPPLIER" ? "Supplier" : "Admin";
+      const prefix =
+        role === "CLIENT"
+          ? "Client"
+          : role === "SUPPLIER"
+            ? "Supplier"
+            : role === "AUDITOR"
+              ? "Auditor"
+              : "Admin";
       const public_id = `${prefix}-${String(count).padStart(4, "0")}`;
+
+      // Auditors are admin-only-onboarded read-only accounts (PRD §13.4).
+      // Activate them immediately on creation so they can start auditing
+      // without going through the KYC funnel that doesn't apply.
+      const isAuditor = role === "AUDITOR";
 
       await ctx.db.insert("profiles", {
         userId,
         role,
-        status: "PENDING",
-        kyc_status: "INCOMPLETE",
+        status: isAuditor ? "ACTIVE" : "PENDING",
+        kyc_status: isAuditor ? "VERIFIED" : "INCOMPLETE",
         company_name,
         public_id,
         credit_limit: 0,

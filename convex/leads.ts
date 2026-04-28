@@ -1,11 +1,11 @@
 import { query, mutation, action, internalQuery } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { api, internal } from "./_generated/api";
-import { requireAdmin } from "./lib";
+import { requireAdmin, requireAdminRead } from "./lib";
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     return ctx.db.query("interest_submissions").order("desc").collect();
   },
 });

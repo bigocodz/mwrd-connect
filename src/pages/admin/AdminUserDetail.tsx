@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { AdminKycPanel } from "@/components/kyc/AdminKycPanel";
 import { PreferredSupplierCard } from "@/components/users/PreferredSupplierCard";
+import { SupplierScorecardPanel } from "@/components/admin/SupplierScorecardPanel";
 import { StatementPanel } from "@/components/invoices/StatementPanel";
 import { LegalEntityPanel } from "@/components/admin/LegalEntityPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -254,9 +255,14 @@ const AdminUserDetail = () => {
       </div>
 
       {profile.role === "SUPPLIER" && (
-        <div className="mt-6">
-          <PreferredSupplierCard profile={profile} />
-        </div>
+        <>
+          <div className="mt-6">
+            <SupplierScorecardPanel profileId={profile._id} />
+          </div>
+          <div className="mt-6">
+            <PreferredSupplierCard profile={profile} />
+          </div>
+        </>
       )}
 
       {profile.role === "CLIENT" && (

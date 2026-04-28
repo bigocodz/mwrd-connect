@@ -84,6 +84,7 @@ const AdminUsers = () => {
             <SelectItem value="CLIENT">{tr("Client")}</SelectItem>
             <SelectItem value="SUPPLIER">{tr("Supplier")}</SelectItem>
             <SelectItem value="ADMIN">{tr("Admin")}</SelectItem>
+            <SelectItem value="AUDITOR">{tr("Auditor")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

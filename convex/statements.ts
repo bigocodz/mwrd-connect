@@ -119,7 +119,10 @@ export const adminClientStatement = query({
   handler: async (ctx, args) => {
     const profile = await getAuthenticatedProfile(ctx);
     if (!profile) throw new ConvexError("Unauthorized");
-    if (profile.role !== "ADMIN") throw new ConvexError("Admins only");
+    // Read-only path — auditors (PRD §13.4) see the same statements as admins.
+    if (profile.role !== "ADMIN" && profile.role !== "AUDITOR") {
+      throw new ConvexError("Admins only");
+    }
     const fromMs = dateStringToTimestamp(args.from);
     const toMs = dateStringToTimestamp(args.to);
     return buildStatement(ctx, args.client_id, fromMs, toMs);

@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
-import { getAuthenticatedProfile, requireAdmin, requireSupplier } from "./lib";
+import { getAuthenticatedProfile, requireAdmin, requireAdminRead, requireSupplier } from "./lib";
 import { logAction } from "./audit";
 
 const deriveAvailability = (
@@ -58,7 +58,7 @@ export const listApprovedWithSupplier = query({
 
 export const listPending = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const products = await ctx.db
       .query("products")
       .withIndex("by_approval", (q) => q.eq("approval_status", "PENDING"))

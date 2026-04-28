@@ -22,6 +22,9 @@ import {
   ORDER_STATUS_LABEL,
 } from "./orderStatus";
 import { OrderTimeline } from "./OrderTimeline";
+import { GrnPanel } from "./GrnPanel";
+import { DocumentsPanel } from "@/components/admin/DocumentsPanel";
+import { CommentsThread } from "@/components/comments/CommentsThread";
 
 type Role = "CLIENT" | "SUPPLIER" | "ADMIN";
 
@@ -528,6 +531,19 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <GrnPanel
+        orderId={order._id}
+        orderStatus={order.status}
+        role={role}
+        items={quotedItems}
+      />
+
+      {role === "ADMIN" && (
+        <DocumentsPanel targetType="order" targetId={order._id} />
+      )}
+
+      <CommentsThread targetType="order" targetId={order._id} />
 
       <OrderTimeline events={order.events ?? []} />
     </div>

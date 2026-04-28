@@ -1,9 +1,11 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, requireClient } from "./lib";
+import { requireAdmin, requireAdminRead, requireClient } from "./lib";
 import { logAction } from "./audit";
 import { api } from "./_generated/api";
+import { recomputeMatchInternal } from "./threeWayMatch";
+import { enqueueNotification } from "./notifyHelpers";
 
 const enrich = async (ctx: any, invoice: any) => {
   const [client, order] = await Promise.all([
@@ -28,7 +30,7 @@ const formatInvoiceNumber = async (ctx: any) => {
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const invoices = await ctx.db.query("client_invoices").order("desc").collect();
     return Promise.all(invoices.map((inv) => enrich(ctx, inv)));
   },
@@ -48,7 +50,7 @@ export const listMine = query({
 
 export const listOrdersAvailableForInvoice = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const orders = await ctx.db.query("orders").collect();
     const eligible = orders.filter((o) =>
       ["DELIVERED", "COMPLETED"].includes(o.status),
@@ -116,12 +118,12 @@ export const createForOrder = mutation({
       status: "PENDING_PAYMENT",
       issued_by: admin._id,
     });
-    await ctx.db.insert("notifications", {
+    await enqueueNotification(ctx, {
       user_id: order.client_id,
+      event_type: "invoice.issued",
       title: "New invoice issued",
       message: `Invoice ${invoice_number} for SAR ${(order.total_with_vat ?? 0).toFixed(2)}.`,
       link: "/client/invoices",
-      read: false,
     });
     await logAction(ctx, {
       action: "client_invoice.create",
@@ -135,6 +137,9 @@ export const createForOrder = mutation({
         total_amount: order.total_with_vat ?? 0,
       },
     });
+    // Three-way match on creation (PRD §6.11) — likely "NO_GRN" on the
+    // first run, but stamps a baseline so admin sees the status badge.
+    await recomputeMatchInternal(ctx, id);
     // Fire-and-forget Wafeq submission (PRD §8.1). Mutations can't call
     // actions synchronously; the scheduler runs it on the next tick. Mock
     // mode kicks in automatically when WAFEQ_API_KEY is unset.
@@ -171,12 +176,12 @@ export const createManual = mutation({
       status: "PENDING_PAYMENT",
       issued_by: admin._id,
     });
-    await ctx.db.insert("notifications", {
+    await enqueueNotification(ctx, {
       user_id: args.client_id,
+      event_type: "invoice.issued",
       title: "New invoice issued",
       message: `Invoice ${invoice_number} for SAR ${(args.subtotal + args.vat_amount).toFixed(2)}.`,
       link: "/client/invoices",
-      read: false,
     });
     await logAction(ctx, {
       action: "client_invoice.create_manual",
@@ -189,6 +194,7 @@ export const createManual = mutation({
         total_amount: args.subtotal + args.vat_amount,
       },
     });
+    await recomputeMatchInternal(ctx, id);
     await ctx.scheduler.runAfter(0, api.wafeq.submitClientInvoice, { invoice_id: id });
     return id;
   },
@@ -207,12 +213,12 @@ export const markPaid = mutation({
       paid_at: Date.now(),
       paid_reference: args.reference?.trim() || undefined,
     });
-    await ctx.db.insert("notifications", {
+    await enqueueNotification(ctx, {
       user_id: invoice.client_id,
+      event_type: "invoice.paid",
       title: "Payment received",
       message: `Invoice ${invoice.invoice_number} marked paid.`,
       link: "/client/invoices",
-      read: false,
     });
     await logAction(ctx, {
       action: "client_invoice.mark_paid",

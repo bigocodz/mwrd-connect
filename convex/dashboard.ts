@@ -1,6 +1,6 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin, requireSupplier } from "./lib";
+import { requireAdminRead, requireSupplier } from "./lib";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -15,7 +15,7 @@ const avg = (values: number[]) => (values.length ? values.reduce((s, n) => s + n
 
 export const adminStats = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
 
     const now = Date.now();
     const monthStart = new Date();
@@ -307,7 +307,7 @@ export const supplierAnalytics = query({
 export const lifecycleMetrics = query({
   args: { windowDays: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const windowDays = args.windowDays ?? 90;
     const since = Date.now() - windowDays * DAY;
 

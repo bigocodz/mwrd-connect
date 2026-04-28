@@ -2,8 +2,9 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, requireClient, requireSupplier, getAuthenticatedProfile } from "./lib";
+import { requireAdmin, requireAdminRead, requireClient, requireSupplier, getAuthenticatedProfile } from "./lib";
 import { logAction } from "./audit";
+import { enqueueNotification } from "./notifyHelpers";
 
 const ORDER_STATUSES = [
   "PENDING_CONFIRMATION",
@@ -33,28 +34,39 @@ const computeQuoteTotals = async (ctx: any, quoteId: Id<"quotes">) => {
   return { totalBeforeVat, totalWithVat };
 };
 
+// Routes through enqueueNotification so cross-channel dispatch (email
+// today, SMS/WhatsApp later) fans out automatically. PRD §10.1.
 const notify = async (
   ctx: any,
   userId: Id<"profiles">,
   title: string,
   message: string,
   link: string,
+  event_type?: string,
 ) => {
-  await ctx.db.insert("notifications", {
+  await enqueueNotification(ctx, {
     user_id: userId,
+    event_type,
     title,
     message,
     link,
-    read: false,
   });
 };
 
-const notifyAdmins = async (ctx: any, title: string, message: string, link: string) => {
+const notifyAdmins = async (
+  ctx: any,
+  title: string,
+  message: string,
+  link: string,
+  event_type?: string,
+) => {
   const admins = await ctx.db
     .query("profiles")
     .withIndex("by_role", (q: any) => q.eq("role", "ADMIN"))
     .collect();
-  await Promise.all(admins.map((admin: any) => notify(ctx, admin._id, title, message, link)));
+  await Promise.all(
+    admins.map((admin: any) => notify(ctx, admin._id, title, message, link, event_type)),
+  );
 };
 
 export const createFromQuote = async (ctx: any, quoteId: Id<"quotes">, actorId: Id<"profiles">) => {
@@ -151,7 +163,7 @@ export const listMineSupplier = query({
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const orders = await ctx.db.query("orders").order("desc").collect();
     return Promise.all(orders.map((order) => enrichOrder(ctx, order)));
   },
@@ -159,7 +171,7 @@ export const listAll = query({
 
 export const listDisputed = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const orders = await ctx.db.query("orders").collect();
     const disputed = orders
       .filter((o) => o.dispute_status)
@@ -175,8 +187,11 @@ export const getById = query({
     if (!profile) throw new ConvexError("Unauthorized");
     const order = await ctx.db.get(args.id);
     if (!order) return null;
+    // ADMIN + AUDITOR (PRD §13.4 read-only) see every order; CLIENT/SUPPLIER
+    // only see orders where they're the counterparty.
     if (
       profile.role !== "ADMIN" &&
+      profile.role !== "AUDITOR" &&
       order.client_id !== profile._id &&
       order.supplier_id !== profile._id
     ) {
@@ -464,6 +479,7 @@ export const cancel = mutation({
   handler: async (ctx, args) => {
     const profile = await getAuthenticatedProfile(ctx);
     if (!profile) throw new ConvexError("Unauthorized");
+    if (profile.role === "AUDITOR") throw new ConvexError("Forbidden");
     const order = await ctx.db.get(args.id);
     if (!order) throw new ConvexError("Order not found");
     if (
@@ -609,6 +625,7 @@ export const addNote = mutation({
   handler: async (ctx, args) => {
     const profile = await getAuthenticatedProfile(ctx);
     if (!profile) throw new ConvexError("Unauthorized");
+    if (profile.role === "AUDITOR") throw new ConvexError("Forbidden");
     const order = await ctx.db.get(args.id);
     if (!order) throw new ConvexError("Order not found");
     if (

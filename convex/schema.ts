@@ -7,7 +7,14 @@ export default defineSchema({
 
   profiles: defineTable({
     userId: v.id("users"),
-    role: v.union(v.literal("CLIENT"), v.literal("SUPPLIER"), v.literal("ADMIN")),
+    // Roles. AUDITOR (PRD §13.4) is read-only — same admin surfaces as
+    // ADMIN but every mutation rejects them via requireAdmin().
+    role: v.union(
+      v.literal("CLIENT"),
+      v.literal("SUPPLIER"),
+      v.literal("ADMIN"),
+      v.literal("AUDITOR"),
+    ),
     status: v.union(
       v.literal("PENDING"),
       v.literal("ACTIVE"),
@@ -74,6 +81,32 @@ export default defineSchema({
     ),
     wathq_verified_at: v.optional(v.number()),
     wathq_verified_legal_name: v.optional(v.string()),
+    // SPL (Saudi Post) National Address validation trail (PRD §8.3).
+    spl_status: v.optional(
+      v.union(
+        v.literal("UNVERIFIED"),
+        v.literal("VERIFIED"),
+        v.literal("MISMATCH"),
+        v.literal("NOT_FOUND"),
+      ),
+    ),
+    spl_verified_at: v.optional(v.number()),
+    spl_short_address: v.optional(v.string()),
+    // Server-side language preference (PRD §9.1) — drives per-user
+    // notification rendering. Defaults to Arabic when unset.
+    preferred_language: v.optional(v.union(v.literal("ar"), v.literal("en"))),
+    // Show Hijri dates alongside Gregorian in the UI (PRD §8.4). Defaults
+    // to true for Saudi-first profiles.
+    show_hijri: v.optional(v.boolean()),
+    // Company stamp image (PRD §6.5) — one per client, rendered on PO docs.
+    // Suppliers don't need stamps in v1.
+    stamp_storage_id: v.optional(v.id("_storage")),
+    stamp_uploaded_at: v.optional(v.number()),
+    // Personal signature image (PRD §6.6.3) — used when the user signs an
+    // approval step. Snapshotted into the step decision at sign time so
+    // historical artifacts stay correct if the user replaces it later.
+    signature_storage_id: v.optional(v.id("_storage")),
+    signature_uploaded_at: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
     .index("by_role", ["role"])
@@ -168,6 +201,10 @@ export default defineSchema({
     reviewed_at: v.optional(v.number()),
     supplier_notes: v.optional(v.string()),
     revision_count: v.optional(v.number()),
+    // Document engine cross-stamp (PRD §10.3)
+    latest_document_id: v.optional(v.id("generated_documents")),
+    latest_document_hash: v.optional(v.string()),
+    latest_document_at: v.optional(v.number()),
   })
     .index("by_rfq", ["rfq_id"])
     .index("by_supplier", ["supplier_id"])
@@ -226,13 +263,103 @@ export default defineSchema({
     .index("by_rfq", ["rfq_id"])
     .index("by_quote", ["quote_id"]),
 
+  // Internal comments threads on procurement entities (PRD §10.4).
+  // Visibility enum is the anonymity invariant gate: SUPPLIER_THREAD never
+  // leaks client identity, CLIENT_THREAD never leaks supplier identity,
+  // INTERNAL is admin-only.
+  comments: defineTable({
+    target_type: v.union(
+      v.literal("rfq"),
+      v.literal("quote"),
+      v.literal("order"),
+      v.literal("client_invoice"),
+      v.literal("dispute"),
+    ),
+    target_id: v.string(), // polymorphic — Convex IDs are strings
+    visibility: v.union(
+      v.literal("INTERNAL"),         // admin-only
+      v.literal("CLIENT_THREAD"),    // admin + the client party
+      v.literal("SUPPLIER_THREAD"),  // admin + the supplier party
+    ),
+    body: v.string(),
+    author_profile_id: v.id("profiles"),
+    author_role: v.union(
+      v.literal("CLIENT"),
+      v.literal("SUPPLIER"),
+      v.literal("ADMIN"),
+    ),
+    mentioned_profile_ids: v.optional(v.array(v.id("profiles"))),
+  })
+    .index("by_target", ["target_type", "target_id"])
+    .index("by_author", ["author_profile_id"]),
+
+  // Cross-channel dispatch log (PRD §10.1) — every send attempt with the
+  // provider response. Append-only; lets ops debug "why didn't user X get
+  // the email?" without rerunning the world.
+  notification_dispatch_log: defineTable({
+    notification_id: v.id("notifications"),
+    user_id: v.id("profiles"),
+    channel: v.union(
+      v.literal("EMAIL"),
+      v.literal("SMS"),
+      v.literal("WHATSAPP"),
+      v.literal("WEBHOOK"),
+    ),
+    status: v.union(
+      v.literal("SUCCESS"),
+      v.literal("FAILED"),
+      v.literal("SKIPPED"),  // user opted out / channel not configured
+      v.literal("MOCK"),     // dev mode, no provider call
+    ),
+    target: v.optional(v.string()),  // email address / phone / webhook URL
+    error_message: v.optional(v.string()),
+    duration_ms: v.optional(v.number()),
+  })
+    .index("by_notification", ["notification_id"])
+    .index("by_user", ["user_id"])
+    .index("by_status", ["status"]),
+
   notifications: defineTable({
     user_id: v.id("profiles"),
     title: v.string(),
     message: v.optional(v.string()),
     read: v.boolean(),
     link: v.optional(v.string()),
+    // Cross-channel dispatch metadata (PRD §10.1, §10.2). Optional so the
+    // existing legacy in-app inserts continue to work unchanged.
+    event_type: v.optional(v.string()),
+    dispatched_at: v.optional(v.number()),
+    dispatched_channels: v.optional(v.array(v.string())),
   }).index("by_user", ["user_id"]),
+
+  // Per-user-per-event channel opt-in/out (PRD §10.2 — "each event is
+  // independently controllable per user"). Missing rows default to "send
+  // on every channel that's wired" so existing behavior doesn't break.
+  notification_channel_prefs: defineTable({
+    user_id: v.id("profiles"),
+    event_type: v.string(),
+    in_app: v.optional(v.boolean()),
+    email: v.optional(v.boolean()),
+    sms: v.optional(v.boolean()),
+    whatsapp: v.optional(v.boolean()),
+  })
+    .index("by_user", ["user_id"])
+    .index("by_user_and_event", ["user_id", "event_type"]),
+
+  // Bilingual templates for cross-channel notifications (PRD §10.2).
+  // Keyed by event_type, rendered through the same handlebars-lite engine
+  // as document_templates. Subject + body are stored separately so each
+  // channel (email, SMS) can pick the right field.
+  notification_templates: defineTable({
+    event_type: v.string(),         // e.g. "invoice.issued", "approval.required"
+    subject_ar: v.string(),
+    subject_en: v.string(),
+    body_ar: v.string(),
+    body_en: v.string(),
+    is_default: v.boolean(),
+    description: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  }).index("by_event_type", ["event_type"]),
 
   payments: defineTable({
     client_id: v.id("profiles"),
@@ -343,12 +470,73 @@ export default defineSchema({
     dispute_resolution: v.optional(v.string()),
     dispute_resolved_by: v.optional(v.id("profiles")),
     dispute_resolved_at: v.optional(v.number()),
+    // Document engine cross-stamp (PRD §10.3) — last generated artifact +
+    // its SHA-256 so tampering on the artifact is visible at the source.
+    latest_document_id: v.optional(v.id("generated_documents")),
+    latest_document_hash: v.optional(v.string()),
+    latest_document_at: v.optional(v.number()),
   })
     .index("by_client", ["client_id"])
     .index("by_supplier", ["supplier_id"])
     .index("by_status", ["status"])
     .index("by_quote", ["quote_id"])
     .index("by_dispute_status", ["dispute_status"]),
+
+  // Goods Receipt Notes (PRD §6.10) — first-class receiving record per
+  // delivery. Multiple GRNs per order to support partial deliveries.
+  // Each line records what was actually received vs what was ordered, with
+  // condition flags for the discrepancy flow.
+  goods_receipt_notes: defineTable({
+    order_id: v.id("orders"),
+    client_id: v.id("profiles"),     // denormalized for client-side queries
+    supplier_id: v.id("profiles"),   // denormalized for admin lookups
+    grn_number: v.string(),          // MWRD-controlled sequential
+    received_at: v.number(),
+    received_by: v.id("profiles"),
+    status: v.union(
+      v.literal("DRAFT"),
+      v.literal("CONFIRMED"),        // happy path — fully accepted
+      v.literal("DISPUTED"),         // has at least one discrepancy line
+      v.literal("CLOSED"),           // admin-resolved, terminal
+    ),
+    has_discrepancy: v.boolean(),
+    discrepancy_summary: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    photo_storage_ids: v.array(v.id("_storage")),
+    // Resolution trail when admin closes a disputed GRN
+    resolution: v.optional(v.string()),
+    resolved_by: v.optional(v.id("profiles")),
+    resolved_at: v.optional(v.number()),
+    // Document engine cross-stamp (PRD §10.3)
+    latest_document_id: v.optional(v.id("generated_documents")),
+    latest_document_hash: v.optional(v.string()),
+    latest_document_at: v.optional(v.number()),
+  })
+    .index("by_order", ["order_id"])
+    .index("by_client", ["client_id"])
+    .index("by_supplier", ["supplier_id"])
+    .index("by_status", ["status"]),
+
+  // Per-line receiving record. References the original quote_item so we can
+  // reconcile against ordered quantities for the three-way match.
+  grn_lines: defineTable({
+    grn_id: v.id("goods_receipt_notes"),
+    order_id: v.id("orders"),
+    quote_item_id: v.optional(v.id("quote_items")),
+    rfq_item_id: v.optional(v.id("rfq_items")),
+    description: v.string(),
+    ordered_qty: v.number(),
+    received_qty: v.number(),
+    condition: v.union(
+      v.literal("GOOD"),
+      v.literal("DAMAGED"),
+      v.literal("SHORT_SHIPPED"),
+      v.literal("WRONG_ITEM"),
+    ),
+    notes: v.optional(v.string()),
+  })
+    .index("by_grn", ["grn_id"])
+    .index("by_order", ["order_id"]),
 
   order_events: defineTable({
     order_id: v.id("orders"),
@@ -434,7 +622,26 @@ export default defineSchema({
     department_id: v.optional(v.id("departments")),
     enabled: v.boolean(),
     notes: v.optional(v.string()),
+    // PRD §6.6 — quotes whose total ≤ threshold skip approval entirely.
+    // null/undefined means "no shortcut, always require approval if matched".
+    auto_approve_threshold: v.optional(v.number()),
+    // Hours after which a pending step pings escalation. Optional.
+    escalation_hours: v.optional(v.number()),
   }).index("by_client", ["client_id"]),
+
+  // Workflow template steps for an approval_rule (PRD §6.6.1).
+  // Steps with the same parallel_group must all approve before the next
+  // group activates (parallel branches). Sequential = each step in its own
+  // group. approver_admin_id null means "any admin in the queue".
+  approval_steps: defineTable({
+    rule_id: v.id("approval_rules"),
+    step_index: v.number(), // 0-based ordering across the whole workflow
+    parallel_group: v.number(), // groups with the same number run in parallel
+    label: v.string(),
+    approver_admin_id: v.optional(v.id("profiles")),
+  })
+    .index("by_rule", ["rule_id"])
+    .index("by_rule_and_group", ["rule_id", "parallel_group"]),
 
   approval_requests: defineTable({
     quote_id: v.id("quotes"),
@@ -452,10 +659,43 @@ export default defineSchema({
     decided_at: v.optional(v.number()),
     decided_by: v.optional(v.id("profiles")),
     decision_note: v.optional(v.string()),
+    // Multi-step state — current parallel_group whose decisions are active.
+    // null/undefined = legacy single-step request.
+    current_group: v.optional(v.number()),
+    total_groups: v.optional(v.number()),
   })
     .index("by_status", ["status"])
     .index("by_client", ["client_id"])
     .index("by_quote", ["quote_id"]),
+
+  // Per-step runtime state on an approval_request. One row per step in the
+  // workflow. Status is filled in as decisions land.
+  approval_step_decisions: defineTable({
+    request_id: v.id("approval_requests"),
+    step_id: v.id("approval_steps"),
+    rule_id: v.id("approval_rules"),
+    parallel_group: v.number(),
+    label: v.string(),
+    approver_admin_id: v.optional(v.id("profiles")),
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("APPROVED"),
+      v.literal("REJECTED"),
+      v.literal("SKIPPED"), // request rejected upstream, this step never opened
+    ),
+    decided_at: v.optional(v.number()),
+    decided_by: v.optional(v.id("profiles")),
+    decision_note: v.optional(v.string()),
+    escalated_at: v.optional(v.number()),
+    activated_at: v.optional(v.number()), // when this group became current
+    // Snapshot of the approver's signature at decision time (PRD §6.6.3).
+    // Frozen here so historical artifacts don't change if the user later
+    // replaces their signature image.
+    signature_storage_id: v.optional(v.id("_storage")),
+  })
+    .index("by_request", ["request_id"])
+    .index("by_status", ["status"])
+    .index("by_approver", ["approver_admin_id", "status"]),
 
   cost_centers: defineTable({
     client_id: v.id("profiles"),
@@ -566,6 +806,26 @@ export default defineSchema({
     last_reminder_at: v.optional(v.number()),
     reminder_count: v.optional(v.number()),
     matched_payment_id: v.optional(v.id("payments")),
+    // Document engine cross-stamp (PRD §10.3)
+    latest_document_id: v.optional(v.id("generated_documents")),
+    latest_document_hash: v.optional(v.string()),
+    latest_document_at: v.optional(v.number()),
+    // Three-way match (PRD §6.11) — auto-reconciliation against the
+    // underlying order's quote items and any confirmed GRN lines.
+    // Recomputed when an invoice is created, a GRN lands, or admin clicks
+    // "Recompute match".
+    match_status: v.optional(
+      v.union(
+        v.literal("MATCHED"),         // received >= invoiced, no disputes
+        v.literal("MISMATCH"),        // qty/price drift detected
+        v.literal("NO_GRN"),          // invoice exists but no receipt yet
+        v.literal("DISPUTED_GRN"),    // any GRN linked is in DISPUTED status
+        v.literal("NOT_APPLICABLE"),  // manual invoice (no order_id)
+      ),
+    ),
+    match_summary: v.optional(v.string()),
+    match_computed_at: v.optional(v.number()),
+    matched_grn_ids: v.optional(v.array(v.id("goods_receipt_notes"))),
     // Wafeq / ZATCA tracking (PRD §8.1) — populated when invoice is pushed
     // through Wafeq for ZATCA Phase 2 clearance.
     wafeq_invoice_id: v.optional(v.string()),
@@ -584,7 +844,8 @@ export default defineSchema({
     .index("by_client", ["client_id"])
     .index("by_status", ["status"])
     .index("by_order", ["order_id"])
-    .index("by_zatca_status", ["zatca_status"]),
+    .index("by_zatca_status", ["zatca_status"])
+    .index("by_match_status", ["match_status"]),
 
   payment_allocations: defineTable({
     payment_id: v.id("payments"),
@@ -594,6 +855,47 @@ export default defineSchema({
   })
     .index("by_payment", ["payment_id"])
     .index("by_invoice", ["invoice_id"]),
+
+  // Credit & debit notes against client invoices (PRD §8.1.4). Each note
+  // references an original invoice, gets cleared through Wafeq for ZATCA,
+  // and is tracked here as an adjustment record. Single polymorphic table
+  // keyed by `type` to avoid duplicating ZATCA fields across two tables.
+  client_invoice_adjustments: defineTable({
+    invoice_id: v.id("client_invoices"),
+    client_id: v.id("profiles"),
+    type: v.union(v.literal("CREDIT"), v.literal("DEBIT")),
+    adjustment_number: v.string(), // MWRD-controlled sequential
+    issue_date: v.string(),
+    subtotal: v.number(),
+    vat_amount: v.number(),
+    total_amount: v.number(),
+    reason: v.string(),
+    notes: v.optional(v.string()),
+    status: v.union(
+      v.literal("PENDING_CLEARANCE"), // created, awaiting Wafeq submit
+      v.literal("CLEARED"),           // ZATCA cleared via Wafeq
+      v.literal("FAILED"),            // Wafeq returned an error
+      v.literal("VOID"),              // soft-deleted by admin
+    ),
+    issued_by: v.id("profiles"),
+    void_reason: v.optional(v.string()),
+    voided_at: v.optional(v.number()),
+    // Wafeq / ZATCA tracking — same shape as client_invoices for consistency
+    wafeq_adjustment_id: v.optional(v.string()),
+    wafeq_environment: v.optional(
+      v.union(v.literal("simulation"), v.literal("production"), v.literal("mock")),
+    ),
+    zatca_uuid: v.optional(v.string()),
+    zatca_status: v.optional(v.string()),
+    zatca_hash: v.optional(v.string()),
+    zatca_qr: v.optional(v.string()),
+    zatca_pdf_url: v.optional(v.string()),
+    zatca_cleared_at: v.optional(v.number()),
+    zatca_last_error: v.optional(v.string()),
+  })
+    .index("by_invoice", ["invoice_id"])
+    .index("by_client", ["client_id"])
+    .index("by_status", ["status"]),
 
   supplier_invoices: defineTable({
     supplier_id: v.id("profiles"),
@@ -630,6 +932,32 @@ export default defineSchema({
   })
     .index("by_supplier", ["supplier_id"])
     .index("by_order", ["order_id"])
+    .index("by_status", ["status"]),
+
+  // SPL (Saudi Post / National Address) verification sync log (PRD §8.3).
+  // Mirrors the wathq_sync_log shape so the admin viewer stays uniform.
+  spl_sync_log: defineTable({
+    operation: v.string(), // validateAddress
+    environment: v.union(v.literal("production"), v.literal("mock")),
+    target_type: v.string(), // profile
+    target_id: v.string(),
+    short_address: v.optional(v.string()),
+    status: v.union(
+      v.literal("VERIFIED"),
+      v.literal("MISMATCH"),
+      v.literal("NOT_FOUND"),
+      v.literal("API_ERROR"),
+      v.literal("NETWORK_ERROR"),
+      v.literal("CONFIG_ERROR"),
+    ),
+    http_status: v.optional(v.number()),
+    error_code: v.optional(v.string()),
+    error_message: v.optional(v.string()),
+    response_summary: v.optional(v.any()),
+    duration_ms: v.optional(v.number()),
+    actor_profile_id: v.optional(v.id("profiles")),
+  })
+    .index("by_target", ["target_type", "target_id"])
     .index("by_status", ["status"]),
 
   // Wathq (Saudi Business Center) verification sync log (PRD §8.3) — every
@@ -708,6 +1036,48 @@ export default defineSchema({
     ),
   }).index("by_status", ["status"]),
 
+  // Document templates (PRD §10.3) — bilingual body strings rendered by
+  // the document engine to produce immutable artifacts. Admin-editable;
+  // each template is keyed (e.g. "client_po") and may carry a version.
+  document_templates: defineTable({
+    key: v.string(),                  // "client_po", "client_invoice", ...
+    title_ar: v.string(),
+    title_en: v.string(),
+    body_ar: v.string(),              // handlebars-lite source
+    body_en: v.string(),
+    bilingual_layout: v.union(
+      v.literal("SIDE_BY_SIDE"),
+      v.literal("AR_ONLY"),
+      v.literal("EN_ONLY"),
+    ),
+    is_default: v.boolean(),
+    description: v.optional(v.string()),
+    notes: v.optional(v.string()),
+  }).index("by_key", ["key"]),
+
+  // Immutable generated artifact (PRD §10.3 storage + versioning).
+  // Each regeneration produces a new row with version+1 — old versions are
+  // never overwritten. content_hash makes the artifact tamper-evident: any
+  // manual edit downstream changes the hash, surfacing the drift.
+  generated_documents: defineTable({
+    template_key: v.string(),
+    target_type: v.string(),          // "order" | "quote" | "client_invoice" | "grn"
+    target_id: v.string(),
+    version: v.number(),              // per (target_type, target_id), starts at 1
+    language: v.union(
+      v.literal("ar"),
+      v.literal("en"),
+      v.literal("bilingual"),
+    ),
+    title: v.string(),                // resolved title at render time
+    content_html: v.string(),         // rendered output
+    content_hash: v.string(),         // SHA-256 of content_html
+    generated_by: v.id("profiles"),
+    notes: v.optional(v.string()),
+  })
+    .index("by_target", ["target_type", "target_id"])
+    .index("by_template", ["template_key"]),
+
   // Append-only audit trail (PRD §13.4) — every privileged mutation
   // writes one row here via logAction(). Kept separate from admin_audit_log
   // (legacy admin-only table) so we can grow toward 10-year ZATCA retention.
@@ -719,6 +1089,7 @@ export default defineSchema({
         v.literal("CLIENT"),
         v.literal("SUPPLIER"),
         v.literal("ADMIN"),
+        v.literal("AUDITOR"),
         v.literal("SYSTEM"),
       ),
     ),

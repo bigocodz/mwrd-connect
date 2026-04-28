@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin, requireClient } from "./lib";
+import { requireAdmin, requireAdminRead, requireClient } from "./lib";
 import { logAction } from "./audit";
 
 export const listMine = query({
@@ -16,7 +16,7 @@ export const listMine = query({
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const payments = await ctx.db.query("payments").order("desc").collect();
     return Promise.all(
       payments.map(async (p) => {

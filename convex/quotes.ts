@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin, requireClient, requireSupplier } from "./lib";
+import { requireAdmin, requireAdminRead, requireClient, requireSupplier } from "./lib";
 import { createFromQuote as createOrderFromQuote } from "./orders";
 import { checkApprovalForQuote } from "./approvals";
 import { logAction } from "./audit";
@@ -183,7 +183,7 @@ const buildComparison = async (ctx: any, rfq: any, quotes: any[]) => {
 
 export const listPending = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const quoteArrays = await Promise.all(
       adminReviewStatuses.map((status) =>
         ctx.db
@@ -217,7 +217,7 @@ export const listPending = query({
 export const getForReview = query({
   args: { id: v.id("quotes") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const quote = await ctx.db.get(args.id);
     if (!quote) return null;
     const supplier = await ctx.db.get(quote.supplier_id);
@@ -309,7 +309,7 @@ export const compareForClient = query({
 export const compareForAdmin = query({
   args: { rfq_id: v.id("rfqs") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const rfq = await ctx.db.get(args.rfq_id);
     if (!rfq) return null;
     const quotes = await ctx.db

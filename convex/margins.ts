@@ -1,11 +1,11 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { requireAdmin } from "./lib";
+import { requireAdmin, requireAdminRead } from "./lib";
 import { logAction } from "./audit";
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     return ctx.db.query("margin_settings").collect();
   },
 });

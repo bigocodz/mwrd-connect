@@ -23,6 +23,8 @@ import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminCreateUser from "./pages/admin/AdminCreateUser";
 import AdminPendingProducts from "./pages/admin/AdminPendingProducts";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminTemplates from "./pages/admin/AdminTemplates";
+import Account from "./pages/Account";
 import AdminMarginSettings from "./pages/admin/AdminMarginSettings";
 import SupplierProducts from "./pages/supplier/SupplierProducts";
 import SupplierProductForm from "./pages/supplier/SupplierProductForm";
@@ -38,6 +40,7 @@ import ClientOrderDetail from "./pages/client/ClientOrderDetail";
 import ClientOrganization from "./pages/client/ClientOrganization";
 import ClientSchedules from "./pages/client/ClientSchedules";
 import ClientInvoices from "./pages/client/ClientInvoices";
+import ClientReports from "./pages/client/ClientReports";
 import ClientAccount from "./pages/client/ClientAccount";
 import AdminRfqs from "./pages/admin/AdminRfqs";
 import AdminRfqQuoteComparison from "./pages/admin/AdminRfqQuoteComparison";
@@ -89,6 +92,9 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/change-password" element={<ChangePassword />} />
                 <Route path="/account-status" element={<AccountStatus />} />
+                <Route path="/account" element={
+                  <ProtectedRoute allowedRoles={["CLIENT", "SUPPLIER", "ADMIN"]}><Account /></ProtectedRoute>
+                } />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 {/* Client */}
                 <Route path="/client/dashboard" element={
@@ -126,6 +132,9 @@ const App = () => (
                 } />
                 <Route path="/client/invoices" element={
                   <ProtectedRoute allowedRoles={["CLIENT"]}><ClientInvoices /></ProtectedRoute>
+                } />
+                <Route path="/client/reports" element={
+                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientReports /></ProtectedRoute>
                 } />
                 <Route path="/client/account" element={
                   <ProtectedRoute allowedRoles={["CLIENT"]}><ClientAccount /></ProtectedRoute>
@@ -191,6 +200,9 @@ const App = () => (
                 } />
                 <Route path="/admin/categories" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminCategories /></ProtectedRoute>
+                } />
+                <Route path="/admin/templates" element={
+                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminTemplates /></ProtectedRoute>
                 } />
                 <Route path="/admin/margin-settings" element={
                   <ProtectedRoute allowedRoles={["ADMIN"]}><AdminMarginSettings /></ProtectedRoute>

@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, getAuthenticatedProfile } from "./lib";
+import { requireAdmin, requireAdminRead, getAuthenticatedProfile } from "./lib";
 
 const enrichContract = async (ctx: any, contract: any) => {
   const [client, supplier, lines] = await Promise.all([
@@ -31,7 +31,7 @@ const isActiveOnDate = (contract: any, today: string) => {
 
 export const listAll = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const contracts = await ctx.db.query("contracts").order("desc").collect();
     return Promise.all(contracts.map((c) => enrichContract(ctx, c)));
   },
@@ -40,7 +40,7 @@ export const listAll = query({
 export const getById = query({
   args: { id: v.id("contracts") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const contract = await ctx.db.get(args.id);
     if (!contract) return null;
     return enrichContract(ctx, contract);
@@ -207,7 +207,10 @@ export const findApplicable = query({
   handler: async (ctx, args) => {
     const profile = await getAuthenticatedProfile(ctx);
     if (!profile) throw new ConvexError("Unauthorized");
-    if (profile.role !== "ADMIN") throw new ConvexError("Forbidden");
+    // Read-only path — auditors (PRD §13.4) see contracts alongside admins.
+    if (profile.role !== "ADMIN" && profile.role !== "AUDITOR") {
+      throw new ConvexError("Forbidden");
+    }
     const today = new Date().toISOString().slice(0, 10);
     const supplierContracts = await ctx.db
       .query("contracts")

@@ -23,9 +23,9 @@
  *   - daily reconciliation cron
  */
 
-import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
 // ==================== Config ====================
@@ -209,191 +209,6 @@ function mockResponseFor(method: string, path: string, body: any): any {
   return { id, raw_method: method };
 }
 
-// ==================== Internal queries / mutations ====================
-
-export const _getProfile = internalQuery({
-  args: { id: v.id("profiles") },
-  handler: async (ctx, args) => ctx.db.get(args.id),
-});
-
-export const _getClientInvoice = internalQuery({
-  args: { id: v.id("client_invoices") },
-  handler: async (ctx, args) => ctx.db.get(args.id),
-});
-
-export const _getSupplierInvoice = internalQuery({
-  args: { id: v.id("supplier_invoices") },
-  handler: async (ctx, args) => ctx.db.get(args.id),
-});
-
-export const _persistContact = internalMutation({
-  args: {
-    profile_id: v.id("profiles"),
-    wafeq_contact_id: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.profile_id, {
-      wafeq_contact_id: args.wafeq_contact_id,
-      wafeq_contact_synced_at: Date.now(),
-    });
-  },
-});
-
-export const _persistClientInvoiceClearance = internalMutation({
-  args: {
-    invoice_id: v.id("client_invoices"),
-    wafeq_invoice_id: v.string(),
-    environment: v.union(
-      v.literal("simulation"),
-      v.literal("production"),
-      v.literal("mock"),
-    ),
-    zatca_uuid: v.optional(v.string()),
-    zatca_status: v.optional(v.string()),
-    zatca_hash: v.optional(v.string()),
-    zatca_qr: v.optional(v.string()),
-    zatca_pdf_url: v.optional(v.string()),
-    error: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.invoice_id, {
-      wafeq_invoice_id: args.wafeq_invoice_id,
-      wafeq_environment: args.environment,
-      zatca_uuid: args.zatca_uuid,
-      zatca_status: args.zatca_status,
-      zatca_hash: args.zatca_hash,
-      zatca_qr: args.zatca_qr,
-      zatca_pdf_url: args.zatca_pdf_url,
-      zatca_cleared_at: args.zatca_status === "CLEARED" ? Date.now() : undefined,
-      zatca_last_error: args.error,
-    });
-  },
-});
-
-export const _persistClientInvoiceError = internalMutation({
-  args: {
-    invoice_id: v.id("client_invoices"),
-    error: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.invoice_id, { zatca_last_error: args.error });
-  },
-});
-
-export const _listSyncableInvoices = internalQuery({
-  // Returns the client_invoices we should poll Wafeq for: anything that has
-  // been pushed to Wafeq but isn't terminal in our local books yet.
-  handler: async (ctx) => {
-    const all = await ctx.db.query("client_invoices").collect();
-    return all
-      .filter((inv) => !!inv.wafeq_invoice_id)
-      .filter((inv) => inv.status !== "VOID")
-      .map((inv) => ({
-        _id: inv._id,
-        wafeq_invoice_id: inv.wafeq_invoice_id!,
-        wafeq_environment: inv.wafeq_environment,
-        local_status: inv.status,
-        zatca_status: inv.zatca_status,
-      }));
-  },
-});
-
-export const _findInvoiceByWafeqId = internalQuery({
-  args: { wafeq_invoice_id: v.string() },
-  handler: async (ctx, args) => {
-    const all = await ctx.db.query("client_invoices").collect();
-    return all.find((i) => i.wafeq_invoice_id === args.wafeq_invoice_id) ?? null;
-  },
-});
-
-export const _applyRemoteState = internalMutation({
-  // Single-write reconciliation: stamps zatca_status / pdf url / paid status
-  // from a remote (Wafeq) snapshot. Used by both the cron and the webhook.
-  args: {
-    invoice_id: v.id("client_invoices"),
-    zatca_status: v.optional(v.string()),
-    zatca_pdf_url: v.optional(v.string()),
-    paid: v.optional(v.boolean()),
-    paid_reference: v.optional(v.string()),
-    voided: v.optional(v.boolean()),
-    void_reason: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const existing = await ctx.db.get(args.invoice_id);
-    if (!existing) return;
-    const patch: Record<string, unknown> = {};
-    if (args.zatca_status && args.zatca_status !== existing.zatca_status) {
-      patch.zatca_status = args.zatca_status;
-      if (args.zatca_status === "CLEARED" && !existing.zatca_cleared_at) {
-        patch.zatca_cleared_at = Date.now();
-      }
-    }
-    if (args.zatca_pdf_url && args.zatca_pdf_url !== existing.zatca_pdf_url) {
-      patch.zatca_pdf_url = args.zatca_pdf_url;
-    }
-    if (args.paid && existing.status !== "PAID" && existing.status !== "VOID") {
-      patch.status = "PAID";
-      patch.paid_at = Date.now();
-      if (args.paid_reference) patch.paid_reference = args.paid_reference;
-    }
-    if (args.voided && existing.status !== "VOID" && existing.status !== "PAID") {
-      patch.status = "VOID";
-      patch.voided_at = Date.now();
-      if (args.void_reason) patch.void_reason = args.void_reason;
-    }
-    if (Object.keys(patch).length === 0) return;
-    await ctx.db.patch(args.invoice_id, patch);
-  },
-});
-
-export const _persistSupplierBill = internalMutation({
-  args: {
-    supplier_invoice_id: v.id("supplier_invoices"),
-    wafeq_bill_id: v.string(),
-    environment: v.union(
-      v.literal("simulation"),
-      v.literal("production"),
-      v.literal("mock"),
-    ),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.supplier_invoice_id, {
-      wafeq_bill_id: args.wafeq_bill_id,
-      wafeq_environment: args.environment,
-    });
-  },
-});
-
-export const _writeSyncLog = internalMutation({
-  args: {
-    operation: v.string(),
-    idempotency_key: v.string(),
-    environment: v.union(
-      v.literal("simulation"),
-      v.literal("production"),
-      v.literal("mock"),
-    ),
-    target_type: v.string(),
-    target_id: v.string(),
-    status: v.union(
-      v.literal("SUCCESS"),
-      v.literal("API_ERROR"),
-      v.literal("ZATCA_ERROR"),
-      v.literal("NETWORK_ERROR"),
-      v.literal("CONFIG_ERROR"),
-    ),
-    http_status: v.optional(v.number()),
-    error_code: v.optional(v.string()),
-    error_message: v.optional(v.string()),
-    request_summary: v.optional(v.any()),
-    response_summary: v.optional(v.any()),
-    duration_ms: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("wafeq_sync_log", args);
-  },
-});
-
 // ==================== Public actions ====================
 
 interface SyncResult {
@@ -421,7 +236,7 @@ async function logAndReturn(
   const status: any = !args.result.ok
     ? args.result.errorCategory ?? "API_ERROR"
     : "SUCCESS";
-  await ctx.runMutation(internal.wafeq._writeSyncLog, {
+  await ctx.runMutation(internal.wafeqHelpers._writeSyncLog, {
     operation: args.operation,
     idempotency_key: args.idempotency_key,
     environment: args.environment,
@@ -454,7 +269,7 @@ export const ensureContact = action({
   args: { profile_id: v.id("profiles") },
   handler: async (ctx, args): Promise<SyncResult> => {
     const config = readConfig();
-    const profile: any = await ctx.runQuery(internal.wafeq._getProfile, {
+    const profile: any = await ctx.runQuery(internal.wafeqHelpers._getProfile, {
       id: args.profile_id,
     });
     if (!profile) throw new ConvexError("Profile not found");
@@ -506,7 +321,7 @@ export const ensureContact = action({
     });
     if (result.ok) {
       const wafeqId = result.data?.id ?? `unknown_${Date.now()}`;
-      await ctx.runMutation(internal.wafeq._persistContact, {
+      await ctx.runMutation(internal.wafeqHelpers._persistContact, {
         profile_id: args.profile_id,
         wafeq_contact_id: String(wafeqId),
       });
@@ -532,7 +347,7 @@ export const submitClientInvoice = action({
   args: { invoice_id: v.id("client_invoices") },
   handler: async (ctx, args): Promise<SyncResult> => {
     const config = readConfig();
-    const invoice: any = await ctx.runQuery(internal.wafeq._getClientInvoice, {
+    const invoice: any = await ctx.runQuery(internal.wafeqHelpers._getClientInvoice, {
       id: args.invoice_id,
     });
     if (!invoice) throw new ConvexError("Invoice not found");
@@ -548,11 +363,11 @@ export const submitClientInvoice = action({
 
     // Ensure contact exists for the client profile first.
     const contact: SyncResult = await ctx.runAction(
-      internal.wafeq.ensureContact as any,
+      api.wafeq.ensureContact,
       { profile_id: invoice.client_id },
     );
     if (!contact.ok) {
-      await ctx.runMutation(internal.wafeq._persistClientInvoiceError, {
+      await ctx.runMutation(internal.wafeqHelpers._persistClientInvoiceError, {
         invoice_id: args.invoice_id,
         error: `Contact sync failed: ${contact.errorMessage ?? contact.errorCode}`,
       });
@@ -593,7 +408,7 @@ export const submitClientInvoice = action({
       config,
     });
     if (result.ok) {
-      await ctx.runMutation(internal.wafeq._persistClientInvoiceClearance, {
+      await ctx.runMutation(internal.wafeqHelpers._persistClientInvoiceClearance, {
         invoice_id: args.invoice_id,
         wafeq_invoice_id: String(result.data?.id ?? "unknown"),
         environment: config.env,
@@ -604,7 +419,7 @@ export const submitClientInvoice = action({
         zatca_pdf_url: result.data?.pdf_url,
       });
     } else {
-      await ctx.runMutation(internal.wafeq._persistClientInvoiceError, {
+      await ctx.runMutation(internal.wafeqHelpers._persistClientInvoiceError, {
         invoice_id: args.invoice_id,
         error: `${result.errorCode ?? "ERROR"}: ${result.errorMessage ?? "unknown"}`,
       });
@@ -622,6 +437,114 @@ export const submitClientInvoice = action({
 });
 
 /**
+ * Submit a credit or debit note to Wafeq (PRD §8.1.4). Wafeq clears it
+ * with ZATCA, links it back to the original invoice on its side, and
+ * returns the cleared metadata which we mirror onto our adjustment row.
+ */
+export const submitInvoiceAdjustment = action({
+  args: { adjustment_id: v.id("client_invoice_adjustments") },
+  handler: async (ctx, args): Promise<SyncResult> => {
+    const config = readConfig();
+    const adj: any = await ctx.runQuery(internal.wafeqHelpers._getInvoiceAdjustment, {
+      id: args.adjustment_id,
+    });
+    if (!adj) throw new ConvexError("Adjustment not found");
+    if (adj.status === "VOID") {
+      return { ok: true, environment: config.env };
+    }
+    if (adj.zatca_status === "CLEARED") {
+      return {
+        ok: true,
+        environment: adj.wafeq_environment ?? config.env,
+        wafeqId: adj.wafeq_adjustment_id,
+        zatcaUuid: adj.zatca_uuid,
+      };
+    }
+
+    const invoice: any = await ctx.runQuery(internal.wafeqHelpers._getClientInvoice, {
+      id: adj.invoice_id,
+    });
+    if (!invoice?.wafeq_invoice_id) {
+      const msg = "Original invoice has no Wafeq ID — submit it for clearance first";
+      await ctx.runMutation(internal.wafeqHelpers._persistAdjustmentError, {
+        adjustment_id: args.adjustment_id,
+        error: msg,
+      });
+      return {
+        ok: false,
+        environment: config.env,
+        errorCode: "MISSING_INVOICE_LINK",
+        errorMessage: msg,
+      };
+    }
+
+    // Wafeq accepts both /credit_notes/ and /debit_notes/ with similar
+    // shapes. Branch on type.
+    const path = adj.type === "CREDIT" ? "/credit_notes/" : "/debit_notes/";
+    const body = {
+      invoice_id: invoice.wafeq_invoice_id,
+      currency: "SAR",
+      issue_date: adj.issue_date,
+      reference: adj.adjustment_number,
+      reason: adj.reason,
+      tax_amount_type: "INCLUSIVE",
+      language: "ar",
+      line_items: [
+        {
+          description: adj.notes ?? adj.reason,
+          quantity: 1,
+          unit_amount: adj.subtotal,
+          tax_rate: adj.vat_amount > 0 ? "VAT15" : "VAT0",
+        },
+      ],
+    };
+    const idempotencyKey = makeIdempotencyKey(
+      adj.type === "CREDIT" ? "creditNote" : "debitNote",
+      "client_invoice_adjustment",
+      args.adjustment_id,
+      shallowHash({ n: adj.adjustment_number, t: adj.total_amount }),
+    );
+    const result = await callWafeq({
+      method: "POST",
+      path,
+      body,
+      idempotencyKey,
+      config,
+    });
+    if (result.ok) {
+      await ctx.runMutation(internal.wafeqHelpers._persistAdjustmentClearance, {
+        adjustment_id: args.adjustment_id,
+        wafeq_adjustment_id: String(result.data?.id ?? "unknown"),
+        environment: config.env,
+        zatca_uuid: result.data?.zatca?.uuid,
+        zatca_status: result.data?.zatca?.uuid ? "CLEARED" : (result.data?.status ?? "PENDING"),
+        zatca_hash: result.data?.zatca?.hash,
+        zatca_qr: result.data?.zatca?.qr,
+        zatca_pdf_url: result.data?.pdf_url,
+      });
+    } else {
+      await ctx.runMutation(internal.wafeqHelpers._persistAdjustmentError, {
+        adjustment_id: args.adjustment_id,
+        error: `${result.errorCode ?? "ERROR"}: ${result.errorMessage ?? "unknown"}`,
+      });
+    }
+    return logAndReturn(ctx, {
+      operation: adj.type === "CREDIT" ? "submitCreditNote" : "submitDebitNote",
+      idempotency_key: idempotencyKey,
+      environment: config.env,
+      target_type: "client_invoice_adjustment",
+      target_id: args.adjustment_id,
+      result,
+      request_summary: {
+        adjustment_number: adj.adjustment_number,
+        type: adj.type,
+        total: adj.total_amount,
+      },
+    });
+  },
+});
+
+/**
  * Record a supplier bill in Wafeq for AP bookkeeping (PRD §8.1.3).
  * Supplier remains seller of record; this is just MWRD's ledger.
  */
@@ -629,7 +552,7 @@ export const submitSupplierBill = action({
   args: { supplier_invoice_id: v.id("supplier_invoices") },
   handler: async (ctx, args): Promise<SyncResult> => {
     const config = readConfig();
-    const bill: any = await ctx.runQuery(internal.wafeq._getSupplierInvoice, {
+    const bill: any = await ctx.runQuery(internal.wafeqHelpers._getSupplierInvoice, {
       id: args.supplier_invoice_id,
     });
     if (!bill) throw new ConvexError("Supplier invoice not found");
@@ -638,7 +561,7 @@ export const submitSupplierBill = action({
     }
 
     const contact: SyncResult = await ctx.runAction(
-      internal.wafeq.ensureContact as any,
+      api.wafeq.ensureContact,
       { profile_id: bill.supplier_id },
     );
     if (!contact.ok) return contact;
@@ -674,7 +597,7 @@ export const submitSupplierBill = action({
       config,
     });
     if (result.ok) {
-      await ctx.runMutation(internal.wafeq._persistSupplierBill, {
+      await ctx.runMutation(internal.wafeqHelpers._persistSupplierBill, {
         supplier_invoice_id: args.supplier_invoice_id,
         wafeq_bill_id: String(result.data?.id ?? "unknown"),
         environment: config.env,
@@ -736,7 +659,7 @@ async function reconcileOne(
     idempotencyKey,
     config,
   });
-  await ctx.runMutation(internal.wafeq._writeSyncLog, {
+  await ctx.runMutation(internal.wafeqHelpers._writeSyncLog, {
     operation: "reconcile",
     idempotency_key: idempotencyKey,
     environment: config.env,
@@ -761,7 +684,7 @@ async function reconcileOne(
   const remoteStatus = (remote.status ?? "").toString().toUpperCase();
   const isPaid = remoteStatus === "PAID" || remote.paid === true;
   const isVoided = remoteStatus === "VOID" || remoteStatus === "VOIDED";
-  await ctx.runMutation(internal.wafeq._applyRemoteState, {
+  await ctx.runMutation(internal.wafeqHelpers._applyRemoteState, {
     invoice_id: invoice._id,
     zatca_status: zatcaStatus,
     zatca_pdf_url: remote.pdf_url,
@@ -784,7 +707,7 @@ async function reconcileOne(
 export const reconcileNow = internalAction({
   handler: async (ctx): Promise<ReconcileSummary> => {
     const config = readConfig();
-    const invoices: any[] = await ctx.runQuery(internal.wafeq._listSyncableInvoices);
+    const invoices: any[] = await ctx.runQuery(internal.wafeqHelpers._listSyncableInvoices);
     let drift = 0;
     let errors = 0;
     for (const inv of invoices) {
@@ -806,7 +729,7 @@ export const reconcileNow = internalAction({
 export const reconcile = action({
   handler: async (ctx): Promise<ReconcileSummary> => {
     const config = readConfig();
-    const invoices: any[] = await ctx.runQuery(internal.wafeq._listSyncableInvoices);
+    const invoices: any[] = await ctx.runQuery(internal.wafeqHelpers._listSyncableInvoices);
     let drift = 0;
     let errors = 0;
     for (const inv of invoices) {
@@ -852,7 +775,7 @@ export const handleWebhookEvent = internalAction({
     const event: WebhookEvent = args.event ?? {};
     if (!event.invoice_id) return { ok: true, matched: false };
 
-    const invoice: any = await ctx.runQuery(internal.wafeq._findInvoiceByWafeqId, {
+    const invoice: any = await ctx.runQuery(internal.wafeqHelpers._findInvoiceByWafeqId, {
       wafeq_invoice_id: event.invoice_id,
     });
     if (!invoice) return { ok: true, matched: false };
@@ -868,7 +791,7 @@ export const handleWebhookEvent = internalAction({
       remoteStatus === "VOIDED" ||
       event.type === "invoice.voided";
 
-    await ctx.runMutation(internal.wafeq._applyRemoteState, {
+    await ctx.runMutation(internal.wafeqHelpers._applyRemoteState, {
       invoice_id: invoice._id,
       zatca_status: zatcaStatus,
       zatca_pdf_url: event.pdf_url,
@@ -878,7 +801,7 @@ export const handleWebhookEvent = internalAction({
       void_reason: event.void_reason,
     });
 
-    await ctx.runMutation(internal.wafeq._writeSyncLog, {
+    await ctx.runMutation(internal.wafeqHelpers._writeSyncLog, {
       operation: "webhook",
       idempotency_key: `webhook_${event.invoice_id}_${event.type ?? "any"}_${Date.now()}`,
       environment: readConfig().env,

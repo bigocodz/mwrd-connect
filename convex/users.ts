@@ -2,7 +2,7 @@ import { query, mutation, action, internalMutation, internalQuery } from "./_gen
 import { v, ConvexError } from "convex/values";
 import { modifyAccountCredentials } from "@convex-dev/auth/server";
 import { internal } from "./_generated/api";
-import { getAuthenticatedProfile, requireAdmin } from "./lib";
+import { getAuthenticatedProfile, requireAdmin, requireAdminRead } from "./lib";
 import { logAction, diffShallow } from "./audit";
 
 export const getMyProfile = query({
@@ -25,7 +25,7 @@ export const listAll = query({
     kyc_status: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     let profiles = await ctx.db.query("profiles").order("desc").collect();
     if (args.role && args.role !== "ALL") {
       profiles = profiles.filter((p) => p.role === args.role);
@@ -43,14 +43,14 @@ export const listAll = query({
 export const getById = query({
   args: { id: v.id("profiles") },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     return ctx.db.get(args.id);
   },
 });
 
 export const listClients = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     return ctx.db
       .query("profiles")
       .withIndex("by_role", (q) => q.eq("role", "CLIENT"))
@@ -61,7 +61,7 @@ export const listClients = query({
 
 export const listSuppliers = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     return ctx.db
       .query("profiles")
       .withIndex("by_role", (q) => q.eq("role", "SUPPLIER"))
@@ -72,7 +72,7 @@ export const listSuppliers = query({
 
 export const listPreferredSuppliers = query({
   handler: async (ctx) => {
-    await requireAdmin(ctx);
+    await requireAdminRead(ctx);
     const suppliers = await ctx.db
       .query("profiles")
       .withIndex("by_role", (q) => q.eq("role", "SUPPLIER"))
@@ -315,4 +315,197 @@ export const changePassword = action({
 export const getUserById = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => ctx.db.get(args.userId),
+});
+
+// ==================== Self-service preferences ====================
+
+export const updateMyPreferences = mutation({
+  // Self-service subset of updateProfile. Any authenticated user can edit
+  // their own language preference, Hijri toggle, etc. — no admin needed.
+  args: {
+    preferred_language: v.optional(v.union(v.literal("ar"), v.literal("en"))),
+    show_hijri: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const profile = await getAuthenticatedProfile(ctx);
+    if (!profile) throw new ConvexError("Unauthorized");
+    const before = profile;
+    const patch: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(args)) {
+      if (v !== undefined) patch[k] = v;
+    }
+    if (Object.keys(patch).length === 0) return profile._id;
+    await ctx.db.patch(profile._id, patch);
+    const after = await ctx.db.get(profile._id);
+    const diff = diffShallow(before as any, after as any);
+    if (diff) {
+      await logAction(ctx, {
+        action: "user.update_preferences",
+        target_type: "user",
+        target_id: profile._id,
+        before: diff.before,
+        after: diff.after,
+      });
+    }
+    return profile._id;
+  },
+});
+
+// ==================== Stamp & signature uploads (PRD §6.5, §6.6.3) ====================
+
+export const generateUploadUrl = mutation({
+  // Convex-storage upload URL. Caller exchanges it client-side for a
+  // storage_id, then calls setStamp / setSignature with the result.
+  handler: async (ctx) => {
+    const profile = await getAuthenticatedProfile(ctx);
+    if (!profile) throw new ConvexError("Unauthorized");
+    return ctx.storage.generateUploadUrl();
+  },
+});
+
+export const setStamp = mutation({
+  args: {
+    profile_id: v.id("profiles"),
+    storage_id: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedProfile(ctx);
+    if (!actor) throw new ConvexError("Unauthorized");
+    const target = await ctx.db.get(args.profile_id);
+    if (!target) throw new ConvexError("Profile not found");
+    // Self-update OR admin-managed. Stamps only meaningful for clients in v1.
+    if (actor.role !== "ADMIN" && actor._id !== args.profile_id) {
+      throw new ConvexError("Forbidden");
+    }
+    if (target.role !== "CLIENT") {
+      throw new ConvexError("Stamps are only used on client profiles");
+    }
+    // Best-effort cleanup of the old stamp (avoid orphaned blobs)
+    if (target.stamp_storage_id && target.stamp_storage_id !== args.storage_id) {
+      try {
+        await ctx.storage.delete(target.stamp_storage_id);
+      } catch {
+        // ignore — already gone
+      }
+    }
+    await ctx.db.patch(args.profile_id, {
+      stamp_storage_id: args.storage_id,
+      stamp_uploaded_at: Date.now(),
+    });
+    await logAction(ctx, {
+      action: "user.stamp.upload",
+      target_type: "user",
+      target_id: args.profile_id,
+      details: { public_id: target.public_id },
+    });
+  },
+});
+
+export const clearStamp = mutation({
+  args: { profile_id: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedProfile(ctx);
+    if (!actor) throw new ConvexError("Unauthorized");
+    const target = await ctx.db.get(args.profile_id);
+    if (!target) throw new ConvexError("Profile not found");
+    if (actor.role !== "ADMIN" && actor._id !== args.profile_id) {
+      throw new ConvexError("Forbidden");
+    }
+    if (target.stamp_storage_id) {
+      try {
+        await ctx.storage.delete(target.stamp_storage_id);
+      } catch {
+        // ignore
+      }
+    }
+    await ctx.db.patch(args.profile_id, {
+      stamp_storage_id: undefined,
+      stamp_uploaded_at: undefined,
+    });
+    await logAction(ctx, {
+      action: "user.stamp.clear",
+      target_type: "user",
+      target_id: args.profile_id,
+    });
+  },
+});
+
+export const setSignature = mutation({
+  args: {
+    profile_id: v.id("profiles"),
+    storage_id: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedProfile(ctx);
+    if (!actor) throw new ConvexError("Unauthorized");
+    const target = await ctx.db.get(args.profile_id);
+    if (!target) throw new ConvexError("Profile not found");
+    if (actor.role !== "ADMIN" && actor._id !== args.profile_id) {
+      throw new ConvexError("Forbidden");
+    }
+    if (target.signature_storage_id && target.signature_storage_id !== args.storage_id) {
+      try {
+        await ctx.storage.delete(target.signature_storage_id);
+      } catch {
+        // ignore
+      }
+    }
+    await ctx.db.patch(args.profile_id, {
+      signature_storage_id: args.storage_id,
+      signature_uploaded_at: Date.now(),
+    });
+    await logAction(ctx, {
+      action: "user.signature.upload",
+      target_type: "user",
+      target_id: args.profile_id,
+      details: { public_id: target.public_id },
+    });
+  },
+});
+
+export const clearSignature = mutation({
+  args: { profile_id: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const actor = await getAuthenticatedProfile(ctx);
+    if (!actor) throw new ConvexError("Unauthorized");
+    const target = await ctx.db.get(args.profile_id);
+    if (!target) throw new ConvexError("Profile not found");
+    if (actor.role !== "ADMIN" && actor._id !== args.profile_id) {
+      throw new ConvexError("Forbidden");
+    }
+    if (target.signature_storage_id) {
+      try {
+        await ctx.storage.delete(target.signature_storage_id);
+      } catch {
+        // ignore
+      }
+    }
+    await ctx.db.patch(args.profile_id, {
+      signature_storage_id: undefined,
+      signature_uploaded_at: undefined,
+    });
+    await logAction(ctx, {
+      action: "user.signature.clear",
+      target_type: "user",
+      target_id: args.profile_id,
+    });
+  },
+});
+
+export const getStampUrl = query({
+  args: { profile_id: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const target = await ctx.db.get(args.profile_id);
+    if (!target?.stamp_storage_id) return null;
+    return ctx.storage.getUrl(target.stamp_storage_id);
+  },
+});
+
+export const getSignatureUrl = query({
+  args: { profile_id: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const target = await ctx.db.get(args.profile_id);
+    if (!target?.signature_storage_id) return null;
+    return ctx.storage.getUrl(target.signature_storage_id);
+  },
 });

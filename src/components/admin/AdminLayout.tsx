@@ -20,6 +20,7 @@ import {
   Users01,
 } from "@untitledui/icons";
 import AppShell from "@/components/app/AppShell";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: HomeLine },
@@ -43,11 +44,18 @@ const navItems = [
   { label: "Preferred Suppliers", href: "/admin/preferred-suppliers", icon: Star01 },
   { label: "Reviews", href: "/admin/reviews", icon: Star01 },
   { label: "Audit Log", href: "/admin/audit-log", icon: FileSearch01 },
+  { label: "Templates", href: "/admin/templates", icon: FileLock02 },
 ];
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
+  const { profile } = useAuth();
+  // PRD §13.4 — auditors share every admin route but in a read-only mode.
+  // Surface that explicitly via the portal label so they (and anyone in a
+  // shared screen) see they're on the audit-only viewer.
+  const isAuditor = profile?.role === "AUDITOR";
+  const portalLabel = isAuditor ? "Audit Portal (read-only)" : "Admin Portal";
   return (
-    <AppShell navItems={navItems} portalLabel="Admin Portal" portalTone="admin">
+    <AppShell navItems={navItems} portalLabel={portalLabel} portalTone="admin">
       {children}
     </AppShell>
   );

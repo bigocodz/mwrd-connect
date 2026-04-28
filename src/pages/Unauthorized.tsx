@@ -12,7 +12,7 @@ const Unauthorized = () => {
 
   const goToDashboard = () => {
     if (!profile) return navigate("/login");
-    const dest = profile.role === "ADMIN" ? "/admin/dashboard"
+    const dest = profile.role === "ADMIN" || profile.role === "AUDITOR" ? "/admin/dashboard"
       : profile.role === "SUPPLIER" ? "/supplier/dashboard"
       : "/client/dashboard";
     navigate(dest);
