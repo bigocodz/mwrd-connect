@@ -8,6 +8,7 @@ import { ConvexReactClient } from "convex/react";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./hooks/useAuth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -77,6 +78,16 @@ import NotFound from "./pages/NotFound";
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!);
 const queryClient = new QueryClient();
 
+/**
+ * Wraps each protected page in an ErrorBoundary so a single query failure
+ * doesn't white-screen the entire app.
+ */
+const SafeRoute = ({ children, roles }: { children: React.ReactNode; roles: ("CLIENT" | "SUPPLIER" | "ADMIN")[] }) => (
+  <ProtectedRoute allowedRoles={roles}>
+    <ErrorBoundary>{children}</ErrorBoundary>
+  </ProtectedRoute>
+);
+
 const App = () => (
   <ConvexAuthProvider client={convex}>
     <QueryClientProvider client={queryClient}>
@@ -97,179 +108,179 @@ const App = () => (
                 <Route path="/change-password" element={<ChangePassword />} />
                 <Route path="/account-status" element={<AccountStatus />} />
                 <Route path="/account" element={
-                  <ProtectedRoute allowedRoles={["CLIENT", "SUPPLIER", "ADMIN"]}><Account /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT", "SUPPLIER", "ADMIN"]}><Account /></SafeRoute>
                 } />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 {/* Client */}
                 <Route path="/client/dashboard" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientDashboard /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientDashboard /></SafeRoute>
                 } />
                 <Route path="/client/catalog" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientCatalog /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientCatalog /></SafeRoute>
                 } />
                 <Route path="/client/rfqs" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientRfqs /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientRfqs /></SafeRoute>
                 } />
                 <Route path="/client/rfq/new" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientCreateRfq /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientCreateRfq /></SafeRoute>
                 } />
                 <Route path="/client/rfqs/:rfqId" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientRfqDetail /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientRfqDetail /></SafeRoute>
                 } />
                 <Route path="/client/rfqs/:rfqId/compare" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientQuoteComparison /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientQuoteComparison /></SafeRoute>
                 } />
                 <Route path="/client/quotes" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientQuotes /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientQuotes /></SafeRoute>
                 } />
                 <Route path="/client/orders" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientOrders /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientOrders /></SafeRoute>
                 } />
                 <Route path="/client/orders/:orderId" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientOrderDetail /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientOrderDetail /></SafeRoute>
                 } />
                 <Route path="/client/organization" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientOrganization /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientOrganization /></SafeRoute>
                 } />
                 <Route path="/client/schedules" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientSchedules /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientSchedules /></SafeRoute>
                 } />
                 <Route path="/client/invoices" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientInvoices /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientInvoices /></SafeRoute>
                 } />
                 <Route path="/client/reports" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientReports /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientReports /></SafeRoute>
                 } />
                 <Route path="/client/account" element={
-                  <ProtectedRoute allowedRoles={["CLIENT"]}><ClientAccount /></ProtectedRoute>
+                  <SafeRoute roles={["CLIENT"]}><ClientAccount /></SafeRoute>
                 } />
                 {/* Supplier */}
                 <Route path="/supplier/dashboard" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierDashboard /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierDashboard /></SafeRoute>
                 } />
                 <Route path="/supplier/products" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProducts /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierProducts /></SafeRoute>
                 } />
                 <Route path="/supplier/products/add" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProductForm /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierProductForm /></SafeRoute>
                 } />
                 <Route path="/supplier/products/bulk" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProductsBulk /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierProductsBulk /></SafeRoute>
                 } />
                 <Route path="/supplier/products/:productId" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierProductForm /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierProductForm /></SafeRoute>
                 } />
                 <Route path="/supplier/rfqs" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierRfqs /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierRfqs /></SafeRoute>
                 } />
                 <Route path="/supplier/rfqs/:rfqId/respond" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierRfqRespond /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierRfqRespond /></SafeRoute>
                 } />
                 <Route path="/supplier/orders" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierOrders /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierOrders /></SafeRoute>
                 } />
                 <Route path="/supplier/orders/:orderId" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierOrderDetail /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierOrderDetail /></SafeRoute>
                 } />
                 <Route path="/supplier/invoices" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierInvoices /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierInvoices /></SafeRoute>
                 } />
                 <Route path="/supplier/analytics" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierAnalytics /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierAnalytics /></SafeRoute>
                 } />
                 <Route path="/supplier/kyc" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierKyc /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierKyc /></SafeRoute>
                 } />
                 <Route path="/supplier/payouts" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierPayouts /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierPayouts /></SafeRoute>
                 } />
                 <Route path="/supplier/reviews" element={
-                  <ProtectedRoute allowedRoles={["SUPPLIER"]}><SupplierReviews /></ProtectedRoute>
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierReviews /></SafeRoute>
                 } />
                 {/* Admin */}
                 <Route path="/admin/dashboard" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminDashboard /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminDashboard /></SafeRoute>
                 } />
                 <Route path="/admin/users" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminUsers /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminUsers /></SafeRoute>
                 } />
                 <Route path="/admin/users/create" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminCreateUser /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminCreateUser /></SafeRoute>
                 } />
                 <Route path="/admin/users/:userId" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminUserDetail /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminUserDetail /></SafeRoute>
                 } />
                 <Route path="/admin/products/pending" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPendingProducts /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminPendingProducts /></SafeRoute>
                 } />
                 <Route path="/admin/categories" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminCategories /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminCategories /></SafeRoute>
                 } />
                 <Route path="/admin/templates" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminTemplates /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminTemplates /></SafeRoute>
                 } />
                 <Route path="/admin/margin-settings" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminMarginSettings /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminMarginSettings /></SafeRoute>
                 } />
                 <Route path="/admin/rfqs" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminRfqs /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminRfqs /></SafeRoute>
                 } />
                 <Route path="/admin/rfqs/:rfqId/quotes" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminRfqQuoteComparison /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminRfqQuoteComparison /></SafeRoute>
                 } />
                 <Route path="/admin/quotes/pending" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPendingQuotes /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminPendingQuotes /></SafeRoute>
                 } />
                 <Route path="/admin/quotes/:quoteId/review" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminQuoteReview /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminQuoteReview /></SafeRoute>
                 } />
                 <Route path="/admin/payments" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPayments /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminPayments /></SafeRoute>
                 } />
                 <Route path="/admin/credit" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminCredit /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminCredit /></SafeRoute>
                 } />
                 <Route path="/admin/payouts" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPayouts /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminPayouts /></SafeRoute>
                 } />
                 <Route path="/admin/reviews" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminReviews /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminReviews /></SafeRoute>
                 } />
                 <Route path="/admin/audit-log" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminAuditLog /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminAuditLog /></SafeRoute>
                 } />
                 <Route path="/admin/leads" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminLeads /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminLeads /></SafeRoute>
                 } />
                 <Route path="/admin/orders" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminOrders /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminOrders /></SafeRoute>
                 } />
                 <Route path="/admin/orders/:orderId" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminOrderDetail /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminOrderDetail /></SafeRoute>
                 } />
                 <Route path="/admin/supplier-invoices" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminSupplierInvoices /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminSupplierInvoices /></SafeRoute>
                 } />
                 <Route path="/admin/client-invoices" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminClientInvoices /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminClientInvoices /></SafeRoute>
                 } />
                 <Route path="/admin/contracts" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminContracts /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminContracts /></SafeRoute>
                 } />
                 <Route path="/admin/contracts/:contractId" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminContractDetail /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminContractDetail /></SafeRoute>
                 } />
                 <Route path="/admin/lifecycle" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminLifecycle /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminLifecycle /></SafeRoute>
                 } />
                 <Route path="/admin/disputes" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminDisputes /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminDisputes /></SafeRoute>
                 } />
                 <Route path="/admin/preferred-suppliers" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminPreferredSuppliers /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminPreferredSuppliers /></SafeRoute>
                 } />
                 <Route path="/admin/approvals" element={
-                  <ProtectedRoute allowedRoles={["ADMIN"]}><AdminApprovals /></ProtectedRoute>
+                  <SafeRoute roles={["ADMIN"]}><AdminApprovals /></SafeRoute>
                 } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
