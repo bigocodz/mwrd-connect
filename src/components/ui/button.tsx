@@ -5,26 +5,48 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff6d43]/20 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium",
+    "transition-[background-color,color,box-shadow,transform] duration-150 ease-out",
+    "focus:outline-none focus-visible:outline-none",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "active:translate-y-px",
+    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  ].join(" "),
   {
     variants: {
       variant: {
-        default: "bg-[#ff6d43] text-white hover:bg-[#e85d35]",
-        destructive: "bg-[#eb4f5d] text-white hover:bg-[#d9404d]",
-        outline: "border border-[#e4e7ec] bg-white text-[#1d2939] hover:bg-[#f9fafb]",
-        secondary: "bg-[#eaf8fb] text-[#1a1a1a] hover:bg-[#d7f0f5]",
-        ghost: "text-[#667085] hover:bg-[#fff1eb] hover:text-[#1a1a1a]",
-        link: "text-[#ff6d43] underline-offset-4 hover:underline",
-        hero: "bg-[#ff6d43] text-white font-semibold hover:bg-[#e85d35]",
-        "hero-outline": "bg-transparent text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.38)] hover:bg-white/10",
-        nav: "bg-[#1a1a1a] text-white hover:bg-[#2a2a2a] font-semibold",
-        "nav-outline": "border border-[#e4e7ec] bg-white text-[#1a1a1a] hover:bg-[#f9fafb] font-semibold",
+        // AlignUI primary CTA — solid carrot, focus ring 4px brand alpha
+        default:
+          "rounded-10 bg-primary-base text-white-0 shadow-[var(--shadow-regular-xs)] hover:bg-primary-darker active:bg-primary-dark focus-visible:shadow-[var(--shadow-button-primary-focus)]",
+        destructive:
+          "rounded-10 bg-error-base text-white-0 shadow-[var(--shadow-regular-xs)] hover:bg-[#e95d52] active:bg-[#d34d44] focus-visible:shadow-[var(--shadow-button-error-focus)]",
+        // Neutral / secondary — white with stroke
+        outline:
+          "rounded-10 bg-bg-white-0 text-strong-950 ring-1 ring-stroke-soft-200 shadow-[var(--shadow-regular-xs)] hover:bg-bg-weak-50 hover:ring-stroke-sub-300 focus-visible:shadow-[var(--shadow-button-neutral-focus)]",
+        secondary:
+          "rounded-10 bg-bg-weak-50 text-strong-950 hover:bg-bg-soft-200 focus-visible:shadow-[var(--shadow-button-neutral-focus)]",
+        ghost:
+          "rounded-10 text-sub-600 hover:bg-bg-weak-50 hover:text-strong-950 focus-visible:shadow-[var(--shadow-button-neutral-focus)]",
+        link:
+          "h-auto p-0 text-primary-base underline-offset-4 hover:underline",
+        // Landing-page variants kept for backward compatibility
+        hero:
+          "rounded-10 bg-primary-base px-5 py-2.5 font-semibold text-white-0 shadow-[var(--shadow-regular-xs)] hover:bg-primary-darker focus-visible:shadow-[var(--shadow-button-primary-focus)]",
+        "hero-outline":
+          "rounded-10 bg-transparent font-semibold text-white-0 ring-1 ring-white/40 hover:bg-white/10",
+        nav:
+          "rounded-10 bg-strong-950 text-white-0 font-semibold hover:bg-[#1f2330]",
+        "nav-outline":
+          "rounded-10 bg-bg-white-0 text-strong-950 font-semibold ring-1 ring-stroke-soft-200 hover:bg-bg-weak-50",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 px-5",
-        icon: "h-10 w-10",
+        default: "h-9 px-3.5 text-sm",
+        xs: "h-7 px-2 text-xs rounded-8",
+        sm: "h-8 px-3 text-sm rounded-8",
+        lg: "h-10 px-4 text-sm rounded-10",
+        xl: "h-11 px-5 text-[15px] rounded-12",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {

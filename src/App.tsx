@@ -32,6 +32,7 @@ import SupplierProducts from "./pages/supplier/SupplierProducts";
 import SupplierProductForm from "./pages/supplier/SupplierProductForm";
 import SupplierProductsBulk from "./pages/supplier/SupplierProductsBulk";
 import ClientCatalog from "./pages/client/ClientCatalog";
+import ClientCart from "./pages/client/ClientCart";
 import ClientRfqs from "./pages/client/ClientRfqs";
 import ClientCreateRfq from "./pages/client/ClientCreateRfq";
 import ClientRfqDetail from "./pages/client/ClientRfqDetail";
@@ -117,6 +118,9 @@ const App = () => (
                 } />
                 <Route path="/client/catalog" element={
                   <SafeRoute roles={["CLIENT"]}><ClientCatalog /></SafeRoute>
+                } />
+                <Route path="/client/cart" element={
+                  <SafeRoute roles={["CLIENT"]}><ClientCart /></SafeRoute>
                 } />
                 <Route path="/client/rfqs" element={
                   <SafeRoute roles={["CLIENT"]}><ClientRfqs /></SafeRoute>

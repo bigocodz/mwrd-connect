@@ -393,6 +393,88 @@ export const approveProposal = mutation({
   },
 });
 
+// Bulk seed a taxonomy (parent + children). Idempotent on slug — skips
+// existing slugs. Used by admins to import a starting category tree.
+export const seedTaxonomy = mutation({
+  args: {
+    items: v.array(
+      v.object({
+        name_en: v.string(),
+        name_ar: v.string(),
+        children: v.optional(
+          v.array(
+            v.object({
+              name_en: v.string(),
+              name_ar: v.string(),
+            }),
+          ),
+        ),
+      }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx);
+    let createdParents = 0;
+    let createdChildren = 0;
+    let skipped = 0;
+    for (const parent of args.items) {
+      const parentSlugBase = slugify(parent.name_en);
+      const existingParent = await ctx.db
+        .query("categories")
+        .withIndex("by_slug", (q) => q.eq("slug", parentSlugBase))
+        .unique();
+      let parentId: Id<"categories">;
+      if (existingParent) {
+        parentId = existingParent._id;
+        skipped++;
+      } else {
+        const slug = await ensureUniqueSlug(ctx, parentSlugBase);
+        parentId = await ctx.db.insert("categories", {
+          level: 0,
+          slug,
+          name_ar: parent.name_ar.trim(),
+          name_en: parent.name_en.trim(),
+          display_order: 0,
+          is_active: true,
+          status: "ACTIVE",
+          created_by: admin._id,
+        });
+        createdParents++;
+      }
+      for (const child of parent.children ?? []) {
+        const childSlugBase = slugify(`${parent.name_en}-${child.name_en}`);
+        const existingChild = await ctx.db
+          .query("categories")
+          .withIndex("by_slug", (q) => q.eq("slug", childSlugBase))
+          .unique();
+        if (existingChild) {
+          skipped++;
+          continue;
+        }
+        const slug = await ensureUniqueSlug(ctx, childSlugBase);
+        await ctx.db.insert("categories", {
+          parent_id: parentId,
+          level: 1,
+          slug,
+          name_ar: child.name_ar.trim(),
+          name_en: child.name_en.trim(),
+          display_order: 0,
+          is_active: true,
+          status: "ACTIVE",
+          created_by: admin._id,
+        });
+        createdChildren++;
+      }
+    }
+    await logAction(ctx, {
+      action: "category.seed",
+      target_type: "category",
+      details: { createdParents, createdChildren, skipped },
+    });
+    return { createdParents, createdChildren, skipped };
+  },
+});
+
 export const rejectProposal = mutation({
   args: {
     id: v.id("categories"),

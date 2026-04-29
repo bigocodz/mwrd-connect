@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@cvx/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,8 +72,10 @@ const ClientCreateRfq = () => {
   const { profile } = useAuth();
   const { tr } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const createRfq = useMutation(api.rfqs.create);
   const generateUploadUrl = useMutation(api.rfqs.generateAttachmentUploadUrl);
+  const clearCart = useMutation(api.clientCatalog.clearCart);
 
   const productsData = useQuery(api.products.listApproved);
   const loadingProducts = productsData === undefined;
@@ -83,7 +85,23 @@ const ClientCreateRfq = () => {
   const departments = useQuery(api.organization.listMyDepartments) ?? [];
   const createSchedule = useMutation(api.schedules.create);
 
-  const [items, setItems] = useState<RfqItemDraft[]>([emptyItem()]);
+  const cartItems = (location.state as any)?.cartItems as
+    | { product_id: string; product_name: string; quantity: number }[]
+    | undefined;
+  const fromCart = !!cartItems?.length;
+
+  const [items, setItems] = useState<RfqItemDraft[]>(
+    fromCart
+      ? cartItems!.map((c) => ({
+          key: crypto.randomUUID(),
+          product_id: c.product_id,
+          custom_item_description: "",
+          quantity: c.quantity,
+          flexibility: "EXACT_MATCH",
+          special_notes: "",
+        }))
+      : [emptyItem()],
+  );
   const [templateKey, setTemplateKey] = useState("blank");
   const [category, setCategory] = useState("");
   const [deliveryLocation, setDeliveryLocation] = useState("");
@@ -271,6 +289,13 @@ const ClientCreateRfq = () => {
           special_notes: item.special_notes || undefined,
         })),
       });
+      if (fromCart) {
+        try {
+          await clearCart();
+        } catch {
+          // non-fatal
+        }
+      }
       toast.success(tr("RFQ submitted successfully"));
       navigate("/client/rfqs");
     } catch (err: any) {

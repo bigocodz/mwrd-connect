@@ -11,8 +11,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PageHeader, EmptyMessage } from "@/components/app/AppSurface";
 import { toast } from "sonner";
-import { Search, Loader2, Package, Star, StarOff, Plus, Pin, EyeOff, Eye, Trash2 } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  Package,
+  Star,
+  StarOff,
+  Pin,
+  EyeOff,
+  Eye,
+  Trash2,
+  ShoppingCart,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCategoryNames } from "@/components/categories/useCategoryNames";
 
@@ -27,6 +40,7 @@ const ClientCatalog = () => {
   const addProduct = useMutation(api.clientCatalog.addProduct);
   const updateEntry = useMutation(api.clientCatalog.updateEntry);
   const removeEntry = useMutation(api.clientCatalog.remove);
+  const addToCart = useMutation(api.clientCatalog.addToCart);
 
   const loading = productsData === undefined;
   const products = productsData ?? [];
@@ -77,6 +91,20 @@ const ClientCatalog = () => {
       setBusy(false);
     }
   };
+
+  const handleAddToCart = async (productId: string) => {
+    setBusy(true);
+    try {
+      await addToCart({ product_id: productId as any, quantity: 1 });
+      toast.success(tr("Added to cart"));
+    } catch (err: any) {
+      toast.error(err.message || tr("Failed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cartCount = meta.reduce((sum: number, m: any) => sum + (m.cart_quantity ?? 0), 0);
 
   const togglePinned = async (entryId: string, next: boolean) => {
     try {
@@ -133,43 +161,56 @@ const ClientCatalog = () => {
     const entryMeta = metaByProduct.get(p._id);
     const inMine = !!entryMeta && !entryMeta.hidden;
     return (
-      <Card key={p._id} className="overflow-hidden">
+      <Card
+        key={p._id}
+        className="group flex flex-col overflow-hidden transition-shadow hover:shadow-[var(--shadow-regular-sm)]"
+      >
         {p.images?.length > 0 ? (
-          <div className="aspect-video bg-muted">
-            <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
+          <div className="aspect-[4/3] overflow-hidden bg-bg-weak-50">
+            <img
+              src={p.images[0]}
+              alt={p.name}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
           </div>
         ) : (
-          <div className="aspect-video bg-muted flex items-center justify-center">
-            <Package className="w-10 h-10 text-muted-foreground/30" />
+          <div className="flex aspect-[4/3] items-center justify-center bg-bg-weak-50">
+            <Package className="h-9 w-9 text-disabled-300" />
           </div>
         )}
-        <CardContent className="pt-4">
-          <h3 className="font-display font-bold text-foreground line-clamp-1">
-            {entryMeta?.alias || p.name}
-          </h3>
-          {entryMeta?.alias && p.name !== entryMeta.alias && (
-            <p className="text-xs text-muted-foreground line-clamp-1">{p.name}</p>
-          )}
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description || tr("No description")}</p>
-          <div className="flex items-center justify-between mt-3">
-            <Badge variant="outline" className="text-xs">{localize((p as any).category_id, p.category)}</Badge>
-            <span className="text-xs text-muted-foreground">{tr("Lead: {days} days", { days: p.lead_time_days })}</span>
+        <CardContent className="flex flex-1 flex-col gap-3 p-4">
+          <div className="min-w-0">
+            <h3 className="font-display text-[15px] font-semibold leading-tight tracking-[-0.01em] text-strong-950 line-clamp-1">
+              {entryMeta?.alias || p.name}
+            </h3>
+            {entryMeta?.alias && p.name !== entryMeta.alias && (
+              <p className="mt-0.5 text-xs text-soft-400 line-clamp-1">{p.name}</p>
+            )}
+            <p className="mt-1 text-sm leading-5 text-sub-600 line-clamp-2">
+              {p.description || tr("No description")}
+            </p>
           </div>
-          {p.availability_status === "LIMITED_STOCK" && (
-            <span className="mt-2 inline-flex rounded-md bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-800">
-              {tr("Limited Stock")}
-            </span>
-          )}
-          <div className="mt-3 flex items-center justify-end">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary">{localize((p as any).category_id, p.category)}</Badge>
+            <Badge variant="outline">{tr("Lead: {days} d", { days: p.lead_time_days })}</Badge>
+            {p.availability_status === "LIMITED_STOCK" && (
+              <Badge variant="warning">{tr("Limited Stock")}</Badge>
+            )}
+          </div>
+          <div className="mt-auto flex items-center justify-end gap-1.5 pt-1">
             {inMine ? (
-              <Badge variant="outline" className="bg-green-100 text-green-800">
-              <Star className="w-3 h-3 me-1 fill-current" /> {tr("In your catalog")}
+              <Badge variant="success">
+                <Star className="h-3 w-3 fill-current" /> {tr("Saved")}
               </Badge>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => handleAdd(p._id)} disabled={busy}>
-              <Plus className="w-3 h-3 me-1" /> {tr("Add to catalog")}
+              <Button size="xs" variant="ghost" onClick={() => handleAdd(p._id)} disabled={busy}>
+                <Star className="h-3 w-3" /> {tr("Save")}
               </Button>
             )}
+            <Button size="sm" onClick={() => handleAddToCart(p._id)} disabled={busy}>
+              <ShoppingCart className="h-3.5 w-3.5" /> {tr("Add to cart")}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -179,44 +220,54 @@ const ClientCatalog = () => {
   const renderMyCard = (p: any) => {
     const entry = p._entry;
     return (
-      <Card key={entry._id} className={`overflow-hidden ${entry.hidden ? "opacity-60" : ""}`}>
+      <Card
+        key={entry._id}
+        className={`group flex flex-col overflow-hidden transition-shadow hover:shadow-[var(--shadow-regular-sm)] ${entry.hidden ? "opacity-60" : ""}`}
+      >
         {p.images?.length > 0 ? (
-          <div className="aspect-video bg-muted">
-            <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = "none")} />
+          <div className="aspect-[4/3] overflow-hidden bg-bg-weak-50">
+            <img
+              src={p.images[0]}
+              alt={p.name}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
           </div>
         ) : (
-          <div className="aspect-video bg-muted flex items-center justify-center">
-            <Package className="w-10 h-10 text-muted-foreground/30" />
+          <div className="flex aspect-[4/3] items-center justify-center bg-bg-weak-50">
+            <Package className="h-9 w-9 text-disabled-300" />
           </div>
         )}
-        <CardContent className="pt-4 space-y-3">
-          <div>
+        <CardContent className="flex flex-1 flex-col gap-3 p-4">
+          <div className="min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="font-display font-bold text-foreground line-clamp-1">
+              <h3 className="font-display text-[15px] font-semibold leading-tight tracking-[-0.01em] text-strong-950 line-clamp-1">
                 {entry.alias || p.name}
               </h3>
-              {entry.pinned && <Pin className="w-4 h-4 text-amber-500 fill-amber-400" />}
+              {entry.pinned && <Pin className="h-4 w-4 text-warning-base" />}
             </div>
             {entry.alias && entry.alias !== p.name && (
-              <p className="text-xs text-muted-foreground line-clamp-1">{p.name}</p>
+              <p className="mt-0.5 text-xs text-soft-400 line-clamp-1">{p.name}</p>
             )}
-            {entry.notes && <p className="text-xs text-muted-foreground mt-1">{entry.notes}</p>}
+            {entry.notes && <p className="mt-1 text-xs text-sub-600 line-clamp-2">{entry.notes}</p>}
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <Badge variant="outline">{localize((p as any).category_id, p.category)}</Badge>
-            <span className="text-muted-foreground">{tr("Lead: {days} d", { days: p.lead_time_days })}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary">{localize((p as any).category_id, p.category)}</Badge>
+            <Badge variant="outline">{tr("Lead: {days} d", { days: p.lead_time_days })}</Badge>
           </div>
-          <div className="flex flex-wrap items-center gap-1">
-            <Button size="sm" variant="ghost" onClick={() => togglePinned(entry._id, !entry.pinned)}>
-              {entry.pinned ? <StarOff className="w-3 h-3 me-1" /> : <Star className="w-3 h-3 me-1" />}
+          <div className="mt-auto flex flex-wrap items-center gap-1 pt-1">
+            <Button size="xs" variant="ghost" onClick={() => togglePinned(entry._id, !entry.pinned)}>
+              {entry.pinned ? <StarOff className="h-3 w-3" /> : <Star className="h-3 w-3" />}
               {entry.pinned ? tr("Unpin") : tr("Pin")}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => openEdit(entry)}>{tr("Edit")}</Button>
-            <Button size="sm" variant="ghost" onClick={() => toggleHidden(entry._id, !entry.hidden)}>
-              {entry.hidden ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            <Button size="xs" variant="ghost" onClick={() => openEdit(entry)}>
+              {tr("Edit")}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => handleRemove(entry._id)}>
-              <Trash2 className="w-3 h-3" />
+            <Button size="xs" variant="ghost" onClick={() => toggleHidden(entry._id, !entry.hidden)}>
+              {entry.hidden ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+            </Button>
+            <Button size="xs" variant="ghost" onClick={() => handleRemove(entry._id)}>
+              <Trash2 className="h-3 w-3" />
             </Button>
           </div>
         </CardContent>
@@ -226,35 +277,73 @@ const ClientCatalog = () => {
 
   return (
     <ClientLayout>
-      <h1 className="font-display text-3xl font-bold text-foreground mb-6">{tr("Product Catalog")}</h1>
+      <PageHeader
+        title={tr("Product Catalog")}
+        description={tr("Browse approved supplier products and curate your private catalog.")}
+        actions={
+          <Button asChild variant="outline" size="lg" className="relative">
+            <Link to="/client/cart">
+              <ShoppingCart className="h-4 w-4" />
+              {tr("Cart")}
+              {cartCount > 0 && (
+                <span className="ms-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-base px-1.5 text-[11px] font-semibold text-white-0">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="flex flex-wrap gap-3 mb-6">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder={tr("Search products...")} value={search} onChange={(e) => setSearch(e.target.value)} className="ps-9" />
+      <div className="mb-5 flex flex-wrap items-center gap-2 rounded-16 border border-stroke-soft-200 bg-bg-white-0 p-2 shadow-[var(--shadow-regular-xs)]">
+        <div className="relative min-w-[220px] flex-1">
+          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-soft-400" />
+          <Input
+            placeholder={tr("Search products...")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="ps-9 border-0 shadow-none focus:shadow-none focus:border-0"
+          />
         </div>
-        <Select value={catFilter} onValueChange={(v) => { setCatFilter(v); setSubFilter("ALL"); }}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder={tr("Category")} /></SelectTrigger>
+        <div className="hidden h-8 w-px bg-stroke-soft-200 sm:block" />
+        <Select
+          value={catFilter}
+          onValueChange={(v) => {
+            setCatFilter(v);
+            setSubFilter("ALL");
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={tr("Category")} />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">{tr("All Categories")}</SelectItem>
             {categories.map((c) => {
-              // For products linked to the master tree, find a representative
-              // category_id so we can localize the label.
               const sample = products.find((p) => p.category === c) as any;
               const label = localize(sample?.category_id, c);
-              return <SelectItem key={c} value={c}>{label}</SelectItem>;
+              return (
+                <SelectItem key={c} value={c}>
+                  {label}
+                </SelectItem>
+              );
             })}
           </SelectContent>
         </Select>
         {subcategories.length > 0 && (
           <Select value={subFilter} onValueChange={setSubFilter}>
-            <SelectTrigger className="w-[180px]"><SelectValue placeholder={tr("Subcategory")} /></SelectTrigger>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={tr("Subcategory")} />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">{tr("All Subcategories")}</SelectItem>
               {subcategories.map((s) => {
                 const sample = products.find((p) => p.subcategory === s) as any;
                 const label = localize(sample?.subcategory_id, s);
-                return <SelectItem key={s} value={s}>{label}</SelectItem>;
+                return (
+                  <SelectItem key={s} value={s}>
+                    {label}
+                  </SelectItem>
+                );
               })}
             </SelectContent>
           </Select>
@@ -264,33 +353,39 @@ const ClientCatalog = () => {
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
         <TabsList>
           <TabsTrigger value="ALL">{tr("All Products")}</TabsTrigger>
-          <TabsTrigger value="MINE">{tr("My Catalog ({count})", { count: myEntries.length })}</TabsTrigger>
+          <TabsTrigger value="MINE">
+            {tr("My Catalog ({count})", { count: myEntries.length })}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="ALL" className="mt-4">
           {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-          ) : allFiltered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>{tr("No products found.")}</p>
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-7 w-7 animate-spin text-soft-400" />
             </div>
+          ) : allFiltered.length === 0 ? (
+            <EmptyMessage>
+              <Package className="mx-auto mb-2 h-9 w-9 text-disabled-300" />
+              {tr("No products found.")}
+            </EmptyMessage>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {allFiltered.map(renderProductCard)}
             </div>
           )}
         </TabsContent>
         <TabsContent value="MINE" className="mt-4">
           {myEntries.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Star className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>{tr("No products in your private catalog yet.")}</p>
-              <p className="text-sm mt-1">{tr("Browse All Products and click Add to catalog to curate your own list.")}</p>
-            </div>
+            <EmptyMessage>
+              <Star className="mx-auto mb-2 h-9 w-9 text-disabled-300" />
+              {tr("No products in your private catalog yet.")}
+              <span className="mt-1 block text-xs text-soft-400">
+                {tr("Browse All Products and click Add to catalog to curate your own list.")}
+              </span>
+            </EmptyMessage>
           ) : myFiltered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{tr("No matches in your catalog.")}</p>
+            <p className="text-sm text-sub-600">{tr("No matches in your catalog.")}</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {myFiltered.map(renderMyCard)}
             </div>
           )}
@@ -299,20 +394,34 @@ const ClientCatalog = () => {
 
       <Dialog open={editEntry !== null} onOpenChange={(o) => !o && setEditEntry(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{tr("Edit catalog entry")}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{tr("Edit catalog entry")}</DialogTitle>
+          </DialogHeader>
           <div className="space-y-3 py-2">
             <div>
               <Label>{tr("Display alias")}</Label>
-              <Input value={alias} onChange={(e) => setAlias(e.target.value)} placeholder={tr("Internal name (optional)")} />
+              <Input
+                value={alias}
+                onChange={(e) => setAlias(e.target.value)}
+                placeholder={tr("Internal name (optional)")}
+              />
             </div>
             <div>
               <Label>{tr("Notes")}</Label>
-              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr("Optional internal notes")} />
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder={tr("Optional internal notes")}
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditEntry(null)}>{tr("Cancel")}</Button>
-            <Button onClick={saveEdit} disabled={busy}>{tr("Save")}</Button>
+            <Button variant="outline" onClick={() => setEditEntry(null)}>
+              {tr("Cancel")}
+            </Button>
+            <Button onClick={saveEdit} disabled={busy}>
+              {tr("Save")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

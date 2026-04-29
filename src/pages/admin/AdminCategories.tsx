@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ChevronDown, ChevronRight, Plus, Pencil, Archive, Check, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Pencil, Archive, Check, X, Download } from "lucide-react";
+import { ezorderTaxonomy } from "@/data/ezorderTaxonomy";
 
 type TaxClass = "STANDARD" | "ZERO_RATED" | "EXEMPT";
 
@@ -88,6 +89,8 @@ const AdminCategories = () => {
   const archive = useMutation(api.categories.archive);
   const approveProposal = useMutation(api.categories.approveProposal);
   const rejectProposal = useMutation(api.categories.rejectProposal);
+  const seedTaxonomy = useMutation(api.categories.seedTaxonomy);
+  const [seeding, setSeeding] = useState(false);
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editorOpen, setEditorOpen] = useState(false);
@@ -188,6 +191,25 @@ const AdminCategories = () => {
       toast.success(tr("Proposal approved"));
     } catch (err: any) {
       toast.error(err.message || tr("Failed"));
+    }
+  };
+
+  const handleSeed = async () => {
+    if (!confirm(tr("Import the sample office-supplies taxonomy? Existing categories with the same slugs will be skipped."))) return;
+    setSeeding(true);
+    try {
+      const res = await seedTaxonomy({ items: ezorderTaxonomy });
+      toast.success(
+        tr("Imported {p} parents and {c} subcategories ({s} skipped)", {
+          p: String(res.createdParents),
+          c: String(res.createdChildren),
+          s: String(res.skipped),
+        }),
+      );
+    } catch (err: any) {
+      toast.error(err.message || tr("Failed"));
+    } finally {
+      setSeeding(false);
     }
   };
 
@@ -310,9 +332,15 @@ const AdminCategories = () => {
             {tr("Bilingual taxonomy used across catalog, RFQs, and margin rules.")}
           </p>
         </div>
-        <Button onClick={() => openCreate()}>
-          <Plus className="me-1.5 h-4 w-4" /> {tr("New top-level category")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleSeed} disabled={seeding}>
+            <Download className="me-1.5 h-4 w-4" />
+            {seeding ? tr("Importing…") : tr("Import sample taxonomy")}
+          </Button>
+          <Button onClick={() => openCreate()}>
+            <Plus className="me-1.5 h-4 w-4" /> {tr("New top-level category")}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="tree" className="space-y-4">

@@ -152,6 +152,77 @@
   --color-brand-900: #5f2419;
   --color-brand-950: #1a1a1a;
 
+  /* ──────────────────────────────────────────────────────────────────
+     AlignUI design tokens
+     Mapped onto the MWRD carrot brand. These coexist with the legacy
+     shadcn HSL tokens above; new components prefer these.
+     ────────────────────────────────────────────────────────────────── */
+
+  /* Brand (carrot) */
+  --color-primary-base: #ff6d43;
+  --color-primary-darker: #e85d35;
+  --color-primary-dark: #ba4424;
+  --color-primary-light: #fff1eb;
+  --color-primary-alpha-10: rgba(255, 109, 67, 0.10);
+  --color-primary-alpha-16: rgba(255, 109, 67, 0.16);
+  --color-primary-alpha-24: rgba(255, 109, 67, 0.24);
+
+  /* Text — used via `text-*` and `border-*` (warm-neutral scale) */
+  --color-strong-950: #0a0d14;
+  --color-sub-600: #525866;
+  --color-soft-400: #868c98;
+  --color-disabled-300: #cdd0d5;
+  --color-white-0: #ffffff;
+
+  /* Surfaces — used via `bg-*` */
+  --color-bg-white-0: #ffffff;
+  --color-bg-weak-50: #f5f7fa;
+  --color-bg-soft-200: #e2e4e9;
+  --color-bg-sub-300: #cdd0d5;
+  --color-bg-surface-700: #2b303b;
+  --color-bg-surface-800: #20232d;
+  --color-bg-strong-950: #0a0d14;
+
+  /* Strokes — used via `border-*` */
+  --color-stroke-white-0: #ffffff;
+  --color-stroke-soft-200: #e2e4e9;
+  --color-stroke-sub-300: #cdd0d5;
+  --color-stroke-strong-950: #0a0d14;
+
+  /* State — base + light variants */
+  --color-success-base: #1fc16b;
+  --color-success-light: #c2efd5;
+  --color-success-lighter: #e0fae7;
+  --color-error-base: #f97066;
+  --color-error-light: #fde7e6;
+  --color-error-lighter: #ffebec;
+  --color-warning-base: #f17b2c;
+  --color-warning-light: #fde9d9;
+  --color-warning-lighter: #fff3eb;
+  --color-information-base: #375dfb;
+  --color-information-light: #d6e1ff;
+  --color-information-lighter: #ebf1ff;
+  --color-feature-base: #7d52f4;
+  --color-feature-light: #e0d4ff;
+
+  /* AlignUI-style ring + soft-drop shadows */
+  --shadow-regular-xs: 0 1px 2px 0 rgba(10, 13, 20, 0.03);
+  --shadow-regular-sm: 0 2px 4px rgba(27, 28, 29, 0.04);
+  --shadow-regular-md: 0 16px 32px -12px rgba(88, 92, 95, 0.10);
+  --shadow-regular-lg: 0 24px 64px -12px rgba(20, 22, 28, 0.16);
+  --shadow-button-primary-focus: 0 0 0 4px rgba(255, 109, 67, 0.16);
+  --shadow-button-error-focus: 0 0 0 4px rgba(249, 112, 102, 0.16);
+  --shadow-button-neutral-focus: 0 0 0 4px rgba(225, 228, 234, 0.32);
+
+  /* AlignUI radius scale (pixel-named for clarity) */
+  --radius-6: 0.375rem;
+  --radius-8: 0.5rem;
+  --radius-10: 0.625rem;
+  --radius-12: 0.75rem;
+  --radius-16: 1rem;
+  --radius-20: 1.25rem;
+  --radius-24: 1.5rem;
+
   /* TailGrids-compatible token names mapped to the MWRD brand system. */
   --color-primary-50: #fff1eb;
   --color-primary-100: #ffe2d7;

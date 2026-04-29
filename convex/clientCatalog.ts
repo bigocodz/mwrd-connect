@@ -102,6 +102,125 @@ export const myProductIds = query({
       hidden: !!e.hidden,
       pinned: !!e.pinned,
       alias: e.alias,
+      cart_quantity: e.cart_quantity ?? 0,
     }));
+  },
+});
+
+// ==================== Cart ====================
+
+export const listMyCart = query({
+  handler: async (ctx) => {
+    const profile = await requireClient(ctx);
+    const entries = await ctx.db
+      .query("client_catalog_entries")
+      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .collect();
+    const inCart = entries.filter((e) => (e.cart_quantity ?? 0) > 0);
+    const enriched = await Promise.all(
+      inCart.map(async (entry) => {
+        const product = await ctx.db.get(entry.product_id);
+        return { ...entry, product };
+      }),
+    );
+    return enriched.filter(
+      (e: any) => e.product && e.product.approval_status === "APPROVED",
+    );
+  },
+});
+
+export const addToCart = mutation({
+  args: {
+    product_id: v.id("products"),
+    quantity: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const profile = await requireClient(ctx);
+    const product = await ctx.db.get(args.product_id);
+    if (!product || product.approval_status !== "APPROVED") {
+      throw new ConvexError("Product not available");
+    }
+    const qty = Math.max(1, Math.floor(args.quantity ?? 1));
+    const existing = await ctx.db
+      .query("client_catalog_entries")
+      .withIndex("by_client_product", (q) =>
+        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+      )
+      .unique();
+    if (existing) {
+      const next = (existing.cart_quantity ?? 0) + qty;
+      await ctx.db.patch(existing._id, { cart_quantity: next, hidden: false });
+      return existing._id;
+    }
+    return ctx.db.insert("client_catalog_entries", {
+      client_id: profile._id,
+      product_id: args.product_id,
+      pinned: false,
+      hidden: false,
+      cart_quantity: qty,
+    });
+  },
+});
+
+export const setCartQuantity = mutation({
+  args: {
+    product_id: v.id("products"),
+    quantity: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const profile = await requireClient(ctx);
+    const qty = Math.max(0, Math.floor(args.quantity));
+    const existing = await ctx.db
+      .query("client_catalog_entries")
+      .withIndex("by_client_product", (q) =>
+        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+      )
+      .unique();
+    if (!existing) {
+      if (qty === 0) return null;
+      const product = await ctx.db.get(args.product_id);
+      if (!product || product.approval_status !== "APPROVED") {
+        throw new ConvexError("Product not available");
+      }
+      return ctx.db.insert("client_catalog_entries", {
+        client_id: profile._id,
+        product_id: args.product_id,
+        pinned: false,
+        hidden: false,
+        cart_quantity: qty,
+      });
+    }
+    await ctx.db.patch(existing._id, { cart_quantity: qty });
+    return existing._id;
+  },
+});
+
+export const removeFromCart = mutation({
+  args: { product_id: v.id("products") },
+  handler: async (ctx, args) => {
+    const profile = await requireClient(ctx);
+    const existing = await ctx.db
+      .query("client_catalog_entries")
+      .withIndex("by_client_product", (q) =>
+        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+      )
+      .unique();
+    if (!existing) return;
+    await ctx.db.patch(existing._id, { cart_quantity: 0 });
+  },
+});
+
+export const clearCart = mutation({
+  handler: async (ctx) => {
+    const profile = await requireClient(ctx);
+    const entries = await ctx.db
+      .query("client_catalog_entries")
+      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .collect();
+    for (const entry of entries) {
+      if ((entry.cart_quantity ?? 0) > 0) {
+        await ctx.db.patch(entry._id, { cart_quantity: 0 });
+      }
+    }
   },
 });

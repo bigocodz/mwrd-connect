@@ -1,9 +1,10 @@
-import { BarChartSquareUp, Building02, FileQuestion02, HomeLine, PackageCheck, Receipt, RefreshCcw01, ShoppingBag03, Wallet02 } from "@untitledui/icons";
+import { BarChartSquareUp, Building02, FileQuestion02, HomeLine, PackageCheck, Receipt, RefreshCcw01, ShoppingBag03, ShoppingCart01, Wallet02 } from "@untitledui/icons";
 import AppShell from "@/components/app/AppShell";
 
 const navItems = [
   { label: "Dashboard", href: "/client/dashboard", icon: HomeLine },
   { label: "Product Catalog", href: "/client/catalog", icon: ShoppingBag03 },
+  { label: "Cart", href: "/client/cart", icon: ShoppingCart01 },
   { label: "My RFQs", href: "/client/rfqs", icon: FileQuestion02 },
   { label: "Repeat RFQs", href: "/client/schedules", icon: RefreshCcw01 },
   { label: "Quotes", href: "/client/quotes", icon: Receipt },

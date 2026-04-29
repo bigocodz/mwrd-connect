@@ -568,6 +568,7 @@ export default defineSchema({
     notes: v.optional(v.string()),
     pinned: v.optional(v.boolean()),
     hidden: v.optional(v.boolean()),
+    cart_quantity: v.optional(v.number()),
   })
     .index("by_client", ["client_id"])
     .index("by_client_product", ["client_id", "product_id"]),

@@ -8,8 +8,14 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-          "rounded-lg border-[#e4e7ec] bg-white text-[#1d2939] shadow-none transition-colors placeholder:text-[#98a2b3] hover:border-[#d0d5dd] focus-visible:border-[#ff6d43] focus-visible:ring-[#ff6d43]/20 focus-visible:ring-offset-[#f5f6f8]",
+          // AlignUI input: white surface, soft 1px stroke, 10px radius, primary focus ring
+          "flex h-10 w-full rounded-10 border border-stroke-soft-200 bg-bg-white-0 px-3 text-sm leading-5 text-strong-950 shadow-[var(--shadow-regular-xs)] transition-[box-shadow,border-color] outline-none",
+          "placeholder:text-soft-400",
+          "hover:border-stroke-sub-300",
+          "focus:border-primary-base focus:shadow-[var(--shadow-button-primary-focus)]",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-strong-950",
+          "md:text-sm",
           className,
         )}
         ref={ref}
