@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import ClientLayout from "@/components/client/ClientLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { formatSAR } from "@/components/shared/VatBadge";
-import { LinkCard, MetricCard, PageHeader, Panel } from "@/components/app/AppSurface";
+import { FlowStepCard, LinkCard, MetricCard, PageHeader, Panel, SignalCard } from "@/components/app/AppSurface";
 import { Button } from "@/components/ui/button";
 import {
   CheckDone01,
@@ -38,13 +38,13 @@ const ClientDashboard = () => {
           <>
             <Button asChild variant="outline" size="lg">
               <Link to="/client/catalog">
-                <ShoppingBag03 className="h-4 w-4" />
+                <ShoppingBag03 data-icon="inline-start" />
                 {tr("Browse Catalog")}
               </Link>
             </Button>
             <Button asChild size="lg">
               <Link to="/client/rfq/new">
-                <FileQuestion02 className="h-4 w-4" />
+                <FileQuestion02 data-icon="inline-start" />
                 {tr("Create RFQ")}
               </Link>
             </Button>
@@ -81,42 +81,34 @@ const ClientDashboard = () => {
         icon={CheckDone01}
       >
         <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-12 border border-stroke-soft-200 bg-bg-weak-50 p-4">
-            <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-soft-400">
-              {tr("Credit health")}
-            </p>
-            <p className="mt-2 text-lg font-semibold leading-tight tracking-[-0.01em] text-strong-950">
-              {creditLimit > 0 ? `${Math.round(creditHealthPct)}% ${tr("available")}` : tr("Prepaid")}
-            </p>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-bg-soft-200">
-              <div
-                className="h-full rounded-full bg-primary-base transition-[width] duration-500"
-                style={{ width: `${creditHealthPct}%` }}
-              />
-            </div>
-          </div>
-          <div className="rounded-12 border border-stroke-soft-200 bg-information-lighter p-4">
-            <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-[#2542c2]/70">
-              {tr("Next best action")}
-            </p>
-            <p className="mt-2 text-lg font-semibold leading-tight tracking-[-0.01em] text-strong-950">
-              {tr("Create RFQ")}
-            </p>
-            <p className="mt-1 text-sm leading-5 text-sub-600">
-              {tr("Convert demand into a controlled supplier request.")}
-            </p>
-          </div>
-          <div className="rounded-12 border border-stroke-soft-200 bg-primary-light p-4">
-            <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-primary-dark/70">
-              {tr("Portal status")}
-            </p>
-            <p className="mt-2 text-lg font-semibold leading-tight tracking-[-0.01em] text-strong-950">
-              {tr(profile?.status ?? "ACTIVE")}
-            </p>
-            <p className="mt-1 text-sm leading-5 text-sub-600">
-              {tr("Company workspace is ready for procurement activity.")}
-            </p>
-          </div>
+          <SignalCard
+            label={tr("Credit health")}
+            value={creditLimit > 0 ? `${Math.round(creditHealthPct)}% ${tr("available")}` : tr("Prepaid")}
+            tone={balanceDanger ? "warning" : "success"}
+            icon={Wallet02}
+            helper={
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-bg-soft-200">
+                <div
+                  className="h-full rounded-full bg-primary-base transition-[width] duration-500"
+                  style={{ width: `${creditHealthPct}%` }}
+                />
+              </div>
+            }
+          />
+          <SignalCard
+            label={tr("Next best action")}
+            value={tr("Create RFQ")}
+            helper={tr("Convert demand into a controlled supplier request.")}
+            tone="info"
+            icon={FileQuestion02}
+          />
+          <SignalCard
+            label={tr("Portal status")}
+            value={tr(profile?.status ?? "ACTIVE")}
+            helper={tr("Company workspace is ready for procurement activity.")}
+            tone="brand"
+            icon={CheckDone01}
+          />
         </div>
       </Panel>
 
@@ -133,21 +125,14 @@ const ClientDashboard = () => {
             { label: tr("Approval"), value: tr("PO signed"), icon: PackageCheck },
             { label: tr("Invoice"), value: tr("Wafeq cleared"), icon: Wallet02 },
           ].map((step, index) => (
-            <div
+            <FlowStepCard
               key={step.label}
-              className="rounded-12 border border-stroke-soft-200 bg-bg-white-0 p-4 transition-shadow hover:shadow-[var(--shadow-regular-sm)]"
-            >
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-10 bg-primary-light text-primary-dark ring-1 ring-primary-alpha-16">
-                  <step.icon className="h-4 w-4" />
-                </span>
-                <span className="text-[11px] font-medium text-soft-400">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-              </div>
-              <p className="text-sm font-semibold text-strong-950">{step.label}</p>
-              <p className="mt-0.5 text-xs leading-5 text-sub-600">{step.value}</p>
-            </div>
+              label={step.label}
+              value={step.value}
+              icon={step.icon}
+              index={index}
+              tone={index === 0 ? "brand" : index === 1 ? "info" : "neutral"}
+            />
           ))}
         </div>
       </Panel>

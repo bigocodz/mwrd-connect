@@ -24,8 +24,8 @@ type AppShellProps = {
 };
 
 const portalChip = {
-  client: "bg-information-lighter text-[#2542c2] ring-information-light/60",
-  supplier: "bg-success-lighter text-[#176c47] ring-success-light/60",
+  client: "bg-information-lighter text-information-base ring-information-light/60",
+  supplier: "bg-success-lighter text-success-base ring-success-light/60",
   admin: "bg-primary-light text-primary-dark ring-primary-alpha-16",
 };
 
@@ -76,10 +76,10 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
   const activeLabel = navItems.find((item) => location.pathname === item.href || location.pathname.startsWith(`${item.href}/`))?.label ?? portalLabel;
 
   return (
-    <div className="min-h-screen bg-bg-weak-50 text-strong-950 lg:flex" dir={dir}>
+    <div className="min-h-screen bg-bg-shell text-strong-950 lg:flex" dir={dir}>
       <aside
         className={cn(
-          "relative hidden shrink-0 overflow-hidden border-e border-stroke-soft-200 bg-bg-white-0 text-strong-950 transition-[width] duration-300 ease-out lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col",
+          "relative hidden shrink-0 overflow-hidden border-e border-stroke-soft-200 bg-bg-shell text-strong-950 shadow-[var(--shadow-regular-inset)] transition-[width] duration-300 ease-out lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col",
           collapsed ? "w-[5.5rem]" : "w-[272px]",
         )}
       >
@@ -88,10 +88,10 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
             <Link to={navItems[0]?.href ?? "/"} className={cn("block min-w-0", collapsed && "pointer-events-auto")}>
               <span
                 className={cn(
-                  "inline-flex bg-bg-white-0",
+                  "inline-flex bg-bg-panel shadow-[var(--shadow-regular-xs)]",
                   collapsed
                     ? "h-11 w-11 items-center justify-center overflow-hidden rounded-10 p-2 ring-1 ring-stroke-soft-200"
-                    : "rounded-10",
+                    : "rounded-10 px-2 py-1.5",
                 )}
               >
                 <img
@@ -105,7 +105,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               type="button"
               onClick={() => setCollapsed((value) => !value)}
               className={cn(
-                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-8 border border-stroke-soft-200 bg-bg-white-0 text-soft-400 transition-colors hover:border-stroke-sub-300 hover:text-strong-950 focus-visible:outline-none focus-visible:shadow-[var(--shadow-button-neutral-focus)]",
+                "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-8 border border-stroke-soft-200 bg-bg-panel text-soft-400 transition-colors hover:border-stroke-sub-300 hover:text-strong-950 focus-visible:outline-none focus-visible:shadow-[var(--shadow-button-neutral-focus)]",
                 collapsed && "absolute -end-3.5 top-6 z-10 shadow-[var(--shadow-regular-sm)]",
               )}
               aria-label={tr(collapsed ? "Expand sidebar" : "Collapse sidebar")}
@@ -116,7 +116,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
           </div>
           {!collapsed && (
             <>
-              <p className="mt-3 text-xs leading-5 text-soft-400">{tr("Managed procurement workspace")}</p>
+              <p className="mt-3 text-xs leading-5 text-soft-400">{tr("Procurement workspace")}</p>
               <span
                 className={cn(
                   "mt-3 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1",
@@ -130,15 +130,15 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
         </div>
 
         <nav className={cn("relative flex-1 overflow-y-auto pb-5", collapsed ? "px-3" : "px-3")}>
-          <div className="space-y-5">
+          <div className="flex flex-col gap-5">
             {navSections.map((section) => (
               <div key={section.label}>
                 {!collapsed && (
-                  <p className="mb-1.5 px-2 text-[11px] font-medium uppercase tracking-[0.04em] text-soft-400">
+                  <p className="mb-1.5 px-2 text-[11px] font-semibold text-soft-400">
                     {tr(section.label)}
                   </p>
                 )}
-                <div className="space-y-0.5">
+                <div className="flex flex-col gap-0.5">
                   {section.items.map((item) => {
                     const isActive =
                       location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
@@ -148,17 +148,17 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                         to={item.href}
                         title={collapsed ? tr(item.label) : undefined}
                         className={cn(
-                          "group relative flex items-center rounded-10 text-sm font-medium transition-colors",
+                          "group relative flex items-center rounded-10 text-sm font-medium transition-[background-color,color,box-shadow]",
                           collapsed ? "h-11 justify-center px-0" : "gap-3 px-2.5 py-2",
                           isActive
-                            ? "bg-primary-base text-white-0 shadow-[var(--shadow-regular-xs)]"
-                            : "text-sub-600 hover:bg-bg-weak-50 hover:text-strong-950",
+                            ? "bg-bg-panel text-strong-950 shadow-[var(--shadow-regular-sm)] before:absolute before:inset-y-2 before:start-0 before:w-1 before:rounded-full before:bg-primary-base"
+                            : "text-sub-600 hover:bg-bg-panel hover:text-strong-950",
                         )}
                       >
                         <span
                           className={cn(
                             "flex h-5 w-5 shrink-0 items-center justify-center",
-                            isActive ? "text-white-0" : "text-soft-400 group-hover:text-strong-950",
+                            isActive ? "text-primary-base" : "text-soft-400 group-hover:text-strong-950",
                           )}
                         >
                           <item.icon className="h-5 w-5" />
@@ -177,7 +177,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
           <Link
             to="/account"
             className={cn(
-              "mb-1.5 flex items-center rounded-10 transition-colors hover:bg-bg-weak-50",
+              "mb-1.5 flex items-center rounded-10 transition-colors hover:bg-bg-panel",
               collapsed ? "justify-center p-1.5" : "gap-3 p-2",
             )}
             title={collapsed ? tr("My account") : undefined}
@@ -199,7 +199,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
             onClick={signOut}
             title={collapsed ? tr("Sign out") : undefined}
             className={cn(
-              "flex w-full items-center rounded-10 text-sm font-medium text-sub-600 transition-colors hover:bg-bg-weak-50 hover:text-strong-950",
+              "flex w-full items-center rounded-10 text-sm font-medium text-sub-600 transition-colors hover:bg-bg-panel hover:text-strong-950",
               collapsed ? "h-10 justify-center" : "gap-2 px-2.5 py-2",
             )}
           >
@@ -210,7 +210,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-stroke-soft-200 bg-bg-white-0/85 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-stroke-soft-200 bg-bg-shell/88 backdrop-blur-xl">
           <div className="mx-auto flex h-16 w-full max-w-[1560px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
               <div className="min-w-0">
@@ -219,7 +219,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               </div>
             </div>
             <div className="hidden min-w-0 flex-1 items-center gap-4 lg:flex">
-              <label className="flex h-10 w-full max-w-[360px] items-center gap-2.5 rounded-10 border border-stroke-soft-200 bg-bg-white-0 px-3 text-soft-400 transition-colors focus-within:border-primary-base focus-within:shadow-[var(--shadow-button-primary-focus)]">
+              <label className="flex h-10 w-full max-w-[360px] items-center gap-2.5 rounded-10 border border-stroke-soft-200 bg-bg-panel px-3 text-soft-400 shadow-[var(--shadow-regular-xs)] transition-colors focus-within:border-primary-base focus-within:shadow-[var(--shadow-button-primary-focus)]">
                 <Search className="h-4 w-4 shrink-0" />
                 <input
                   type="search"
@@ -232,7 +232,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                 </span>
               </label>
               <div className="min-w-0 border-s border-stroke-soft-200 ps-4">
-                <p className="text-[11px] font-medium uppercase tracking-[0.04em] text-soft-400">
+                <p className="text-[11px] font-semibold text-soft-400">
                   {tr(portalLabel)}
                 </p>
                 <p className="mt-0.5 truncate text-sm font-semibold text-strong-950">{tr(activeLabel)}</p>
@@ -242,7 +242,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               <button
                 type="button"
                 onClick={() => setLang(lang === "en" ? "ar" : "en")}
-                className="inline-flex h-10 items-center gap-2 rounded-10 border border-stroke-soft-200 bg-bg-white-0 px-3 text-sm font-medium text-sub-600 transition-colors hover:bg-bg-weak-50 hover:text-strong-950"
+                className="inline-flex h-10 items-center gap-2 rounded-10 border border-stroke-soft-200 bg-bg-panel px-3 text-sm font-medium text-sub-600 shadow-[var(--shadow-regular-xs)] transition-colors hover:bg-bg-white-0 hover:text-strong-950"
                 aria-label={tr("Toggle language")}
               >
                 <Globe01 className="h-4 w-4" />
@@ -251,7 +251,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
               <NotificationBell />
               <Link
                 to="/account"
-                className="hidden items-center gap-3 rounded-10 border border-stroke-soft-200 bg-bg-white-0 p-1 pe-2 transition-colors hover:bg-bg-weak-50 sm:flex"
+                className="hidden items-center gap-3 rounded-10 border border-stroke-soft-200 bg-bg-panel p-1 pe-2 shadow-[var(--shadow-regular-xs)] transition-colors hover:bg-bg-white-0 sm:flex"
                 title={tr("My account")}
               >
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-8 bg-primary-base text-sm font-semibold text-white-0">
@@ -279,8 +279,8 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                   className={cn(
                     "flex shrink-0 items-center gap-2 rounded-10 px-3 py-1.5 text-sm font-medium",
                     isActive
-                      ? "bg-primary-base text-white-0"
-                      : "border border-stroke-soft-200 bg-bg-white-0 text-sub-600",
+                      ? "bg-primary-base text-white-0 shadow-[var(--shadow-regular-xs)]"
+                      : "border border-stroke-soft-200 bg-bg-panel text-sub-600",
                   )}
                 >
                   <item.icon className="h-4 w-4" />

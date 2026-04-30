@@ -176,18 +176,23 @@
 
   /* Surfaces — used via `bg-*` */
   --color-bg-white-0: #ffffff;
-  --color-bg-weak-50: #f5f7fa;
-  --color-bg-soft-200: #e2e4e9;
-  --color-bg-sub-300: #cdd0d5;
-  --color-bg-surface-700: #2b303b;
-  --color-bg-surface-800: #20232d;
+  --color-bg-weak-50: #f6f7f5;
+  --color-bg-soft-200: #e6e8e2;
+  --color-bg-sub-300: #d0d4cd;
+  --color-bg-surface-700: #2a3038;
+  --color-bg-surface-800: #1f252d;
   --color-bg-strong-950: #0a0d14;
+  --color-bg-shell: #f6f7f5;
+  --color-bg-panel: #fbfbf8;
+  --color-bg-inset: #f0f2ef;
 
   /* Strokes — used via `border-*` */
   --color-stroke-white-0: #ffffff;
-  --color-stroke-soft-200: #e2e4e9;
-  --color-stroke-sub-300: #cdd0d5;
+  --color-stroke-soft-200: #e3e6de;
+  --color-stroke-sub-300: #c7ccc2;
   --color-stroke-strong-950: #0a0d14;
+  --color-stroke-brand-soft: rgba(255, 109, 67, 0.28);
+  --color-stroke-cyan-soft: rgba(117, 218, 234, 0.36);
 
   /* State — base + light variants */
   --color-success-base: #1fc16b;
@@ -206,10 +211,11 @@
   --color-feature-light: #e0d4ff;
 
   /* AlignUI-style ring + soft-drop shadows */
-  --shadow-regular-xs: 0 1px 2px 0 rgba(10, 13, 20, 0.03);
-  --shadow-regular-sm: 0 2px 4px rgba(27, 28, 29, 0.04);
-  --shadow-regular-md: 0 16px 32px -12px rgba(88, 92, 95, 0.10);
-  --shadow-regular-lg: 0 24px 64px -12px rgba(20, 22, 28, 0.16);
+  --shadow-regular-xs: 0 1px 2px rgba(10, 13, 20, 0.03), 0 0 0 1px rgba(199, 204, 194, 0.42);
+  --shadow-regular-sm: 0 10px 24px -20px rgba(10, 13, 20, 0.26), 0 0 0 1px rgba(199, 204, 194, 0.54);
+  --shadow-regular-md: 0 18px 44px -28px rgba(10, 13, 20, 0.28), 0 0 0 1px rgba(199, 204, 194, 0.48);
+  --shadow-regular-lg: 0 28px 72px -34px rgba(10, 13, 20, 0.32), 0 0 0 1px rgba(199, 204, 194, 0.5);
+  --shadow-regular-inset: inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 -1px 0 rgba(10, 13, 20, 0.03);
   --shadow-button-primary-focus: 0 0 0 4px rgba(255, 109, 67, 0.16);
   --shadow-button-error-focus: 0 0 0 4px rgba(249, 112, 102, 0.16);
   --shadow-button-neutral-focus: 0 0 0 4px rgba(225, 228, 234, 0.32);
@@ -240,7 +246,7 @@
   --color-text-100: #475467;
   --color-text-200: #344054;
   --color-text-300: #1d2939;
-  --color-background-50: #f5f6f8;
+  --color-background-50: #f6f7f5;
   --color-background-100: #ffffff;
   --color-background-soft-50: #ffffff;
   --color-background-soft-100: #f9fafb;
@@ -384,7 +390,7 @@
   body {
     @apply bg-background text-foreground font-sans;
     color: #1a1a1a;
-    background: #f5f6f8;
+    background: #f6f7f5;
   }
   ::selection {
     color: #ffffff;

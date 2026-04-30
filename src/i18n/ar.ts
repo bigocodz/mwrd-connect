@@ -2,6 +2,7 @@ export const arStrings: Record<string, string> = {
   // Global / navigation
   "Dashboard": "لوحة التحكم",
   "Product Catalog": "كتالوج المنتجات",
+  "Cart": "السلة",
   "My RFQs": "طلبات التسعير",
   "Repeat RFQs": "طلبات التسعير المتكررة",
   "Quotes": "العروض",
@@ -39,6 +40,13 @@ export const arStrings: Record<string, string> = {
 
   // App shell
   "Procurement workspace": "مساحة عمل المشتريات",
+  "Workspace": "مساحة العمل",
+  "Operations": "العمليات",
+  "Finance & Compliance": "المالية والامتثال",
+  "Governance": "الحوكمة",
+  "Supply Desk": "مكتب التوريد",
+  "Business": "الأعمال",
+  "Procurement": "المشتريات",
   "Sign out": "تسجيل الخروج",
   "MWRD account": "حساب MWRD",
   "Toggle language": "تبديل اللغة",

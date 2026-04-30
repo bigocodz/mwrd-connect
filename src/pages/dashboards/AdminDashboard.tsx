@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import {
@@ -19,7 +18,16 @@ import {
 } from "@untitledui/icons";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { api } from "@cvx/api";
-import { EmptyMessage, MetricCard, PageHeader, Panel, SkeletonLine, type AppIcon } from "@/components/app/AppSurface";
+import {
+  EmptyMessage,
+  FlowStepCard,
+  MetricCard,
+  PageHeader,
+  Panel,
+  SignalCard,
+  SkeletonLine,
+  type AppIcon,
+} from "@/components/app/AppSurface";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminDashboard = () => {
@@ -60,29 +68,29 @@ const AdminDashboard = () => {
         icon={ShieldTick}
       >
         <div className="grid gap-3 md:grid-cols-3">
-          <AdminPulseCard
+          <SignalCard
             label={tr("Open queue")}
             value={String(pendingTotal)}
             helper={tr("Products, quotes, and payouts waiting for admin action.")}
             icon={ClockCheck}
             loading={loading}
-            tone="carrot"
+            tone="brand"
           />
-          <AdminPulseCard
+          <SignalCard
             label={tr("Credit watch")}
             value={String(creditWatchCount)}
             helper={tr("Clients above the utilization threshold.")}
             icon={Percent03}
             loading={loading}
-            tone="cyan"
+            tone="info"
           />
-          <AdminPulseCard
+          <SignalCard
             label={tr("Supplier quality")}
             value={topSupplier ? `${topSupplier.avg_rating.toFixed(1)} / 5` : tr("No reviews")}
             helper={topSupplier ? topSupplier.company_name : tr("Ratings will appear as reviews arrive.")}
             icon={Star01}
             loading={loading}
-            tone="sun"
+            tone="warning"
           />
         </div>
       </Panel>
@@ -97,16 +105,14 @@ const AdminDashboard = () => {
             { label: tr("PO"), value: tr("Dispatch order"), icon: PackageCheck },
             { label: tr("Invoice"), value: tr("Clear in Wafeq"), icon: Receipt },
           ].map((step, index) => (
-            <div key={step.label} className="rounded-xl border-2 border-white bg-white/70 p-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43]">
-                  <step.icon className="h-5 w-5" />
-                </span>
-                <span className="text-xs font-semibold text-[#98a2b3]">{String(index + 1).padStart(2, "0")}</span>
-              </div>
-              <p className="text-sm font-semibold text-[#1d2939]">{step.label}</p>
-              <p className="mt-1 text-xs leading-5 text-[#667085]">{step.value}</p>
-            </div>
+            <FlowStepCard
+              key={step.label}
+              label={step.label}
+              value={step.value}
+              icon={step.icon}
+              index={index}
+              tone={index === 0 ? "brand" : index === 1 ? "info" : "neutral"}
+            />
           ))}
         </div>
       </Panel>
@@ -122,7 +128,7 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[440px] text-sm">
                   <thead>
-                    <tr className="border-b border-border-primary text-start text-xs font-semibold uppercase text-text-tertiary">
+                    <tr className="border-b border-border-primary text-start text-xs font-semibold text-text-tertiary">
                       <th className="pb-3">{tr("Supplier")}</th>
                       <th className="pb-3 text-end">{tr("Avg Rating")}</th>
                       <th className="pb-3 text-end">{tr("Reviews")}</th>
@@ -153,7 +159,7 @@ const AdminDashboard = () => {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px] text-sm">
                   <thead>
-                    <tr className="border-b border-border-primary text-start text-xs font-semibold uppercase text-text-tertiary">
+                    <tr className="border-b border-border-primary text-start text-xs font-semibold text-text-tertiary">
                       <th className="pb-3">{tr("Client")}</th>
                       <th className="pb-3 text-end">{tr("Limit")}</th>
                       <th className="pb-3 text-end">{tr("Balance")}</th>
@@ -225,46 +231,11 @@ const AdminDashboard = () => {
 };
 
 const TableSkeleton = () => (
-  <div className="space-y-3">
+  <div className="flex flex-col gap-3">
     <SkeletonLine className="h-5 w-full" />
     <SkeletonLine className="h-5 w-11/12" />
     <SkeletonLine className="h-5 w-10/12" />
     <SkeletonLine className="h-5 w-9/12" />
-  </div>
-);
-
-const pulseTone = {
-  carrot: "bg-[#fff1eb] text-[#ba4424]",
-  cyan: "bg-[#eaf8fb] text-[#1a1a1a]",
-  sun: "bg-[#fff7d6] text-[#8c5f00]",
-};
-
-const AdminPulseCard = ({
-  label,
-  value,
-  helper,
-  icon: Icon,
-  loading,
-  tone,
-}: {
-  label: string;
-  value: ReactNode;
-  helper: ReactNode;
-  icon: AppIcon;
-  loading: boolean;
-  tone: keyof typeof pulseTone;
-}) => (
-  <div className="relative overflow-hidden rounded-xl border-2 border-white bg-white/70 p-4">
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-[#667085]">{label}</p>
-        {loading ? <SkeletonLine className="mt-2 h-7 w-24" /> : <p className="mt-2 text-2xl font-semibold leading-tight text-[#1d2939]">{value}</p>}
-      </div>
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${pulseTone[tone]}`}>
-        <Icon className="h-5 w-5" />
-      </span>
-    </div>
-    {!loading && <p className="mt-2 text-sm leading-relaxed text-[#667085]">{helper}</p>}
   </div>
 );
 
@@ -285,18 +256,18 @@ const PendingAction = ({
 }) => (
   <Link
     to={href}
-    className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-xl border-2 border-white bg-white/70 p-4 transition-colors hover:bg-white"
+    className="group relative flex items-center justify-between gap-4 overflow-hidden rounded-12 border border-stroke-soft-200 bg-bg-panel p-4 shadow-[var(--shadow-regular-xs)] transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-stroke-sub-300 hover:shadow-[var(--shadow-regular-sm)]"
   >
     <div className="flex min-w-0 items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#fff1eb] text-[#ff6d43] transition-colors group-hover:bg-[#ff6d43] group-hover:text-white">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-10 bg-primary-light text-primary-dark ring-1 ring-primary-alpha-16 transition-colors group-hover:bg-primary-base group-hover:text-white-0 group-hover:ring-primary-base">
         <Icon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-[#667085]">{label}</p>
-        {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-[#1d2939]">{count}</p>}
+        <p className="truncate text-sm font-semibold text-sub-600">{label}</p>
+        {loading ? <SkeletonLine className="mt-1 h-6 w-8" /> : <p className="text-xl font-semibold text-strong-950">{count}</p>}
       </div>
     </div>
-    <ArrowRight className={`h-4 w-4 shrink-0 text-[#8a8a85] transition-colors group-hover:text-[#ff6d43] ${dir === "rtl" ? "rotate-180" : ""}`} />
+    <ArrowRight className={`h-4 w-4 shrink-0 text-soft-400 transition-colors group-hover:text-primary-base ${dir === "rtl" ? "rotate-180" : ""}`} />
   </Link>
 );
 
