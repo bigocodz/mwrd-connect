@@ -1,0 +1,5 @@
+# Serve the static landing page directly
+/landing/index.html  /landing/index.html  200
+
+# SPA fallback — all other routes go through the React app
+/*  /index.html  200
