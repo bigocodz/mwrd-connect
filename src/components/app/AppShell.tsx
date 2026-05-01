@@ -95,7 +95,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
                 )}
               >
                 <img
-                  src="/logos/asset-2.svg"
+                  src="/logos/primary-logo-orange.svg"
                   alt="MWRD"
                   className={cn("h-9 w-auto max-w-[138px]", collapsed && "h-7 max-w-none scale-[1.85]")}
                 />
@@ -214,7 +214,7 @@ const AppShell = ({ children, navItems, portalLabel, portalTone }: AppShellProps
           <div className="mx-auto flex h-16 w-full max-w-[1560px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
               <div className="min-w-0">
-                <img src="/logos/asset-2.svg" alt="MWRD" className="h-7 w-auto max-w-[112px]" />
+                <img src="/logos/primary-logo-orange.svg" alt="MWRD" className="h-7 w-auto max-w-[112px]" />
                 <p className="truncate text-xs text-soft-400">{tr(portalLabel)}</p>
               </div>
             </div>

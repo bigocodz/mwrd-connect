@@ -90,7 +90,7 @@ const GetStarted = () => {
     <div className="min-h-screen bg-[#f5f6f8] text-[#1a1a1a]" dir={dir}>
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
         <Link to="/" className="inline-flex items-center">
-          <img src="/logos/asset-2.svg" alt="MWRD" className="h-9 w-auto max-w-[132px]" />
+          <img src="/logos/primary-logo-orange.svg" alt="MWRD" className="h-9 w-auto max-w-[132px]" />
         </Link>
         <div className="flex items-center gap-2">
           <button

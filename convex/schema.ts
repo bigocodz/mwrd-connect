@@ -5,6 +5,17 @@ import { authTables } from "@convex-dev/auth/server";
 export default defineSchema({
   ...authTables,
 
+  pending_users: defineTable({
+    email: v.string(),
+    role: v.union(
+      v.literal("CLIENT"),
+      v.literal("SUPPLIER"),
+      v.literal("AUDITOR"),
+    ),
+    company_name: v.string(),
+    created_at: v.number(),
+  }).index("by_email", ["email"]),
+
   profiles: defineTable({
     userId: v.id("users"),
     // Roles. AUDITOR (PRD §13.4) is read-only — same admin surfaces as

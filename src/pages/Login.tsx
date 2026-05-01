@@ -112,11 +112,11 @@ const Login = () => {
         >
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(198,228,238,0.18)_0%,rgba(190,184,174,0.10)_42%,rgba(255,109,67,0.24)_100%)]" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(0deg,rgba(26,26,26,0.96),rgba(26,26,26,0))]" />
-          <img src="/logos/asset-2.svg" alt="" className="pointer-events-none absolute -end-28 top-20 w-[520px] opacity-[0.08] invert" />
+          <img src="/logos/primary-logo-orange.svg" alt="" className="pointer-events-none absolute -end-28 top-20 w-[520px] opacity-[0.08]" />
 
           <div className="relative z-10">
             <span className="inline-flex rounded-lg bg-white px-3 py-2.5 shadow-[0_14px_30px_rgba(0,0,0,0.22),inset_0_0_0_1px_rgba(190,184,174,0.45)]">
-              <img src="/logos/asset-2.svg" alt="MWRD" className="h-9 w-auto max-w-[150px]" />
+              <img src="/logos/primary-logo-orange.svg" alt="MWRD" className="h-9 w-auto max-w-[150px]" />
             </span>
             <p className="mt-3 text-xs text-white/60">{tr("Procurement workspace")}</p>
           </div>
@@ -151,7 +151,7 @@ const Login = () => {
         <section className="flex flex-col bg-white px-6 py-8 sm:px-10 sm:py-10 lg:px-14" dir={dir}>
           <div className="flex items-center justify-between gap-4">
             <Link to="/" className="flex items-center gap-3">
-              <img src="/logos/asset-2.svg" alt="MWRD" className="h-9 w-auto max-w-[128px]" />
+              <img src="/logos/primary-logo-orange.svg" alt="MWRD" className="h-9 w-auto max-w-[128px]" />
             </Link>
 
             <div className="flex items-center gap-2">

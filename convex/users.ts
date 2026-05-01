@@ -264,6 +264,36 @@ export const adjustBalance = mutation({
   },
 });
 
+export const deleteUser = mutation({
+  args: { id: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const admin = await requireAdmin(ctx);
+    const profile = await ctx.db.get(args.id);
+    if (!profile) throw new ConvexError("User not found");
+
+    // Cannot delete admin accounts or own account
+    if (profile.role === "ADMIN") {
+      throw new ConvexError("Cannot delete admin accounts");
+    }
+    if (profile.userId === admin.userId) {
+      throw new ConvexError("Cannot delete your own account");
+    }
+
+    // Delete the profile
+    await ctx.db.delete(args.id);
+
+    // Delete the user account
+    await ctx.db.delete(profile.userId);
+
+    await logAction(ctx, {
+      action: "user.delete",
+      target_type: "user",
+      target_id: args.id,
+      details: { public_id: profile.public_id, role: profile.role, company_name: profile.company_name },
+    });
+  },
+});
+
 export const activateAndFlagPasswordChange = internalMutation({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {

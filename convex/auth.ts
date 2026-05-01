@@ -66,19 +66,30 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         name: args.profile.name as string | undefined,
       });
 
-      // Parse role/company_name from name field (used by admin-created accounts)
+      // Check if this is an admin-created account by looking for pending user role
       let role: "CLIENT" | "SUPPLIER" | "ADMIN" | "AUDITOR" = "CLIENT";
       let company_name: string | undefined;
       let adminCreated = false;
-      const profileName = args.profile.name as string | undefined;
-      try {
-        const meta = JSON.parse(profileName ?? "");
-        if (meta.role) role = meta.role;
-        if (meta.company_name) company_name = meta.company_name;
-        adminCreated = true;
-      } catch {
-        // name is a plain string, not JSON — normal self-signup
-        company_name = profileName;
+
+      const email = args.profile.email as string | undefined;
+      if (email) {
+        const pending = await ctx.db
+          .query("pending_users")
+          .withIndex("by_email", (q) => q.eq("email", email))
+          .unique();
+
+        if (pending) {
+          role = pending.role;
+          company_name = pending.company_name;
+          adminCreated = true;
+          // Clean up the pending user record
+          await ctx.db.delete(pending._id);
+        } else {
+          // Normal self-signup uses the name field as company name
+          company_name = args.profile.name as string | undefined;
+        }
+      } else {
+        company_name = args.profile.name as string | undefined;
       }
 
       const existing = await ctx.db

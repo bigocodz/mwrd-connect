@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@cvx/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Star } from "lucide-react";
+import { Plus, Search, Star, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { usePagination, PaginationControls } from "@/components/shared/Pagination";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -38,6 +40,10 @@ const AdminUsers = () => {
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [kycFilter, setKycFilter] = useState("ALL");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deleteUser = useMutation(api.users.deleteUser);
 
   const usersData = useQuery(api.users.listAll, {
     role: roleFilter === "ALL" ? undefined : roleFilter,
@@ -57,6 +63,27 @@ const AdminUsers = () => {
   });
 
   const { page, setPage, totalPages, paginated, total } = usePagination(filtered);
+
+  const handleDeleteClick = (e: React.MouseEvent, user: any) => {
+    e.stopPropagation();
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteUser({ id: userToDelete._id });
+      toast.success(tr("User deleted successfully"));
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (err: any) {
+      toast.error(err.message || tr("Failed to delete user"));
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -127,6 +154,7 @@ const AdminUsers = () => {
                   <TableHead>{tr("Status")}</TableHead>
                   <TableHead>{tr("KYC")}</TableHead>
                   <TableHead>{tr("Created")}</TableHead>
+                  <TableHead className="w-[60px]">{tr("Actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -143,6 +171,16 @@ const AdminUsers = () => {
                     <TableCell><span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${statusColors[u.status] || ""}`}>{u.status}</span></TableCell>
                     <TableCell><span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${kycColors[u.kyc_status] || ""}`}>{u.kyc_status}</span></TableCell>
                     <TableCell className="text-muted-foreground text-sm">{format(new Date(u._creationTime), "MMM d, yyyy")}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleDeleteClick(e, u)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -151,6 +189,29 @@ const AdminUsers = () => {
           <PaginationControls page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
         </>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tr("Delete User")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tr("Are you sure you want to delete {name}? This action cannot be undone.", {
+                name: userToDelete?.company_name || userToDelete?.public_id || "this user",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3">
+            <AlertDialogCancel>{tr("Cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? tr("Deleting...") : tr("Delete")}
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
