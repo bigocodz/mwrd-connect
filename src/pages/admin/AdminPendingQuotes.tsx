@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FileText, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const AdminPendingQuotes = () => {
+  const { tr } = useLanguage();
   const quotesData = useQuery(api.quotes.listPending);
   const loading = quotesData === undefined;
   const quotes = quotesData ?? [];
@@ -17,8 +19,8 @@ const AdminPendingQuotes = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Pending Quotes</h1>
-          <p className="text-muted-foreground mt-1">Review supplier quotes before sending to clients.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground">{tr("Pending Quotes")}</h1>
+          <p className="text-muted-foreground mt-1">{tr("Review supplier quotes before sending to clients.")}</p>
         </div>
 
         {loading ? (
@@ -27,19 +29,19 @@ const AdminPendingQuotes = () => {
           <Card>
             <CardContent className="py-16 text-center">
               <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground">No pending quotes to review.</p>
+              <p className="text-muted-foreground">{tr("No pending quotes to review.")}</p>
             </CardContent>
           </Card>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Quote ID</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>RFQ</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Submitted</TableHead>
+                <TableHead>{tr("Quote ID")}</TableHead>
+                <TableHead>{tr("Supplier")}</TableHead>
+                <TableHead>{tr("Status")}</TableHead>
+                <TableHead>{tr("RFQ")}</TableHead>
+                <TableHead>{tr("Items")}</TableHead>
+                <TableHead>{tr("Submitted")}</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -56,7 +58,7 @@ const AdminPendingQuotes = () => {
                   <TableCell className="text-sm">{new Date(q._creationTime).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Button variant="default" size="sm" asChild>
-                      <Link to={`/admin/quotes/${q._id}/review`}>Review</Link>
+                      <Link to={`/admin/quotes/${q._id}/review`}>{tr("Review")}</Link>
                     </Button>
                   </TableCell>
                 </TableRow>
