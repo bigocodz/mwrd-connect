@@ -18,6 +18,13 @@ type Profile = {
   frozen_at?: number;
   freeze_reason?: string;
   must_change_password?: boolean;
+  // Client team-member metadata. OWNER (or undefined for legacy) means full
+  // control of the org; ADMIN/BUYER/APPROVER/VIEWER are scoped sub-roles.
+  parent_client_id?: string;
+  team_role?: "OWNER" | "ADMIN" | "BUYER" | "APPROVER" | "VIEWER";
+  full_name?: string;
+  job_title?: string;
+  phone?: string;
 };
 
 type AuthContextType = {

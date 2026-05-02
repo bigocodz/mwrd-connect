@@ -1,7 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireClient } from "./lib";
+import { getClientOrgId, requireClient } from "./lib";
 
 type OrgTable = "cost_centers" | "branches" | "departments";
 
@@ -23,32 +23,32 @@ const listForClient = async (ctx: any, table: OrgTable, clientId: Id<"profiles">
 
 export const listMyCostCenters = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
-    return listForClient(ctx, "cost_centers", profile._id);
+    const orgId = await getClientOrgId(ctx);
+    return listForClient(ctx, "cost_centers", orgId);
   },
 });
 
 export const listMyBranches = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
-    return listForClient(ctx, "branches", profile._id);
+    const orgId = await getClientOrgId(ctx);
+    return listForClient(ctx, "branches", orgId);
   },
 });
 
 export const listMyDepartments = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
-    return listForClient(ctx, "departments", profile._id);
+    const orgId = await getClientOrgId(ctx);
+    return listForClient(ctx, "departments", orgId);
   },
 });
 
 export const createCostCenter = mutation({
   args: { code: v.string(), name: v.string(), notes: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     if (!args.code.trim() || !args.name.trim()) throw new ConvexError("Code and name are required");
     return ctx.db.insert("cost_centers", {
-      client_id: profile._id,
+      client_id: orgId,
       code: args.code.trim(),
       name: args.name.trim(),
       notes: args.notes?.trim() || undefined,
@@ -64,8 +64,8 @@ export const updateCostCenter = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
-    await ensureOwnership(ctx, "cost_centers", args.id, profile._id);
+    const orgId = await getClientOrgId(ctx);
+    await ensureOwnership(ctx, "cost_centers", args.id, orgId);
     await ctx.db.patch(args.id, {
       code: args.code.trim(),
       name: args.name.trim(),
@@ -77,8 +77,8 @@ export const updateCostCenter = mutation({
 export const archiveCostCenter = mutation({
   args: { id: v.id("cost_centers") },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
-    await ensureOwnership(ctx, "cost_centers", args.id, profile._id);
+    const orgId = await getClientOrgId(ctx);
+    await ensureOwnership(ctx, "cost_centers", args.id, orgId);
     await ctx.db.patch(args.id, { archived: true });
   },
 });
@@ -86,10 +86,10 @@ export const archiveCostCenter = mutation({
 export const createBranch = mutation({
   args: { name: v.string(), location: v.optional(v.string()), notes: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     if (!args.name.trim()) throw new ConvexError("Name is required");
     return ctx.db.insert("branches", {
-      client_id: profile._id,
+      client_id: orgId,
       name: args.name.trim(),
       location: args.location?.trim() || undefined,
       notes: args.notes?.trim() || undefined,
@@ -105,8 +105,8 @@ export const updateBranch = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
-    await ensureOwnership(ctx, "branches", args.id, profile._id);
+    const orgId = await getClientOrgId(ctx);
+    await ensureOwnership(ctx, "branches", args.id, orgId);
     await ctx.db.patch(args.id, {
       name: args.name.trim(),
       location: args.location?.trim() || undefined,
@@ -118,8 +118,8 @@ export const updateBranch = mutation({
 export const archiveBranch = mutation({
   args: { id: v.id("branches") },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
-    await ensureOwnership(ctx, "branches", args.id, profile._id);
+    const orgId = await getClientOrgId(ctx);
+    await ensureOwnership(ctx, "branches", args.id, orgId);
     await ctx.db.patch(args.id, { archived: true });
   },
 });
@@ -127,10 +127,10 @@ export const archiveBranch = mutation({
 export const createDepartment = mutation({
   args: { name: v.string(), notes: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     if (!args.name.trim()) throw new ConvexError("Name is required");
     return ctx.db.insert("departments", {
-      client_id: profile._id,
+      client_id: orgId,
       name: args.name.trim(),
       notes: args.notes?.trim() || undefined,
     });
@@ -140,8 +140,8 @@ export const createDepartment = mutation({
 export const updateDepartment = mutation({
   args: { id: v.id("departments"), name: v.string(), notes: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
-    await ensureOwnership(ctx, "departments", args.id, profile._id);
+    const orgId = await getClientOrgId(ctx);
+    await ensureOwnership(ctx, "departments", args.id, orgId);
     await ctx.db.patch(args.id, {
       name: args.name.trim(),
       notes: args.notes?.trim() || undefined,
@@ -152,8 +152,8 @@ export const updateDepartment = mutation({
 export const archiveDepartment = mutation({
   args: { id: v.id("departments") },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
-    await ensureOwnership(ctx, "departments", args.id, profile._id);
+    const orgId = await getClientOrgId(ctx);
+    await ensureOwnership(ctx, "departments", args.id, orgId);
     await ctx.db.patch(args.id, { archived: true });
   },
 });

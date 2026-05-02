@@ -22,6 +22,21 @@ export const storePendingUserRole = internalMutation({
     email: v.string(),
     role: v.union(v.literal("CLIENT"), v.literal("SUPPLIER"), v.literal("AUDITOR")),
     company_name: v.string(),
+    // Optional team-invite payload — when an owner invites a colleague the
+    // auth callback uses these to attach the new profile to the parent org
+    // with the correct team_role + display info.
+    parent_client_id: v.optional(v.id("profiles")),
+    team_role: v.optional(
+      v.union(
+        v.literal("ADMIN"),
+        v.literal("BUYER"),
+        v.literal("APPROVER"),
+        v.literal("VIEWER"),
+      ),
+    ),
+    full_name: v.optional(v.string()),
+    job_title: v.optional(v.string()),
+    phone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("pending_users", {
@@ -29,6 +44,11 @@ export const storePendingUserRole = internalMutation({
       role: args.role,
       company_name: args.company_name,
       created_at: Date.now(),
+      parent_client_id: args.parent_client_id,
+      team_role: args.team_role,
+      full_name: args.full_name,
+      job_title: args.job_title,
+      phone: args.phone,
     });
   },
 });

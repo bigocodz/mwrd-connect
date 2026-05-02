@@ -2,7 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, requireAdminRead, requireClient, requireSupplier, getAuthenticatedProfile } from "./lib";
+import { requireAdmin, requireAdminRead, requireClient, requireSupplier, getAuthenticatedProfile, getClientOrgId } from "./lib";
 import { logAction } from "./audit";
 import { enqueueNotification } from "./notifyHelpers";
 
@@ -139,10 +139,10 @@ const enrichOrder = async (ctx: any, order: any) => {
 
 export const listMineClient = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const orders = await ctx.db
       .query("orders")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .order("desc")
       .collect();
     return Promise.all(orders.map((order) => enrichOrder(ctx, order)));
@@ -188,11 +188,13 @@ export const getById = query({
     const order = await ctx.db.get(args.id);
     if (!order) return null;
     // ADMIN + AUDITOR (PRD §13.4 read-only) see every order; CLIENT/SUPPLIER
-    // only see orders where they're the counterparty.
+    // only see orders where they're the counterparty. Client team members
+    // share the org owner's id for ownership checks.
+    const clientOrgId = profile.parent_client_id ?? profile._id;
     if (
       profile.role !== "ADMIN" &&
       profile.role !== "AUDITOR" &&
-      order.client_id !== profile._id &&
+      order.client_id !== clientOrgId &&
       order.supplier_id !== profile._id
     ) {
       throw new ConvexError("Forbidden");
@@ -256,9 +258,10 @@ const requireOrderForSupplier = async (ctx: any, orderId: Id<"orders">) => {
 
 const requireOrderForClient = async (ctx: any, orderId: Id<"orders">) => {
   const profile = await requireClient(ctx);
+  const orgId = profile.parent_client_id ?? profile._id;
   const order = await ctx.db.get(orderId);
   if (!order) throw new ConvexError("Order not found");
-  if (order.client_id !== profile._id) throw new ConvexError("Forbidden");
+  if (order.client_id !== orgId) throw new ConvexError("Forbidden");
   return { profile, order };
 };
 
@@ -482,12 +485,15 @@ export const cancel = mutation({
     if (profile.role === "AUDITOR") throw new ConvexError("Forbidden");
     const order = await ctx.db.get(args.id);
     if (!order) throw new ConvexError("Order not found");
-    if (
-      profile.role !== "ADMIN" &&
-      order.client_id !== profile._id &&
-      order.supplier_id !== profile._id
-    ) {
-      throw new ConvexError("Forbidden");
+    {
+      const clientOrgId = profile.parent_client_id ?? profile._id;
+      if (
+        profile.role !== "ADMIN" &&
+        order.client_id !== clientOrgId &&
+        order.supplier_id !== profile._id
+      ) {
+        throw new ConvexError("Forbidden");
+      }
     }
     if (["COMPLETED", "CANCELLED"].includes(order.status)) {
       throw new ConvexError(`Order is ${order.status}; cannot cancel.`);
@@ -628,12 +634,15 @@ export const addNote = mutation({
     if (profile.role === "AUDITOR") throw new ConvexError("Forbidden");
     const order = await ctx.db.get(args.id);
     if (!order) throw new ConvexError("Order not found");
-    if (
-      profile.role !== "ADMIN" &&
-      order.client_id !== profile._id &&
-      order.supplier_id !== profile._id
-    ) {
-      throw new ConvexError("Forbidden");
+    {
+      const clientOrgId = profile.parent_client_id ?? profile._id;
+      if (
+        profile.role !== "ADMIN" &&
+        order.client_id !== clientOrgId &&
+        order.supplier_id !== profile._id
+      ) {
+        throw new ConvexError("Forbidden");
+      }
     }
     await recordEvent(ctx, args.id, { _id: profile._id, role: profile.role }, "NOTE", args.message);
   },
@@ -675,9 +684,13 @@ export const createFromAward = mutation({
   },
   handler: async (ctx, args) => {
     const profile = await requireClient(ctx);
+    if (profile.team_role === "VIEWER") {
+      throw new ConvexError("Viewer accounts cannot award orders");
+    }
+    const orgId = profile.parent_client_id ?? profile._id;
     const rfq = await ctx.db.get(args.rfq_id);
     if (!rfq) throw new ConvexError("RFQ not found");
-    if (rfq.client_id !== profile._id) throw new ConvexError("Forbidden");
+    if (rfq.client_id !== orgId) throw new ConvexError("Forbidden");
     if (args.lines.length === 0) throw new ConvexError("No award lines");
 
     // Resolve each line → quote_item under that quote for the rfq_item.
@@ -750,7 +763,7 @@ export const createFromAward = mutation({
     const transactionRef = generateTransactionRef();
     const cpoId = await ctx.db.insert("client_purchase_orders", {
       rfq_id: args.rfq_id,
-      client_id: profile._id,
+      client_id: orgId,
       transaction_ref: transactionRef,
       award_mode: args.award_mode,
       status: "OPEN",
@@ -773,7 +786,7 @@ export const createFromAward = mutation({
       const orderId = await ctx.db.insert("orders", {
         rfq_id: args.rfq_id,
         quote_id: lines[0].quote_id,
-        client_id: profile._id,
+        client_id: orgId,
         supplier_id: supplierId,
         client_po_id: cpoId,
         transaction_ref: transactionRef,
@@ -865,12 +878,15 @@ export const getCpoById = query({
     if (!profile) return null;
     const cpo = await ctx.db.get(args.id);
     if (!cpo) return null;
-    if (
-      profile.role !== "ADMIN" &&
-      profile.role !== "AUDITOR" &&
-      cpo.client_id !== profile._id
-    ) {
-      return null;
+    {
+      const clientOrgId = profile.parent_client_id ?? profile._id;
+      if (
+        profile.role !== "ADMIN" &&
+        profile.role !== "AUDITOR" &&
+        cpo.client_id !== clientOrgId
+      ) {
+        return null;
+      }
     }
     const orders = await ctx.db
       .query("orders")
@@ -891,10 +907,10 @@ export const getCpoById = query({
 
 export const listMyCpos = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const cpos = await ctx.db
       .query("client_purchase_orders")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .order("desc")
       .collect();
     return Promise.all(

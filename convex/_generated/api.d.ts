@@ -20,6 +20,7 @@ import type * as categories from "../categories.js";
 import type * as clientCatalog from "../clientCatalog.js";
 import type * as clientInvoiceAdjustments from "../clientInvoiceAdjustments.js";
 import type * as clientInvoices from "../clientInvoices.js";
+import type * as clientTeam from "../clientTeam.js";
 import type * as comments from "../comments.js";
 import type * as contracts from "../contracts.js";
 import type * as crons from "../crons.js";
@@ -87,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   clientCatalog: typeof clientCatalog;
   clientInvoiceAdjustments: typeof clientInvoiceAdjustments;
   clientInvoices: typeof clientInvoices;
+  clientTeam: typeof clientTeam;
   comments: typeof comments;
   contracts: typeof contracts;
   crons: typeof crons;

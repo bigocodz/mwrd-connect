@@ -14,6 +14,21 @@ export default defineSchema({
     ),
     company_name: v.string(),
     created_at: v.number(),
+    // Client team-member invites: when an org owner invites a colleague,
+    // these fields steer the auth callback to attach the new profile to
+    // the parent org with the right team_role + display info.
+    parent_client_id: v.optional(v.id("profiles")),
+    team_role: v.optional(
+      v.union(
+        v.literal("ADMIN"),
+        v.literal("BUYER"),
+        v.literal("APPROVER"),
+        v.literal("VIEWER"),
+      ),
+    ),
+    full_name: v.optional(v.string()),
+    job_title: v.optional(v.string()),
+    phone: v.optional(v.string()),
   }).index("by_email", ["email"]),
 
   profiles: defineTable({
@@ -118,10 +133,32 @@ export default defineSchema({
     // historical artifacts stay correct if the user replaces it later.
     signature_storage_id: v.optional(v.id("_storage")),
     signature_uploaded_at: v.optional(v.number()),
+    // Client team-member model. The first profile created for an account is
+    // the OWNER; additional team members are profiles whose parent_client_id
+    // points at the owner's _id. All org-scoped data (RFQs, orders, cost
+    // centers, etc.) keys on the owner profile, so every team member sees
+    // the same org. team_role gates which actions a member can perform on
+    // shared org data.
+    parent_client_id: v.optional(v.id("profiles")),
+    team_role: v.optional(
+      v.union(
+        v.literal("OWNER"),     // org account holder; full control
+        v.literal("ADMIN"),     // can manage team + every org action
+        v.literal("BUYER"),     // can browse, create RFQs, place orders
+        v.literal("APPROVER"),  // sits in the approval tree; reviews + approves
+        v.literal("VIEWER"),    // read-only across org data
+      ),
+    ),
+    // Personal display fields for team members (the OWNER reuses
+    // company_name / legal_name etc.).
+    full_name: v.optional(v.string()),
+    job_title: v.optional(v.string()),
+    phone: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_role", ["role"])
-    .index("by_public_id", ["public_id"]),
+    .index("by_public_id", ["public_id"])
+    .index("by_parent_client", ["parent_client_id"]),
 
   // Master Catalog (Phase 1 of catalog two-tier refactor). Admin-curated,
   // single source of truth for product identity (name, specs, images, pack

@@ -47,3 +47,26 @@ export async function requireSupplier(ctx: QueryCtx | MutationCtx) {
 export async function requireClient(ctx: QueryCtx | MutationCtx) {
   return requireRole(ctx, "CLIENT");
 }
+
+/**
+ * Returns the org-owner profile id for the current actor.
+ *
+ * Team members are CLIENT profiles with `parent_client_id` set to the org
+ * owner's profile id. All org-scoped data (RFQs, orders, cost centers,
+ * approvals, etc.) keys on the owner's id so every team member sees the
+ * same shared org. Use this in queries/mutations that touch shared client
+ * data; use `requireClient` when you need the *actor's* identity (audit,
+ * notifications).
+ */
+export async function getClientOrgId(ctx: QueryCtx | MutationCtx) {
+  const profile = await requireClient(ctx);
+  return profile.parent_client_id ?? profile._id;
+}
+
+/**
+ * Returns both the actor and the org-owner id in one call.
+ */
+export async function requireClientWithOrg(ctx: QueryCtx | MutationCtx) {
+  const profile = await requireClient(ctx);
+  return { profile, orgId: profile.parent_client_id ?? profile._id };
+}

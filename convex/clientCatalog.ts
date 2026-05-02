@@ -1,6 +1,6 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
-import { requireClient } from "./lib";
+import { getClientOrgId, requireClient } from "./lib";
 
 const enrich = async (ctx: any, entry: any) => {
   const product = await ctx.db.get(entry.product_id);
@@ -9,10 +9,10 @@ const enrich = async (ctx: any, entry: any) => {
 
 export const listMine = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const entries = await ctx.db
       .query("client_catalog_entries")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .order("desc")
       .collect();
     const enriched = await Promise.all(entries.map((entry) => enrich(ctx, entry)));
@@ -28,7 +28,7 @@ export const addProduct = mutation({
     pinned: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const product = await ctx.db.get(args.product_id);
     if (!product || product.approval_status !== "APPROVED") {
       throw new ConvexError("Product not available");
@@ -36,7 +36,7 @@ export const addProduct = mutation({
     const existing = await ctx.db
       .query("client_catalog_entries")
       .withIndex("by_client_product", (q) =>
-        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+        q.eq("client_id", orgId).eq("product_id", args.product_id),
       )
       .unique();
     if (existing) {
@@ -49,7 +49,7 @@ export const addProduct = mutation({
       return existing._id;
     }
     return ctx.db.insert("client_catalog_entries", {
-      client_id: profile._id,
+      client_id: orgId,
       product_id: args.product_id,
       alias: args.alias?.trim() || undefined,
       notes: args.notes?.trim() || undefined,
@@ -68,9 +68,9 @@ export const updateEntry = mutation({
     hidden: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const entry = await ctx.db.get(args.id);
-    if (!entry || entry.client_id !== profile._id) throw new ConvexError("Forbidden");
+    if (!entry || entry.client_id !== orgId) throw new ConvexError("Forbidden");
     const patch: Record<string, unknown> = {};
     if (args.alias !== undefined) patch.alias = args.alias.trim() || undefined;
     if (args.notes !== undefined) patch.notes = args.notes.trim() || undefined;
@@ -83,19 +83,19 @@ export const updateEntry = mutation({
 export const remove = mutation({
   args: { id: v.id("client_catalog_entries") },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const entry = await ctx.db.get(args.id);
-    if (!entry || entry.client_id !== profile._id) throw new ConvexError("Forbidden");
+    if (!entry || entry.client_id !== orgId) throw new ConvexError("Forbidden");
     await ctx.db.delete(args.id);
   },
 });
 
 export const myProductIds = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const entries = await ctx.db
       .query("client_catalog_entries")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .collect();
     return entries.map((e) => ({
       product_id: e.product_id,
@@ -111,10 +111,10 @@ export const myProductIds = query({
 
 export const listMyCart = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const entries = await ctx.db
       .query("client_catalog_entries")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .collect();
     const inCart = entries.filter((e) => (e.cart_quantity ?? 0) > 0);
     const enriched = await Promise.all(
@@ -139,7 +139,7 @@ export const addToCart = mutation({
     quantity: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const product = await ctx.db.get(args.product_id);
     if (!product || product.approval_status !== "APPROVED") {
       throw new ConvexError("Product not available");
@@ -148,7 +148,7 @@ export const addToCart = mutation({
     const existing = await ctx.db
       .query("client_catalog_entries")
       .withIndex("by_client_product", (q) =>
-        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+        q.eq("client_id", orgId).eq("product_id", args.product_id),
       )
       .unique();
     if (existing) {
@@ -161,7 +161,7 @@ export const addToCart = mutation({
       return existing._id;
     }
     return ctx.db.insert("client_catalog_entries", {
-      client_id: profile._id,
+      client_id: orgId,
       product_id: args.product_id,
       pinned: false,
       hidden: false,
@@ -177,12 +177,12 @@ export const setCartQuantity = mutation({
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const qty = Math.max(0, Math.floor(args.quantity));
     const existing = await ctx.db
       .query("client_catalog_entries")
       .withIndex("by_client_product", (q) =>
-        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+        q.eq("client_id", orgId).eq("product_id", args.product_id),
       )
       .unique();
     if (!existing) {
@@ -192,7 +192,7 @@ export const setCartQuantity = mutation({
         throw new ConvexError("Product not available");
       }
       return ctx.db.insert("client_catalog_entries", {
-        client_id: profile._id,
+        client_id: orgId,
         product_id: args.product_id,
         pinned: false,
         hidden: false,
@@ -211,11 +211,11 @@ export const setCartQuantity = mutation({
 export const removeFromCart = mutation({
   args: { product_id: v.id("products") },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const existing = await ctx.db
       .query("client_catalog_entries")
       .withIndex("by_client_product", (q) =>
-        q.eq("client_id", profile._id).eq("product_id", args.product_id),
+        q.eq("client_id", orgId).eq("product_id", args.product_id),
       )
       .unique();
     if (!existing) return;
@@ -225,10 +225,10 @@ export const removeFromCart = mutation({
 
 export const clearCart = mutation({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const entries = await ctx.db
       .query("client_catalog_entries")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .collect();
     for (const entry of entries) {
       if ((entry.cart_quantity ?? 0) > 0) {

@@ -50,6 +50,7 @@ import ClientQuotes from "./pages/client/ClientQuotes";
 import ClientOrders from "./pages/client/ClientOrders";
 import ClientOrderDetail from "./pages/client/ClientOrderDetail";
 import ClientOrganization from "./pages/client/ClientOrganization";
+import ClientTeam from "./pages/client/ClientTeam";
 import ClientSchedules from "./pages/client/ClientSchedules";
 import ClientInvoices from "./pages/client/ClientInvoices";
 import ClientReports from "./pages/client/ClientReports";
@@ -154,6 +155,9 @@ const App = () => (
                 } />
                 <Route path="/client/organization" element={
                   <SafeRoute roles={["CLIENT"]}><ClientOrganization /></SafeRoute>
+                } />
+                <Route path="/client/team" element={
+                  <SafeRoute roles={["CLIENT"]}><ClientTeam /></SafeRoute>
                 } />
                 <Route path="/client/schedules" element={
                   <SafeRoute roles={["CLIENT"]}><ClientSchedules /></SafeRoute>

@@ -70,6 +70,13 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       let role: "CLIENT" | "SUPPLIER" | "ADMIN" | "AUDITOR" = "CLIENT";
       let company_name: string | undefined;
       let adminCreated = false;
+      // Team-invite metadata (set when an org owner invites a colleague).
+      let parent_client_id: any = undefined;
+      let team_role: "OWNER" | "ADMIN" | "BUYER" | "APPROVER" | "VIEWER" | undefined =
+        undefined;
+      let invited_full_name: string | undefined;
+      let invited_job_title: string | undefined;
+      let invited_phone: string | undefined;
 
       const email = args.profile.email as string | undefined;
       if (email) {
@@ -82,6 +89,11 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
           role = pending.role;
           company_name = pending.company_name;
           adminCreated = true;
+          parent_client_id = pending.parent_client_id;
+          team_role = pending.team_role;
+          invited_full_name = pending.full_name;
+          invited_job_title = pending.job_title;
+          invited_phone = pending.phone;
           // Clean up the pending user record
           await ctx.db.delete(pending._id);
         } else {
@@ -112,16 +124,29 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       // without going through the KYC funnel that doesn't apply.
       const isAuditor = role === "AUDITOR";
 
+      // Team-member profiles inherit ACTIVE status + parent KYC posture so
+      // a newly-invited colleague can sign in immediately. Only the OWNER
+      // profile goes through KYC.
+      const isTeamMember = !!parent_client_id && role === "CLIENT";
+      const status = isAuditor || isTeamMember ? "ACTIVE" : "PENDING";
+      const kyc_status =
+        isAuditor || isTeamMember ? "VERIFIED" : "INCOMPLETE";
+
       await ctx.db.insert("profiles", {
         userId,
         role,
-        status: isAuditor ? "ACTIVE" : "PENDING",
-        kyc_status: isAuditor ? "VERIFIED" : "INCOMPLETE",
+        status,
+        kyc_status,
         company_name,
         public_id,
         credit_limit: 0,
         current_balance: 0,
         must_change_password: adminCreated ? true : undefined,
+        parent_client_id: isTeamMember ? parent_client_id : undefined,
+        team_role: isTeamMember ? (team_role ?? "BUYER") : undefined,
+        full_name: invited_full_name,
+        job_title: invited_job_title,
+        phone: invited_phone,
       });
 
       return userId;

@@ -1,7 +1,7 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { Id } from "./_generated/dataModel";
-import { requireAdmin, requireAdminRead, requireClient } from "./lib";
+import { getClientOrgId, requireAdmin, requireAdminRead, requireClient } from "./lib";
 import { createFromQuote as createOrderFromQuote } from "./orders";
 import { logAction } from "./audit";
 import { enqueueNotification } from "./notifyHelpers";
@@ -168,10 +168,10 @@ export const checkApprovalForQuote = async (
 
 export const listMyRules = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     return ctx.db
       .query("approval_rules")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .order("asc")
       .collect();
   },
@@ -203,7 +203,7 @@ export const upsertRule = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     if (!args.name.trim()) throw new ConvexError("Name is required");
     if (args.min_amount < 0) throw new ConvexError("Minimum amount must be non-negative");
     if (args.max_amount != null && args.max_amount < args.min_amount) {
@@ -217,7 +217,7 @@ export const upsertRule = mutation({
     }
     const verifyOwn = async (table: "cost_centers" | "branches" | "departments", id: any) => {
       const doc = (await ctx.db.get(id)) as { client_id?: any } | null;
-      if (!doc || doc.client_id !== profile._id) throw new ConvexError(`Invalid ${table}`);
+      if (!doc || doc.client_id !== orgId) throw new ConvexError(`Invalid ${table}`);
     };
     if (args.cost_center_id) await verifyOwn("cost_centers", args.cost_center_id);
     if (args.branch_id) await verifyOwn("branches", args.branch_id);
@@ -227,11 +227,11 @@ export const upsertRule = mutation({
     let ruleId: Id<"approval_rules">;
     if (existingId) {
       const existing = await ctx.db.get(existingId);
-      if (!existing || existing.client_id !== profile._id) throw new ConvexError("Forbidden");
+      if (!existing || existing.client_id !== orgId) throw new ConvexError("Forbidden");
       await ctx.db.patch(existingId, rest);
       ruleId = existingId;
     } else {
-      ruleId = await ctx.db.insert("approval_rules", { ...rest, client_id: profile._id });
+      ruleId = await ctx.db.insert("approval_rules", { ...rest, client_id: orgId });
     }
 
     if (steps !== undefined) {
@@ -273,9 +273,9 @@ export const listStepsForRule = query({
   args: { rule_id: v.id("approval_rules") },
   handler: async (ctx, args) => {
     // Owner-only read
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const rule = await ctx.db.get(args.rule_id);
-    if (!rule || rule.client_id !== profile._id) return [];
+    if (!rule || rule.client_id !== orgId) return [];
     const steps = await ctx.db
       .query("approval_steps")
       .withIndex("by_rule", (q) => q.eq("rule_id", args.rule_id))
@@ -287,19 +287,19 @@ export const listStepsForRule = query({
 export const deleteRule = mutation({
   args: { id: v.id("approval_rules") },
   handler: async (ctx, args) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const existing = await ctx.db.get(args.id);
-    if (!existing || existing.client_id !== profile._id) throw new ConvexError("Forbidden");
+    if (!existing || existing.client_id !== orgId) throw new ConvexError("Forbidden");
     await ctx.db.delete(args.id);
   },
 });
 
 export const listMyRequests = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const requests = await ctx.db
       .query("approval_requests")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .order("desc")
       .collect();
     return Promise.all(

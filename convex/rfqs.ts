@@ -1,6 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { getAuthenticatedProfile, requireAdminRead, requireClient, requireSupplier } from "./lib";
+import { getAuthenticatedProfile, getClientOrgId, requireAdminRead, requireClient, requireSupplier } from "./lib";
 import { generateDraftsForRfq } from "./autoQuote";
 
 const attachmentInput = v.object({
@@ -38,10 +38,10 @@ export const generateAttachmentUploadUrl = mutation({
 
 export const listMine = query({
   handler: async (ctx) => {
-    const profile = await requireClient(ctx);
+    const orgId = await getClientOrgId(ctx);
     const rfqs = await ctx.db
       .query("rfqs")
-      .withIndex("by_client", (q) => q.eq("client_id", profile._id))
+      .withIndex("by_client", (q) => q.eq("client_id", orgId))
       .order("desc")
       .collect();
     return Promise.all(
@@ -82,7 +82,10 @@ export const getById = query({
     if (!profile) return null;
     const rfq = await ctx.db.get(args.id);
     if (!rfq) return null;
-    if (profile.role === "CLIENT" && rfq.client_id !== profile._id) return null;
+    if (profile.role === "CLIENT") {
+      const orgId = profile.parent_client_id ?? profile._id;
+      if (rfq.client_id !== orgId) return null;
+    }
     if (profile.role === "SUPPLIER") {
       const assignment = await ctx.db
         .query("rfq_supplier_assignments")
@@ -321,10 +324,16 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const profile = await requireClient(ctx);
     if (profile.status === "FROZEN") throw new Error("Account is frozen");
+    // VIEWER team members can only read; APPROVERs sit in the tree but don't
+    // create RFQs. OWNER/ADMIN/BUYER are the writers.
+    if (profile.team_role === "VIEWER") {
+      throw new Error("Viewer accounts cannot create RFQs");
+    }
+    const orgId = profile.parent_client_id ?? profile._id;
 
     const verifyOwnership = async (table: "cost_centers" | "branches" | "departments", id: any) => {
       const doc = (await ctx.db.get(id)) as { client_id?: any } | null;
-      if (!doc || doc.client_id !== profile._id) {
+      if (!doc || doc.client_id !== orgId) {
         throw new Error(`Invalid ${table} reference`);
       }
     };
@@ -333,7 +342,7 @@ export const create = mutation({
     if (args.department_id) await verifyOwnership("departments", args.department_id);
 
     const rfqId = await ctx.db.insert("rfqs", {
-      client_id: profile._id,
+      client_id: orgId,
       status: "OPEN",
       category: args.category,
       template_key: args.template_key,
