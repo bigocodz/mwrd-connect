@@ -14,14 +14,31 @@ import { usePagination, PaginationControls } from "@/components/shared/Paginatio
 import { useLanguage } from "@/contexts/LanguageContext";
 import { DualDate } from "@/components/shared/DualDate";
 
+type AuditDetails = Record<string, unknown>;
+
+type AuditLogEntry = {
+  _id: string;
+  _creationTime: number;
+  action: string;
+  actor_role?: string;
+  actor_public_id?: string;
+  actor_profile_id?: string;
+  target_type?: string;
+  target_id?: string;
+  before?: AuditDetails;
+  after?: AuditDetails;
+  details?: AuditDetails;
+};
+
+const EMPTY_AUDIT_LOGS: AuditLogEntry[] = [];
+
 const AdminAuditLog = () => {
-  const { tr, lang } = useLanguage();
-  const locale = lang === "ar" ? "ar-SA" : "en-SA";
+  const { tr } = useLanguage();
   // New canonical audit log (PRD §13.4): captures every privileged mutation
   // across the platform, not just admin-initiated ones.
-  const logsData = useQuery(api.auditLog.listAudit, { limit: 500 });
+  const logsData = useQuery(api.auditLog.listAudit, { limit: 500 }) as AuditLogEntry[] | undefined;
   const loading = logsData === undefined;
-  const allLogs = logsData ?? [];
+  const allLogs = logsData ?? EMPTY_AUDIT_LOGS;
 
   const [actionFilter, setActionFilter] = useState("ALL");
   const [targetTypeFilter, setTargetTypeFilter] = useState("ALL");
@@ -29,14 +46,14 @@ const AdminAuditLog = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const actions = useMemo(() => [...new Set(allLogs.map((l: any) => l.action))].sort(), [allLogs]);
+  const actions = useMemo(() => [...new Set(allLogs.map((log) => log.action))].sort(), [allLogs]);
   const targetTypes = useMemo(
-    () => [...new Set(allLogs.map((l: any) => l.target_type).filter(Boolean))].sort() as string[],
+    () => [...new Set(allLogs.map((log) => log.target_type).filter((target): target is string => Boolean(target)))].sort(),
     [allLogs],
   );
 
   const logs = useMemo(() => {
-    return allLogs.filter((log: any) => {
+    return allLogs.filter((log) => {
       if (actionFilter !== "ALL" && log.action !== actionFilter) return false;
       if (targetTypeFilter !== "ALL" && log.target_type !== targetTypeFilter) return false;
       if (roleFilter !== "ALL" && log.actor_role !== roleFilter) return false;
@@ -48,7 +65,7 @@ const AdminAuditLog = () => {
 
   const { page, setPage, totalPages, paginated, total } = usePagination(logs);
 
-  const summarizeChange = (log: any) => {
+  const summarizeChange = (log: AuditLogEntry) => {
     if (log.before && log.after) {
       const keys = [...new Set([...Object.keys(log.before), ...Object.keys(log.after)])];
       return keys
@@ -125,7 +142,7 @@ const AdminAuditLog = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginated.map((log: any) => (
+                  {paginated.map((log) => (
                     <TableRow key={log._id}>
                       <TableCell className="text-xs whitespace-nowrap"><DualDate value={log._creationTime} withTime /></TableCell>
                       <TableCell className="font-medium text-sm">

@@ -4,7 +4,7 @@ import { ArrowRight } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export type AppIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number; color?: string }>;
+export type AppIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: string | number; color?: string }>;
 
 type PageHeaderProps = {
   title: string;

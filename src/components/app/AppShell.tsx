@@ -8,7 +8,7 @@ import NotificationBell from "@/components/NotificationBell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
-type ShellIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: number; color?: string }>;
+type ShellIcon = ComponentType<SVGProps<SVGSVGElement> & { size?: string | number; color?: string }>;
 
 export type AppShellNavItem = {
   label: string;

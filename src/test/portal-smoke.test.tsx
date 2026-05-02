@@ -5,16 +5,19 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 
 import AdminApprovals from "@/pages/admin/AdminApprovals";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
+import AdminBundles from "@/pages/admin/AdminBundles";
 import AdminCategories from "@/pages/admin/AdminCategories";
 import AdminClientInvoices from "@/pages/admin/AdminClientInvoices";
 import AdminContracts from "@/pages/admin/AdminContracts";
 import AdminContractDetail from "@/pages/admin/AdminContractDetail";
 import AdminCreateUser from "@/pages/admin/AdminCreateUser";
 import AdminCredit from "@/pages/admin/AdminCredit";
+import AdminDeliveryNotes from "@/pages/admin/AdminDeliveryNotes";
 import AdminDisputes from "@/pages/admin/AdminDisputes";
 import AdminLeads from "@/pages/admin/AdminLeads";
 import AdminLifecycle from "@/pages/admin/AdminLifecycle";
 import AdminMarginSettings from "@/pages/admin/AdminMarginSettings";
+import AdminMasterCatalog from "@/pages/admin/AdminMasterCatalog";
 import AdminOrderDetail from "@/pages/admin/AdminOrderDetail";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminPayouts from "@/pages/admin/AdminPayouts";
@@ -22,6 +25,7 @@ import AdminPayments from "@/pages/admin/AdminPayments";
 import AdminPendingProducts from "@/pages/admin/AdminPendingProducts";
 import AdminPendingQuotes from "@/pages/admin/AdminPendingQuotes";
 import AdminPreferredSuppliers from "@/pages/admin/AdminPreferredSuppliers";
+import AdminProductRequests from "@/pages/admin/AdminProductRequests";
 import AdminQuoteReview from "@/pages/admin/AdminQuoteReview";
 import AdminReviews from "@/pages/admin/AdminReviews";
 import AdminRfqQuoteComparison from "@/pages/admin/AdminRfqQuoteComparison";
@@ -32,6 +36,7 @@ import AdminUserDetail from "@/pages/admin/AdminUserDetail";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminDashboard from "@/pages/dashboards/AdminDashboard";
 import ClientAccount from "@/pages/client/ClientAccount";
+import ClientCart from "@/pages/client/ClientCart";
 import ClientCatalog from "@/pages/client/ClientCatalog";
 import ClientCreateRfq from "@/pages/client/ClientCreateRfq";
 import ClientDashboard from "@/pages/dashboards/ClientDashboard";
@@ -45,13 +50,19 @@ import ClientReports from "@/pages/client/ClientReports";
 import ClientRfqDetail from "@/pages/client/ClientRfqDetail";
 import ClientRfqs from "@/pages/client/ClientRfqs";
 import ClientSchedules from "@/pages/client/ClientSchedules";
+import SupplierAutoQuoteQueue from "@/pages/supplier/SupplierAutoQuoteQueue";
 import SupplierAnalytics from "@/pages/supplier/SupplierAnalytics";
+import SupplierCatalogBrowse from "@/pages/supplier/SupplierCatalogBrowse";
+import SupplierDeliveryNoteForm from "@/pages/supplier/SupplierDeliveryNoteForm";
+import SupplierDeliveryNotes from "@/pages/supplier/SupplierDeliveryNotes";
 import SupplierDashboard from "@/pages/dashboards/SupplierDashboard";
 import SupplierInvoices from "@/pages/supplier/SupplierInvoices";
 import SupplierKyc from "@/pages/supplier/SupplierKyc";
+import SupplierOfferForm from "@/pages/supplier/SupplierOfferForm";
 import SupplierOrderDetail from "@/pages/supplier/SupplierOrderDetail";
 import SupplierOrders from "@/pages/supplier/SupplierOrders";
 import SupplierPayouts from "@/pages/supplier/SupplierPayouts";
+import SupplierProductRequest from "@/pages/supplier/SupplierProductRequest";
 import SupplierProductForm from "@/pages/supplier/SupplierProductForm";
 import SupplierProducts from "@/pages/supplier/SupplierProducts";
 import SupplierProductsBulk from "@/pages/supplier/SupplierProductsBulk";
@@ -129,6 +140,9 @@ const cases: PortalCase[] = [
   { name: "admin user detail", role: "ADMIN", path: "/admin/users/profile_1", element: <AdminUserDetail /> },
   { name: "admin create user", role: "ADMIN", path: "/admin/users/create", element: <AdminCreateUser /> },
   { name: "admin pending products", role: "ADMIN", path: "/admin/products/pending", element: <AdminPendingProducts /> },
+  { name: "admin master catalog", role: "ADMIN", path: "/admin/master-catalog", element: <AdminMasterCatalog /> },
+  { name: "admin product requests", role: "ADMIN", path: "/admin/product-requests", element: <AdminProductRequests /> },
+  { name: "admin bundles", role: "ADMIN", path: "/admin/bundles", element: <AdminBundles /> },
   { name: "admin categories", role: "ADMIN", path: "/admin/categories", element: <AdminCategories /> },
   { name: "admin templates", role: "ADMIN", path: "/admin/templates", element: <AdminTemplates /> },
   { name: "admin margin settings", role: "ADMIN", path: "/admin/margin-settings", element: <AdminMarginSettings /> },
@@ -144,6 +158,7 @@ const cases: PortalCase[] = [
   { name: "admin leads", role: "ADMIN", path: "/admin/leads", element: <AdminLeads /> },
   { name: "admin orders", role: "ADMIN", path: "/admin/orders", element: <AdminOrders /> },
   { name: "admin order detail", role: "ADMIN", path: "/admin/orders/order_1", element: <AdminOrderDetail /> },
+  { name: "admin delivery notes", role: "ADMIN", path: "/admin/delivery-notes", element: <AdminDeliveryNotes /> },
   { name: "admin supplier invoices", role: "ADMIN", path: "/admin/supplier-invoices", element: <AdminSupplierInvoices /> },
   { name: "admin client invoices", role: "ADMIN", path: "/admin/client-invoices", element: <AdminClientInvoices /> },
   { name: "admin contracts", role: "ADMIN", path: "/admin/contracts", element: <AdminContracts /> },
@@ -154,6 +169,7 @@ const cases: PortalCase[] = [
   { name: "admin approvals", role: "ADMIN", path: "/admin/approvals", element: <AdminApprovals /> },
   { name: "client dashboard", role: "CLIENT", path: "/client/dashboard", element: <ClientDashboard /> },
   { name: "client catalog", role: "CLIENT", path: "/client/catalog", element: <ClientCatalog /> },
+  { name: "client cart", role: "CLIENT", path: "/client/cart", element: <ClientCart /> },
   { name: "client rfqs", role: "CLIENT", path: "/client/rfqs", element: <ClientRfqs /> },
   { name: "client create rfq", role: "CLIENT", path: "/client/rfq/new", element: <ClientCreateRfq /> },
   { name: "client rfq detail", role: "CLIENT", path: "/client/rfqs/rfq_1", element: <ClientRfqDetail /> },
@@ -167,10 +183,17 @@ const cases: PortalCase[] = [
   { name: "client reports", role: "CLIENT", path: "/client/reports", element: <ClientReports /> },
   { name: "client account", role: "CLIENT", path: "/client/account", element: <ClientAccount /> },
   { name: "supplier dashboard", role: "SUPPLIER", path: "/supplier/dashboard", element: <SupplierDashboard /> },
+  { name: "supplier catalog browse", role: "SUPPLIER", path: "/supplier/catalog", element: <SupplierCatalogBrowse /> },
   { name: "supplier products", role: "SUPPLIER", path: "/supplier/products", element: <SupplierProducts /> },
   { name: "supplier product add", role: "SUPPLIER", path: "/supplier/products/add", element: <SupplierProductForm /> },
   { name: "supplier product edit", role: "SUPPLIER", path: "/supplier/products/product_1", element: <SupplierProductForm /> },
   { name: "supplier bulk products", role: "SUPPLIER", path: "/supplier/products/bulk", element: <SupplierProductsBulk /> },
+  { name: "supplier offer add", role: "SUPPLIER", path: "/supplier/offers/new", element: <SupplierOfferForm /> },
+  { name: "supplier offer edit", role: "SUPPLIER", path: "/supplier/offers/offer_1", element: <SupplierOfferForm /> },
+  { name: "supplier product request", role: "SUPPLIER", path: "/supplier/product-requests/new", element: <SupplierProductRequest /> },
+  { name: "supplier auto quote queue", role: "SUPPLIER", path: "/supplier/auto-quotes", element: <SupplierAutoQuoteQueue /> },
+  { name: "supplier delivery notes", role: "SUPPLIER", path: "/supplier/delivery-notes", element: <SupplierDeliveryNotes /> },
+  { name: "supplier delivery note form", role: "SUPPLIER", path: "/supplier/delivery-notes/new", element: <SupplierDeliveryNoteForm /> },
   { name: "supplier rfqs", role: "SUPPLIER", path: "/supplier/rfqs", element: <SupplierRfqs /> },
   { name: "supplier rfq response", role: "SUPPLIER", path: "/supplier/rfqs/rfq_1/respond", element: <SupplierRfqRespond /> },
   { name: "supplier orders", role: "SUPPLIER", path: "/supplier/orders", element: <SupplierOrders /> },

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@cvx/api";
+import type { Id } from "@cvx/dataModel";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +14,13 @@ import { toast } from "sonner";
 import { Pencil, Trash2, Plus, Percent } from "lucide-react";
 
 type MarginSetting = {
-  _id: string;
+  _id: Id<"margin_settings">;
   type: "GLOBAL" | "CATEGORY";
   category?: string;
   margin_percent: number;
 };
+
+const getErrorMessage = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 const AdminMarginSettings = () => {
   const { tr } = useLanguage();
@@ -48,8 +51,8 @@ const AdminMarginSettings = () => {
       await upsertGlobal({ margin_percent: parseFloat(currentGlobalValue) });
       toast.success(tr("Global margin updated"));
       setGlobalValue("");
-    } catch (err: any) {
-      toast.error(tr("Error: {message}", { message: err.message }));
+    } catch (err) {
+      toast.error(tr("Error: {message}", { message: getErrorMessage(err) }));
     } finally {
       setSaving(false);
     }
@@ -75,19 +78,19 @@ const AdminMarginSettings = () => {
       await upsertCategory({ category: categoryName.trim(), margin_percent: parseFloat(categoryValue) });
       toast.success(editingCategory ? tr("Category margin updated") : tr("Category margin added"));
       setDialogOpen(false);
-    } catch (err: any) {
-      toast.error(tr("Error: {message}", { message: err.message }));
+    } catch (err) {
+      toast.error(tr("Error: {message}", { message: getErrorMessage(err) }));
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteCategoryMargin = async (id: string) => {
+  const deleteCategoryMargin = async (id: Id<"margin_settings">) => {
     try {
-      await deleteById({ id: id as any });
+      await deleteById({ id });
       toast.success(tr("Category margin removed"));
-    } catch (err: any) {
-      toast.error(tr("Error: {message}", { message: err.message }));
+    } catch (err) {
+      toast.error(tr("Error: {message}", { message: getErrorMessage(err) }));
     }
   };
 
