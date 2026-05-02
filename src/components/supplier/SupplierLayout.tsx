@@ -8,6 +8,7 @@ const navItems = [
   { label: "Auto-Quote Queue", href: "/supplier/auto-quotes", icon: Lightning01 },
   { label: "Assigned RFQs", href: "/supplier/rfqs", icon: FileCheck02 },
   { label: "Orders", href: "/supplier/orders", icon: PackageCheck },
+  { label: "Delivery Notes", href: "/supplier/delivery-notes", icon: FileCheck02 },
   { label: "Invoices", href: "/supplier/invoices", icon: Receipt },
   { label: "Payouts", href: "/supplier/payouts", icon: BankNote01 },
   { label: "Performance", href: "/supplier/analytics", icon: BarChartSquareUp },

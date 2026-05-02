@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CategoryPicker } from "@/components/categories/CategoryPicker";
 import { useCategoryNames } from "@/components/categories/useCategoryNames";
+import { ImageListUpload } from "@/components/shared/ImageListUpload";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, Plus, Pencil, Archive, RotateCcw, Trash2 } from "lucide-react";
 
@@ -98,8 +99,6 @@ const AdminMasterCatalog = () => {
   const [editingId, setEditingId] = useState<Id<"master_products"> | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
-
-  const [imageDraft, setImageDraft] = useState("");
 
   const openCreate = () => {
     setEditingId(null);
@@ -416,51 +415,11 @@ const AdminMasterCatalog = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>{tr("Images (URLs)")}</Label>
-              <div className="flex flex-wrap gap-2">
-                {form.images.map((url, i) => (
-                  <div key={i} className="relative">
-                    <img
-                      src={url}
-                      alt=""
-                      className="w-16 h-16 rounded-lg object-cover border border-border"
-                    />
-                    <button
-                      type="button"
-                      className="absolute -top-1.5 -end-1.5 bg-background border border-border rounded-full p-0.5"
-                      onClick={() =>
-                        setForm((f) => ({
-                          ...f,
-                          images: f.images.filter((_, idx) => idx !== i),
-                        }))
-                      }
-                    >
-                      <Trash2 className="w-3 h-3 text-destructive" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://..."
-                  value={imageDraft}
-                  onChange={(e) => setImageDraft(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const url = imageDraft.trim();
-                    if (!url) return;
-                    setForm((f) => ({ ...f, images: [...f.images, url] }));
-                    setImageDraft("");
-                  }}
-                >
-                  {tr("Add")}
-                </Button>
-              </div>
-            </div>
+            <ImageListUpload
+              label={tr("Images")}
+              images={form.images}
+              onChange={(next) => setForm((f) => ({ ...f, images: next }))}
+            />
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ShoppingCart, Trash2, Package, Loader2, ArrowRight } from "lucide-react";
+import { ShoppingCart, Trash2, Package, Loader2, ArrowRight, Clock } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCategoryNames } from "@/components/categories/useCategoryNames";
 
@@ -65,6 +65,23 @@ const ClientCart = () => {
     0,
   );
 
+  // Earliest expiry across all cart entries — that's when the cart starts
+  // losing items. Set on the server when entries are touched, 7-day TTL.
+  const earliestExpiry = cart.reduce<number | null>((min: number | null, e: any) => {
+    if (!e.cart_expires_at) return min;
+    if (min === null) return e.cart_expires_at;
+    return Math.min(min, e.cart_expires_at);
+  }, null);
+  const formatRemaining = (ts: number) => {
+    const ms = ts - Date.now();
+    if (ms <= 0) return tr("Expired");
+    const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((ms % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    if (days >= 1) return tr("{n} days left", { n: days });
+    if (hours >= 1) return tr("{n} hours left", { n: hours });
+    return tr("Less than an hour");
+  };
+
   return (
     <ClientLayout>
       <div className="mb-6 flex items-center justify-between gap-4">
@@ -73,6 +90,12 @@ const ClientCart = () => {
           <p className="text-sm text-muted-foreground mt-1">
             {tr("Review items, then send them as a Request for Quote.")}
           </p>
+          {earliestExpiry !== null && (
+            <Badge variant="outline" className="mt-2 inline-flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {formatRemaining(earliestExpiry)}
+            </Badge>
+          )}
         </div>
         {cart.length > 0 && (
           <Button variant="ghost" onClick={handleClear}>

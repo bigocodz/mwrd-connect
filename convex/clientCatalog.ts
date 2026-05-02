@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { requireClient } from "./lib";
 
@@ -129,6 +129,10 @@ export const listMyCart = query({
   },
 });
 
+// Saved Cart 7-day TTL — every cart-touch stamps a fresh expiry.
+const CART_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const cartExpiry = () => Date.now() + CART_TTL_MS;
+
 export const addToCart = mutation({
   args: {
     product_id: v.id("products"),
@@ -149,7 +153,11 @@ export const addToCart = mutation({
       .unique();
     if (existing) {
       const next = (existing.cart_quantity ?? 0) + qty;
-      await ctx.db.patch(existing._id, { cart_quantity: next, hidden: false });
+      await ctx.db.patch(existing._id, {
+        cart_quantity: next,
+        hidden: false,
+        cart_expires_at: cartExpiry(),
+      });
       return existing._id;
     }
     return ctx.db.insert("client_catalog_entries", {
@@ -158,6 +166,7 @@ export const addToCart = mutation({
       pinned: false,
       hidden: false,
       cart_quantity: qty,
+      cart_expires_at: cartExpiry(),
     });
   },
 });
@@ -188,9 +197,13 @@ export const setCartQuantity = mutation({
         pinned: false,
         hidden: false,
         cart_quantity: qty,
+        cart_expires_at: qty > 0 ? cartExpiry() : undefined,
       });
     }
-    await ctx.db.patch(existing._id, { cart_quantity: qty });
+    await ctx.db.patch(existing._id, {
+      cart_quantity: qty,
+      cart_expires_at: qty > 0 ? cartExpiry() : undefined,
+    });
     return existing._id;
   },
 });
@@ -206,7 +219,7 @@ export const removeFromCart = mutation({
       )
       .unique();
     if (!existing) return;
-    await ctx.db.patch(existing._id, { cart_quantity: 0 });
+    await ctx.db.patch(existing._id, { cart_quantity: 0, cart_expires_at: undefined });
   },
 });
 
@@ -219,8 +232,40 @@ export const clearCart = mutation({
       .collect();
     for (const entry of entries) {
       if ((entry.cart_quantity ?? 0) > 0) {
-        await ctx.db.patch(entry._id, { cart_quantity: 0 });
+        await ctx.db.patch(entry._id, { cart_quantity: 0, cart_expires_at: undefined });
       }
     }
+  },
+});
+
+/**
+ * Cron-driven cart expiry sweeper. Zeroes cart_quantity on entries whose
+ * cart_expires_at has passed. The catalog row itself stays — favorites,
+ * aliases, and notes are preserved.
+ */
+export const sweepExpiredCarts = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    // Pull every entry that has a cart_expires_at set; the index is sparse.
+    const candidates = await ctx.db
+      .query("client_catalog_entries")
+      .withIndex("by_cart_expires")
+      .collect();
+    let cleared = 0;
+    for (const entry of candidates) {
+      if (!entry.cart_expires_at) continue;
+      if (entry.cart_expires_at > now) continue;
+      if ((entry.cart_quantity ?? 0) === 0) {
+        // Already empty — just clear the expiry so it stops appearing.
+        await ctx.db.patch(entry._id, { cart_expires_at: undefined });
+        continue;
+      }
+      await ctx.db.patch(entry._id, {
+        cart_quantity: 0,
+        cart_expires_at: undefined,
+      });
+      cleared++;
+    }
+    return { cleared };
   },
 });

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CategoryPicker } from "@/components/categories/CategoryPicker";
+import { ImageListUpload } from "@/components/shared/ImageListUpload";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCategoryNames } from "@/components/categories/useCategoryNames";
 import { Loader2, Plus, Trash2, ArrowLeft } from "lucide-react";
@@ -47,7 +48,6 @@ const SupplierProductRequest = () => {
   const [categoryId, setCategoryId] = useState<Id<"categories"> | undefined>();
   const [sku, setSku] = useState("");
   const [brand, setBrand] = useState("");
-  const [imageDraft, setImageDraft] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [packs, setPacks] = useState<PackType[]>([{ ...emptyPack }]);
   const [justification, setJustification] = useState("");
@@ -194,48 +194,11 @@ const SupplierProductRequest = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>{tr("Images (URLs)")}</Label>
-              <div className="flex flex-wrap gap-2">
-                {images.map((url, i) => (
-                  <div key={i} className="relative">
-                    <img
-                      src={url}
-                      alt=""
-                      className="w-16 h-16 rounded-lg object-cover border border-border"
-                    />
-                    <button
-                      type="button"
-                      className="absolute -top-1.5 -end-1.5 bg-background border border-border rounded-full p-0.5"
-                      onClick={() =>
-                        setImages((arr) => arr.filter((_, idx) => idx !== i))
-                      }
-                    >
-                      <Trash2 className="w-3 h-3 text-destructive" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="https://..."
-                  value={imageDraft}
-                  onChange={(e) => setImageDraft(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const url = imageDraft.trim();
-                    if (!url) return;
-                    setImages((arr) => [...arr, url]);
-                    setImageDraft("");
-                  }}
-                >
-                  {tr("Add")}
-                </Button>
-              </div>
-            </div>
+            <ImageListUpload
+              label={tr("Images")}
+              images={images}
+              onChange={setImages}
+            />
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">

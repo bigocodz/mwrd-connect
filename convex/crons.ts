@@ -42,4 +42,12 @@ crons.interval(
   internal.autoQuote.sweepExpiredDrafts,
 );
 
+// Saved Cart 7-day TTL — clear cart_quantity on entries past their expiry.
+// Hourly cadence is plenty for a 7-day timeout.
+crons.interval(
+  "expire stale carts",
+  { hours: 1 },
+  internal.clientCatalog.sweepExpiredCarts,
+);
+
 export default crons;

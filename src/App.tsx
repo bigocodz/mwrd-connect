@@ -27,6 +27,7 @@ import AdminPendingProducts from "./pages/admin/AdminPendingProducts";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminMasterCatalog from "./pages/admin/AdminMasterCatalog";
 import AdminProductRequests from "./pages/admin/AdminProductRequests";
+import AdminBundles from "./pages/admin/AdminBundles";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import Account from "./pages/Account";
 import AdminMarginSettings from "./pages/admin/AdminMarginSettings";
@@ -37,6 +38,8 @@ import SupplierCatalogBrowse from "./pages/supplier/SupplierCatalogBrowse";
 import SupplierOfferForm from "./pages/supplier/SupplierOfferForm";
 import SupplierProductRequest from "./pages/supplier/SupplierProductRequest";
 import SupplierAutoQuoteQueue from "./pages/supplier/SupplierAutoQuoteQueue";
+import SupplierDeliveryNotes from "./pages/supplier/SupplierDeliveryNotes";
+import SupplierDeliveryNoteForm from "./pages/supplier/SupplierDeliveryNoteForm";
 import ClientCatalog from "./pages/client/ClientCatalog";
 import ClientCart from "./pages/client/ClientCart";
 import ClientRfqs from "./pages/client/ClientRfqs";
@@ -195,6 +198,12 @@ const App = () => (
                 <Route path="/supplier/auto-quotes" element={
                   <SafeRoute roles={["SUPPLIER"]}><SupplierAutoQuoteQueue /></SafeRoute>
                 } />
+                <Route path="/supplier/delivery-notes" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierDeliveryNotes /></SafeRoute>
+                } />
+                <Route path="/supplier/delivery-notes/new" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierDeliveryNoteForm /></SafeRoute>
+                } />
                 <Route path="/supplier/rfqs" element={
                   <SafeRoute roles={["SUPPLIER"]}><SupplierRfqs /></SafeRoute>
                 } />
@@ -243,6 +252,9 @@ const App = () => (
                 } />
                 <Route path="/admin/product-requests" element={
                   <SafeRoute roles={["ADMIN"]}><AdminProductRequests /></SafeRoute>
+                } />
+                <Route path="/admin/bundles" element={
+                  <SafeRoute roles={["ADMIN"]}><AdminBundles /></SafeRoute>
                 } />
                 <Route path="/admin/categories" element={
                   <SafeRoute roles={["ADMIN"]}><AdminCategories /></SafeRoute>

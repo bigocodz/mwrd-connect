@@ -1,14 +1,15 @@
 /**
- * Three-way match: PO ↔ GRN ↔ Invoice (PRD §6.11).
- *
- * Reconciles a client_invoice against the underlying order's quote items
- * and any confirmed GRN lines. Surfaces drift to admin AP so nothing is
- * paid against an undelivered or short-shipped order.
+ * Match engine: PO ↔ DN ↔ GRN ↔ Invoice (PRD §6.11, extended for Phase-5
+ * Delivery Notes). Reconciles a client_invoice against the underlying
+ * order's quote items, supplier-issued delivery notes, and client-issued
+ * goods receipt notes. Surfaces drift to admin AP so nothing is paid
+ * against an undelivered, short-shipped, or over-receipt order.
  *
  * Trigger points (called from elsewhere as a non-mutation helper):
  *   - clientInvoices.createForOrder / createManual → after insert
  *   - grn.create → on every receipt
  *   - grn.resolveDiscrepancy → after admin closes a dispute
+ *   - deliveryNotes.create / issue / cancel → on every supplier ship action
  *   - admin "Recompute match" button (manual)
  */
 import { internalMutation, mutation } from "./_generated/server";
@@ -102,6 +103,31 @@ async function computeMatchInternal(
     }
   }
 
+  // Phase 5: aggregate shipped quantities from supplier-issued ISSUED
+  // delivery notes. Cancelled/Draft DNs are ignored.
+  const shippedByQuoteItem = new Map<string, number>();
+  const issuedDns = await ctx.db
+    .query("delivery_notes")
+    .withIndex("by_order", (q: any) => q.eq("order_id", invoice.order_id))
+    .filter((q: any) => q.eq(q.field("status"), "ISSUED"))
+    .collect();
+  for (const d of issuedDns) {
+    const lines = await ctx.db
+      .query("delivery_note_lines")
+      .withIndex("by_delivery_note", (q: any) =>
+        q.eq("delivery_note_id", d._id),
+      )
+      .collect();
+    for (const ln of lines) {
+      if (!ln.quote_item_id) continue;
+      shippedByQuoteItem.set(
+        String(ln.quote_item_id),
+        (shippedByQuoteItem.get(String(ln.quote_item_id)) ?? 0) +
+          ln.shipped_qty,
+      );
+    }
+  }
+
   // Order's quoted items — what was supposed to ship
   const orderItems = await ctx.db
     .query("quote_items")
@@ -111,16 +137,34 @@ async function computeMatchInternal(
   const issues: string[] = [];
   let totalOrdered = 0;
   let totalShortReceived = 0;
+  // 2% tolerance for over-receipt vs over-shipment. Real-world handling.
+  const QTY_TOLERANCE = 1.02;
   for (const it of orderItems) {
     if (!it.is_quoted) continue;
     const rfqItem = await ctx.db.get(it.rfq_item_id);
     const orderedQty = rfqItem?.quantity ?? 1;
     totalOrdered += orderedQty;
     const received = receivedByQuoteItem.get(String(it._id)) ?? 0;
+    const shipped = shippedByQuoteItem.get(String(it._id));
     if (received < orderedQty) {
       totalShortReceived += orderedQty - received;
       issues.push(`Line short: received ${received} of ${orderedQty}`);
     }
+    // If a delivery note exists, the receipt should not exceed what was
+    // shipped (within tolerance). This catches data-entry errors.
+    if (shipped !== undefined && received > shipped * QTY_TOLERANCE) {
+      issues.push(
+        `Line over-receipt: received ${received} but shipped only ${shipped}`,
+      );
+    }
+    // Conversely, shipped < ordered is normal for partial shipments — only
+    // flag when shipped + remaining would still be short of received.
+    if (shipped !== undefined && shipped < orderedQty && received < shipped) {
+      // pure short-shipment + short-receipt; already covered by `Line short`.
+    }
+  }
+  if (issuedDns.length === 0) {
+    issues.push("No delivery note issued by supplier");
   }
 
   // Amount drift: invoice total_amount vs order total_with_vat — small

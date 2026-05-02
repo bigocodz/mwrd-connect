@@ -1,8 +1,10 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "@cvx/api";
+import { Id } from "@cvx/dataModel";
 import ClientLayout from "@/components/client/ClientLayout";
 import { QuoteComparisonView } from "@/components/rfqs/QuoteComparisonView";
+import { AwardPanel } from "@/components/rfqs/AwardPanel";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const ClientQuoteComparison = () => {
@@ -20,7 +22,10 @@ const ClientQuoteComparison = () => {
 
   return (
     <ClientLayout>
-      <QuoteComparisonView comparison={comparison} mode="client" backHref={`/client/rfqs/${rfqId}`} />
+      <div className="space-y-6">
+        <QuoteComparisonView comparison={comparison} mode="client" backHref={`/client/rfqs/${rfqId}`} />
+        <AwardPanel comparison={comparison} rfqId={rfqId as Id<"rfqs">} />
+      </div>
     </ClientLayout>
   );
 };

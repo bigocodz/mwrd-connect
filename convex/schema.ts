@@ -163,6 +163,38 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_sku", ["sku"]),
 
+  // Bundles (Phase 3) — admin-curated kits of master products. One-click
+  // add expands into N rfq_items at the configured pack_type + quantity.
+  bundles: defineTable({
+    name_en: v.string(),
+    name_ar: v.string(),
+    description_en: v.optional(v.string()),
+    description_ar: v.optional(v.string()),
+    category_id: v.optional(v.id("categories")),
+    image_url: v.optional(v.string()),
+    status: v.union(
+      v.literal("DRAFT"),
+      v.literal("ACTIVE"),
+      v.literal("ARCHIVED"),
+    ),
+    display_order: v.optional(v.number()),
+    created_by: v.id("profiles"),
+    updated_at: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_category", ["category_id"]),
+
+  bundle_items: defineTable({
+    bundle_id: v.id("bundles"),
+    master_product_id: v.id("master_products"),
+    pack_type_code: v.string(),
+    quantity: v.number(),
+    display_order: v.optional(v.number()),
+    notes: v.optional(v.string()),
+  })
+    .index("by_bundle", ["bundle_id"])
+    .index("by_master_product", ["master_product_id"]),
+
   // Supplier proposals to add new master products. Approval creates a row
   // in `master_products` and stamps `created_master_product_id` here.
   product_addition_requests: defineTable({
@@ -565,11 +597,49 @@ export default defineSchema({
     details: v.optional(v.any()),
   }).index("by_admin", ["admin_id"]),
 
+  // Client Purchase Orders (Phase 4 — dual PO). One CPO is created per
+  // client award decision and groups all the supplier-side orders that came
+  // out of that award. transaction_ref is the human-readable id that appears
+  // on every linked SPO (the legacy `orders` table) so docs reconcile.
+  client_purchase_orders: defineTable({
+    rfq_id: v.id("rfqs"),
+    client_id: v.id("profiles"),
+    transaction_ref: v.string(),
+    award_mode: v.union(
+      v.literal("FULL_BASKET"),  // single supplier won every line
+      v.literal("PER_ITEM"),     // lines split across suppliers
+    ),
+    status: v.union(
+      v.literal("OPEN"),
+      v.literal("PARTIALLY_FULFILLED"),
+      v.literal("FULFILLED"),
+      v.literal("CANCELLED"),
+    ),
+    total_before_vat: v.number(),
+    total_with_vat: v.number(),
+    delivery_location: v.optional(v.string()),
+    required_by: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    cancelled_at: v.optional(v.number()),
+    cancelled_reason: v.optional(v.string()),
+    latest_document_id: v.optional(v.id("generated_documents")),
+    latest_document_hash: v.optional(v.string()),
+    latest_document_at: v.optional(v.number()),
+  })
+    .index("by_client", ["client_id"])
+    .index("by_rfq", ["rfq_id"])
+    .index("by_transaction_ref", ["transaction_ref"]),
+
   orders: defineTable({
     rfq_id: v.id("rfqs"),
     quote_id: v.id("quotes"),
     client_id: v.id("profiles"),
     supplier_id: v.id("profiles"),
+    // Phase 4 — dual PO link. Optional during migration; set on every order
+    // created via the new createFromAward path. Legacy single-quote orders
+    // have these unset and continue to behave as before.
+    client_po_id: v.optional(v.id("client_purchase_orders")),
+    transaction_ref: v.optional(v.string()),
     status: v.union(
       v.literal("PENDING_CONFIRMATION"),
       v.literal("CONFIRMED"),
@@ -617,7 +687,55 @@ export default defineSchema({
     .index("by_supplier", ["supplier_id"])
     .index("by_status", ["status"])
     .index("by_quote", ["quote_id"])
-    .index("by_dispute_status", ["dispute_status"]),
+    .index("by_dispute_status", ["dispute_status"])
+    .index("by_client_po", ["client_po_id"])
+    .index("by_transaction_ref", ["transaction_ref"]),
+
+  // Delivery Notes (PRD: supplier-issued shipment record). Distinct from
+  // Goods Receipt Notes — a DN is what the SUPPLIER ships; a GRN is what
+  // the CLIENT receives. Three-way match compares PO × DN × GRN × INV.
+  delivery_notes: defineTable({
+    order_id: v.id("orders"),
+    supplier_id: v.id("profiles"),
+    client_id: v.id("profiles"),         // denormalized for client lookups
+    dn_number: v.string(),               // MWRD-controlled sequential
+    issued_at: v.number(),
+    issued_by: v.id("profiles"),
+    status: v.union(
+      v.literal("DRAFT"),
+      v.literal("ISSUED"),                // supplier finalized; client can receive against it
+      v.literal("CANCELLED"),
+    ),
+    carrier: v.optional(v.string()),
+    tracking_number: v.optional(v.string()),
+    expected_delivery_at: v.optional(v.number()),
+    notes: v.optional(v.string()),
+    photo_storage_ids: v.array(v.id("_storage")),
+    cancelled_at: v.optional(v.number()),
+    cancelled_reason: v.optional(v.string()),
+    latest_document_id: v.optional(v.id("generated_documents")),
+    latest_document_hash: v.optional(v.string()),
+    latest_document_at: v.optional(v.number()),
+  })
+    .index("by_order", ["order_id"])
+    .index("by_supplier", ["supplier_id"])
+    .index("by_client", ["client_id"])
+    .index("by_status", ["status"]),
+
+  // Per-line shipped quantities on a delivery_note. Three-way match reads
+  // these to compare ordered → shipped → received → invoiced.
+  delivery_note_lines: defineTable({
+    delivery_note_id: v.id("delivery_notes"),
+    order_id: v.id("orders"),
+    quote_item_id: v.optional(v.id("quote_items")),
+    rfq_item_id: v.optional(v.id("rfq_items")),
+    description: v.string(),
+    ordered_qty: v.number(),
+    shipped_qty: v.number(),
+    notes: v.optional(v.string()),
+  })
+    .index("by_delivery_note", ["delivery_note_id"])
+    .index("by_order", ["order_id"]),
 
   // Goods Receipt Notes (PRD §6.10) — first-class receiving record per
   // delivery. Multiple GRNs per order to support partial deliveries.
@@ -706,9 +824,15 @@ export default defineSchema({
     pinned: v.optional(v.boolean()),
     hidden: v.optional(v.boolean()),
     cart_quantity: v.optional(v.number()),
+    // Saved Cart 7-day expiry (PRD: RFQ drafts have a 7-day TTL). Set on every
+    // cart-touch (add / setQty), null for non-cart catalog entries. Sweep cron
+    // zeroes cart_quantity on entries past expiry without deleting the entry
+    // (we keep favorites/notes intact).
+    cart_expires_at: v.optional(v.number()),
   })
     .index("by_client", ["client_id"])
-    .index("by_client_product", ["client_id", "product_id"]),
+    .index("by_client_product", ["client_id", "product_id"])
+    .index("by_cart_expires", ["cart_expires_at"]),
 
   rfq_schedules: defineTable({
     client_id: v.id("profiles"),

@@ -90,6 +90,8 @@ const ClientCreateRfq = () => {
   const products = productsData ?? [];
   const masterProductsData = useQuery(api.masterProducts.listActive, {});
   const masterProducts = masterProductsData ?? [];
+  const bundlesData = useQuery(api.bundles.listActive, {});
+  const bundles = bundlesData ?? [];
   const costCenters = useQuery(api.organization.listMyCostCenters) ?? [];
   const branches = useQuery(api.organization.listMyBranches) ?? [];
   const departments = useQuery(api.organization.listMyDepartments) ?? [];
@@ -535,9 +537,55 @@ const ClientCreateRfq = () => {
             </Card>
           ))}
 
-          <Button variant="outline" className="w-full" onClick={() => setItems([...items, emptyItem()])}>
-            <Plus className="w-4 h-4 me-2" /> {tr("Add Another Item")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setItems([...items, emptyItem()])}
+            >
+              <Plus className="w-4 h-4 me-2" /> {tr("Add Another Item")}
+            </Button>
+            {bundles.length > 0 && (
+              <Select
+                onValueChange={(bundleId) => {
+                  const b = bundles.find((bb: any) => bb._id === bundleId);
+                  if (!b) return;
+                  setItems((prev) => [
+                    ...prev.filter((p) => {
+                      // Drop the empty starter line if it's still pristine.
+                      return (
+                        p.master_product_id ||
+                        p.product_id ||
+                        p.custom_item_description.trim()
+                      );
+                    }),
+                    ...b.items.map((it: any) => ({
+                      key: crypto.randomUUID(),
+                      master_product_id: it.master_product_id,
+                      pack_type_code: it.pack_type_code,
+                      product_id: null,
+                      custom_item_description: "",
+                      quantity: it.quantity,
+                      flexibility: "EXACT_MATCH" as const,
+                      special_notes: it.notes ?? "",
+                    })),
+                  ]);
+                  toast.success(tr("Bundle added"));
+                }}
+              >
+                <SelectTrigger className="w-[260px]">
+                  <SelectValue placeholder={tr("+ Add a bundle")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {bundles.map((b: any) => (
+                    <SelectItem key={b._id} value={b._id}>
+                      {b.name_en} ({b.items.length})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
 
         <Card>

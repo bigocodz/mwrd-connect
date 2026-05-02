@@ -1,4 +1,4 @@
-import { action, internalQuery, mutation } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { api, internal } from "./_generated/api";
 
@@ -17,7 +17,7 @@ export const getProfileByEmail = internalQuery({
   },
 });
 
-export const storePendingUserRole = mutation({
+export const storePendingUserRole = internalMutation({
   args: {
     email: v.string(),
     role: v.union(v.literal("CLIENT"), v.literal("SUPPLIER"), v.literal("AUDITOR")),

@@ -30,6 +30,7 @@ const navItems = [
   { label: "Users", href: "/admin/users", icon: Users01 },
   { label: "Categories", href: "/admin/categories", icon: FolderCode },
   { label: "Master Catalog", href: "/admin/master-catalog", icon: Package },
+  { label: "Bundles", href: "/admin/bundles", icon: PackageCheck },
   { label: "Product Requests", href: "/admin/product-requests", icon: Inbox01 },
   { label: "Pending Offers", href: "/admin/products/pending", icon: PackageSearch },
   { label: "Margins", href: "/admin/margin-settings", icon: Percent03 },
