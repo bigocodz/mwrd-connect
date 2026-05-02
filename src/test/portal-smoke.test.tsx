@@ -10,7 +10,6 @@ import AdminCategories from "@/pages/admin/AdminCategories";
 import AdminClientInvoices from "@/pages/admin/AdminClientInvoices";
 import AdminContracts from "@/pages/admin/AdminContracts";
 import AdminContractDetail from "@/pages/admin/AdminContractDetail";
-import AdminCreateUser from "@/pages/admin/AdminCreateUser";
 import AdminCredit from "@/pages/admin/AdminCredit";
 import AdminDeliveryNotes from "@/pages/admin/AdminDeliveryNotes";
 import AdminDisputes from "@/pages/admin/AdminDisputes";
@@ -138,7 +137,6 @@ const cases: PortalCase[] = [
   { name: "admin dashboard", role: "ADMIN", path: "/admin/dashboard", element: <AdminDashboard /> },
   { name: "admin users", role: "ADMIN", path: "/admin/users", element: <AdminUsers /> },
   { name: "admin user detail", role: "ADMIN", path: "/admin/users/profile_1", element: <AdminUserDetail /> },
-  { name: "admin create user", role: "ADMIN", path: "/admin/users/create", element: <AdminCreateUser /> },
   { name: "admin pending products", role: "ADMIN", path: "/admin/products/pending", element: <AdminPendingProducts /> },
   { name: "admin master catalog", role: "ADMIN", path: "/admin/master-catalog", element: <AdminMasterCatalog /> },
   { name: "admin product requests", role: "ADMIN", path: "/admin/product-requests", element: <AdminProductRequests /> },

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Plus, Search, Star, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { TableSkeleton } from "@/components/shared/LoadingSkeletons";
@@ -16,6 +16,7 @@ import { usePagination, PaginationControls } from "@/components/shared/Paginatio
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import CreateUserDialog from "@/components/admin/CreateUserDialog";
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -43,6 +44,7 @@ const AdminUsers = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const deleteUser = useMutation(api.users.deleteUser);
 
   const usersData = useQuery(api.users.listAll, {
@@ -89,10 +91,12 @@ const AdminUsers = () => {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-3xl font-bold text-foreground">{tr("User Management")}</h1>
-        <Button asChild>
-          <Link to="/admin/users/create"><Plus className="w-4 h-4 me-1.5" /> {tr("Create User")}</Link>
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus className="w-4 h-4 me-1.5" /> {tr("Create User")}
         </Button>
       </div>
+
+      <CreateUserDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">

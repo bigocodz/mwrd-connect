@@ -22,7 +22,6 @@ import SupplierDashboard from "./pages/dashboards/SupplierDashboard";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
-import AdminCreateUser from "./pages/admin/AdminCreateUser";
 import AdminPendingProducts from "./pages/admin/AdminPendingProducts";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminMasterCatalog from "./pages/admin/AdminMasterCatalog";
@@ -238,9 +237,6 @@ const App = () => (
                 } />
                 <Route path="/admin/users" element={
                   <SafeRoute roles={["ADMIN"]}><AdminUsers /></SafeRoute>
-                } />
-                <Route path="/admin/users/create" element={
-                  <SafeRoute roles={["ADMIN"]}><AdminCreateUser /></SafeRoute>
                 } />
                 <Route path="/admin/users/:userId" element={
                   <SafeRoute roles={["ADMIN"]}><AdminUserDetail /></SafeRoute>
