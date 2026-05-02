@@ -28,6 +28,7 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminMasterCatalog from "./pages/admin/AdminMasterCatalog";
 import AdminProductRequests from "./pages/admin/AdminProductRequests";
 import AdminBundles from "./pages/admin/AdminBundles";
+import AdminDeliveryNotes from "./pages/admin/AdminDeliveryNotes";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import Account from "./pages/Account";
 import AdminMarginSettings from "./pages/admin/AdminMarginSettings";
@@ -300,6 +301,9 @@ const App = () => (
                 } />
                 <Route path="/admin/orders/:orderId" element={
                   <SafeRoute roles={["ADMIN"]}><AdminOrderDetail /></SafeRoute>
+                } />
+                <Route path="/admin/delivery-notes" element={
+                  <SafeRoute roles={["ADMIN"]}><AdminDeliveryNotes /></SafeRoute>
                 } />
                 <Route path="/admin/supplier-invoices" element={
                   <SafeRoute roles={["ADMIN"]}><AdminSupplierInvoices /></SafeRoute>

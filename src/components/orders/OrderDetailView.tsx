@@ -23,6 +23,7 @@ import {
 } from "./orderStatus";
 import { OrderTimeline } from "./OrderTimeline";
 import { GrnPanel } from "./GrnPanel";
+import { DeliveryNotePanel } from "./DeliveryNotePanel";
 import { DocumentsPanel } from "@/components/admin/DocumentsPanel";
 import { CommentsThread } from "@/components/comments/CommentsThread";
 
@@ -531,6 +532,12 @@ export const OrderDetailView = ({ orderId, role }: { orderId: string; role: Role
           </TableBody>
         </Table>
       </CardContent></Card>
+
+      <DeliveryNotePanel
+        orderId={order._id}
+        orderStatus={order.status}
+        role={role}
+      />
 
       <GrnPanel
         orderId={order._id}

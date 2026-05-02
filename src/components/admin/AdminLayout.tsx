@@ -38,6 +38,7 @@ const navItems = [
   { label: "Quotes", href: "/admin/quotes/pending", icon: Receipt },
   { label: "Approvals", href: "/admin/approvals", icon: ShieldTick },
   { label: "Orders", href: "/admin/orders", icon: PackageCheck },
+  { label: "Delivery Notes", href: "/admin/delivery-notes", icon: PackageCheck },
   { label: "Disputes", href: "/admin/disputes", icon: AlertCircle },
   { label: "Contracts", href: "/admin/contracts", icon: FileLock02 },
   { label: "Client Invoices", href: "/admin/client-invoices", icon: Receipt },
