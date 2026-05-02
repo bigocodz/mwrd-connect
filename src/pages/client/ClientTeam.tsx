@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 
 type TeamRole = "OWNER" | "ADMIN" | "BUYER" | "APPROVER" | "VIEWER";
-type InvitableRole = Exclude<TeamRole, "OWNER">;
+type InvitableRole = "BUYER" | "APPROVER" | "VIEWER";
 
 interface Member {
   _id: Id<"profiles">;
@@ -317,7 +317,6 @@ const ClientTeam = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ADMIN">{tr("Admin")}</SelectItem>
                           <SelectItem value="BUYER">{tr("Buyer")}</SelectItem>
                           <SelectItem value="APPROVER">
                             {tr("Approver")}
@@ -420,8 +419,8 @@ const ClientTeam = () => {
 
             <div className="space-y-2">
               <Label>{tr("Role")}</Label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {(["ADMIN", "BUYER", "APPROVER", "VIEWER"] as InvitableRole[]).map(
+              <div className="grid grid-cols-3 gap-2">
+                {(["BUYER", "APPROVER", "VIEWER"] as InvitableRole[]).map(
                   (r) => {
                     const meta = roleMeta[r];
                     const Icon = meta.icon;

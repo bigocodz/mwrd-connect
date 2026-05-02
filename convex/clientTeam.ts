@@ -28,7 +28,6 @@ const TEAM_ROLE = v.union(
 );
 
 const INVITABLE_ROLE = v.union(
-  v.literal("ADMIN"),
   v.literal("BUYER"),
   v.literal("APPROVER"),
   v.literal("VIEWER"),
