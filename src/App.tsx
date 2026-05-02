@@ -25,12 +25,18 @@ import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminCreateUser from "./pages/admin/AdminCreateUser";
 import AdminPendingProducts from "./pages/admin/AdminPendingProducts";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminMasterCatalog from "./pages/admin/AdminMasterCatalog";
+import AdminProductRequests from "./pages/admin/AdminProductRequests";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import Account from "./pages/Account";
 import AdminMarginSettings from "./pages/admin/AdminMarginSettings";
 import SupplierProducts from "./pages/supplier/SupplierProducts";
 import SupplierProductForm from "./pages/supplier/SupplierProductForm";
 import SupplierProductsBulk from "./pages/supplier/SupplierProductsBulk";
+import SupplierCatalogBrowse from "./pages/supplier/SupplierCatalogBrowse";
+import SupplierOfferForm from "./pages/supplier/SupplierOfferForm";
+import SupplierProductRequest from "./pages/supplier/SupplierProductRequest";
+import SupplierAutoQuoteQueue from "./pages/supplier/SupplierAutoQuoteQueue";
 import ClientCatalog from "./pages/client/ClientCatalog";
 import ClientCart from "./pages/client/ClientCart";
 import ClientRfqs from "./pages/client/ClientRfqs";
@@ -174,6 +180,21 @@ const App = () => (
                 <Route path="/supplier/products/:productId" element={
                   <SafeRoute roles={["SUPPLIER"]}><SupplierProductForm /></SafeRoute>
                 } />
+                <Route path="/supplier/catalog" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierCatalogBrowse /></SafeRoute>
+                } />
+                <Route path="/supplier/offers/new" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierOfferForm /></SafeRoute>
+                } />
+                <Route path="/supplier/offers/:offerId" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierOfferForm /></SafeRoute>
+                } />
+                <Route path="/supplier/product-requests/new" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierProductRequest /></SafeRoute>
+                } />
+                <Route path="/supplier/auto-quotes" element={
+                  <SafeRoute roles={["SUPPLIER"]}><SupplierAutoQuoteQueue /></SafeRoute>
+                } />
                 <Route path="/supplier/rfqs" element={
                   <SafeRoute roles={["SUPPLIER"]}><SupplierRfqs /></SafeRoute>
                 } />
@@ -216,6 +237,12 @@ const App = () => (
                 } />
                 <Route path="/admin/products/pending" element={
                   <SafeRoute roles={["ADMIN"]}><AdminPendingProducts /></SafeRoute>
+                } />
+                <Route path="/admin/master-catalog" element={
+                  <SafeRoute roles={["ADMIN"]}><AdminMasterCatalog /></SafeRoute>
+                } />
+                <Route path="/admin/product-requests" element={
+                  <SafeRoute roles={["ADMIN"]}><AdminProductRequests /></SafeRoute>
                 } />
                 <Route path="/admin/categories" element={
                   <SafeRoute roles={["ADMIN"]}><AdminCategories /></SafeRoute>

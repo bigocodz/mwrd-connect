@@ -1,9 +1,11 @@
-import { BankNote01, BarChartSquareUp, FileCheck02, FileShield02, HomeLine, Package, PackageCheck, Receipt, Star01 } from "@untitledui/icons";
+import { BankNote01, BarChartSquareUp, FileCheck02, FileShield02, HomeLine, Package, PackageCheck, PackageSearch, Receipt, Star01, Lightning01 } from "@untitledui/icons";
 import AppShell from "@/components/app/AppShell";
 
 const navItems = [
   { label: "Dashboard", href: "/supplier/dashboard", icon: HomeLine },
+  { label: "Browse Catalog", href: "/supplier/catalog", icon: PackageSearch },
   { label: "My Products", href: "/supplier/products", icon: Package },
+  { label: "Auto-Quote Queue", href: "/supplier/auto-quotes", icon: Lightning01 },
   { label: "Assigned RFQs", href: "/supplier/rfqs", icon: FileCheck02 },
   { label: "Orders", href: "/supplier/orders", icon: PackageCheck },
   { label: "Invoices", href: "/supplier/invoices", icon: Receipt },

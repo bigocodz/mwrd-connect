@@ -123,6 +123,87 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_public_id", ["public_id"]),
 
+  // Master Catalog (Phase 1 of catalog two-tier refactor). Admin-curated,
+  // single source of truth for product identity (name, specs, images, pack
+  // types). Suppliers attach Offers (rows in `products`) to a master_product
+  // and price/availability per pack type.
+  master_products: defineTable({
+    name_en: v.string(),
+    name_ar: v.string(),
+    description_en: v.optional(v.string()),
+    description_ar: v.optional(v.string()),
+    category_id: v.id("categories"),
+    sku: v.optional(v.string()),       // canonical admin SKU
+    brand: v.optional(v.string()),
+    images: v.array(v.string()),
+    specs: v.optional(v.any()),        // structured attributes (free-form JSON)
+    // Pack types (PRD: per-pack-type cost prices). Each entry is one orderable
+    // unit — e.g. {code:"EACH", base_qty:1}, {code:"CASE", base_qty:24}.
+    pack_types: v.array(
+      v.object({
+        code: v.string(),              // EACH | CASE | BULK | <custom>
+        label_en: v.string(),
+        label_ar: v.string(),
+        base_qty: v.number(),          // units of the smallest sellable unit
+        uom: v.optional(v.string()),   // PCS, KG, BOX, ...
+      }),
+    ),
+    status: v.union(
+      v.literal("DRAFT"),
+      v.literal("ACTIVE"),
+      v.literal("DEPRECATED"),
+    ),
+    display_order: v.optional(v.number()),
+    created_by: v.id("profiles"),      // admin who created
+    updated_at: v.optional(v.number()),
+    deprecated_at: v.optional(v.number()),
+    deprecation_reason: v.optional(v.string()),
+  })
+    .index("by_category", ["category_id"])
+    .index("by_status", ["status"])
+    .index("by_sku", ["sku"]),
+
+  // Supplier proposals to add new master products. Approval creates a row
+  // in `master_products` and stamps `created_master_product_id` here.
+  product_addition_requests: defineTable({
+    supplier_id: v.id("profiles"),
+    proposed_name_en: v.string(),
+    proposed_name_ar: v.string(),
+    proposed_description_en: v.optional(v.string()),
+    proposed_description_ar: v.optional(v.string()),
+    category_id: v.id("categories"),
+    proposed_sku: v.optional(v.string()),
+    proposed_brand: v.optional(v.string()),
+    images: v.array(v.string()),
+    specs: v.optional(v.any()),
+    proposed_pack_types: v.array(
+      v.object({
+        code: v.string(),
+        label_en: v.string(),
+        label_ar: v.string(),
+        base_qty: v.number(),
+        uom: v.optional(v.string()),
+      }),
+    ),
+    justification: v.optional(v.string()),
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("APPROVED"),
+      v.literal("REJECTED"),
+    ),
+    admin_notes: v.optional(v.string()),
+    rejection_reason: v.optional(v.string()),
+    decided_by: v.optional(v.id("profiles")),
+    decided_at: v.optional(v.number()),
+    created_master_product_id: v.optional(v.id("master_products")),
+  })
+    .index("by_supplier", ["supplier_id"])
+    .index("by_status", ["status"]),
+
+  // Supplier Offers — current `products` table re-purposed into the offer
+  // tier of the two-tier catalog. Existing rows continue to function in
+  // legacy mode (master_product_id null). New offers reference a
+  // master_product and a pack_type from that master.
   products: defineTable({
     supplier_id: v.id("profiles"),
     name: v.string(),
@@ -134,11 +215,28 @@ export default defineSchema({
     // Master-tree references (PRD §5.4) — optional during migration.
     category_id: v.optional(v.id("categories")),
     subcategory_id: v.optional(v.id("categories")),
+    // Two-tier link (Phase 1). Optional during migration; populated for any
+    // offer attached to a master product. pack_type_code identifies which
+    // pack from master_products.pack_types this offer prices.
+    master_product_id: v.optional(v.id("master_products")),
+    pack_type_code: v.optional(v.string()),
     sku: v.optional(v.string()),
     brand: v.optional(v.string()),
     images: v.array(v.string()),
     cost_price: v.number(),
     lead_time_days: v.number(),
+    // Minimum order quantity (PRD: per-offer MOQ). Optional for back-compat.
+    moq: v.optional(v.number()),
+    // Auto-quote engine (Phase 2 surfaces — fields land here in Phase 1 so
+    // suppliers can set the toggle now).
+    auto_quote: v.optional(v.boolean()),
+    review_window: v.optional(
+      v.union(
+        v.literal("INSTANT"),
+        v.literal("MIN_30"),
+        v.literal("HR_2"),
+      ),
+    ),
     availability_status: v.union(
       v.literal("AVAILABLE"),
       v.literal("LIMITED_STOCK"),
@@ -157,7 +255,9 @@ export default defineSchema({
   })
     .index("by_supplier", ["supplier_id"])
     .index("by_approval", ["approval_status"])
-    .index("by_category_id", ["category_id"]),
+    .index("by_category_id", ["category_id"])
+    .index("by_master_product", ["master_product_id"])
+    .index("by_master_and_supplier", ["master_product_id", "supplier_id"]),
 
   rfqs: defineTable({
     client_id: v.id("profiles"),
@@ -177,7 +277,11 @@ export default defineSchema({
 
   rfq_items: defineTable({
     rfq_id: v.id("rfqs"),
+    // Legacy direct supplier-product reference (back-compat). New RFQs should
+    // populate master_product_id + pack_type_code instead.
     product_id: v.optional(v.id("products")),
+    master_product_id: v.optional(v.id("master_products")),
+    pack_type_code: v.optional(v.string()),
     custom_item_description: v.optional(v.string()),
     quantity: v.number(),
     flexibility: v.union(
@@ -200,6 +304,9 @@ export default defineSchema({
     rfq_id: v.id("rfqs"),
     supplier_id: v.id("profiles"),
     status: v.union(
+      v.literal("AUTO_DRAFT"),          // generated by auto-quote engine, still
+                                        // in supplier review window. Not yet
+                                        // visible to client or admin.
       v.literal("PENDING_ADMIN"),
       v.literal("SENT_TO_CLIENT"),
       v.literal("CLIENT_REVISION_REQUESTED"),
@@ -208,6 +315,19 @@ export default defineSchema({
       v.literal("ACCEPTED"),
       v.literal("REJECTED"),
     ),
+    // Auto-quote engine (Phase 2). `source` distinguishes a draft generated by
+    // the engine from a supplier-typed manual quote so review queues, audit
+    // logs, and notifications can describe the right user journey.
+    source: v.optional(
+      v.union(
+        v.literal("MANUAL"),
+        v.literal("AUTO_DRAFT"),
+        v.literal("AUTO_SENT"),
+      ),
+    ),
+    // When status=AUTO_DRAFT, the scheduled flip to PENDING_ADMIN/SENT happens
+    // at this timestamp unless the supplier sends/edits/declines first.
+    review_until: v.optional(v.number()),
     reviewed_by: v.optional(v.id("profiles")),
     reviewed_at: v.optional(v.number()),
     supplier_notes: v.optional(v.string()),
@@ -219,14 +339,20 @@ export default defineSchema({
   })
     .index("by_rfq", ["rfq_id"])
     .index("by_supplier", ["supplier_id"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_status_and_review_until", ["status", "review_until"]),
 
   quote_items: defineTable({
     quote_id: v.id("quotes"),
     rfq_item_id: v.id("rfq_items"),
     is_quoted: v.boolean(),
+    // supplier_product_id is the offer the supplier is pricing. Two-tier
+    // refactor (Phase 1): also stamp master_product_id + pack_type_code so
+    // line-item comparison and award flows can group across suppliers.
     supplier_product_id: v.optional(v.id("products")),
     alternative_product_id: v.optional(v.id("products")),
+    master_product_id: v.optional(v.id("master_products")),
+    pack_type_code: v.optional(v.string()),
     cost_price: v.optional(v.number()),
     lead_time_days: v.optional(v.number()),
     margin_percent: v.optional(v.number()),

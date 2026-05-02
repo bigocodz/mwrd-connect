@@ -1,6 +1,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthenticatedProfile, requireAdminRead, requireClient, requireSupplier } from "./lib";
+import { generateDraftsForRfq } from "./autoQuote";
 
 const attachmentInput = v.object({
   document_type: v.union(
@@ -56,7 +57,12 @@ export const listMine = query({
         const quotes = await ctx.db
           .query("quotes")
           .withIndex("by_rfq", (q) => q.eq("rfq_id", rfq._id))
-          .filter((q) => q.neq(q.field("status"), "PENDING_ADMIN"))
+          .filter((q) =>
+            q.and(
+              q.neq(q.field("status"), "PENDING_ADMIN"),
+              q.neq(q.field("status"), "AUTO_DRAFT"),
+            ),
+          )
           .collect();
         return {
           ...rfq,
@@ -92,7 +98,8 @@ export const getById = query({
     const itemsWithProducts = await Promise.all(
       items.map(async (item) => {
         const product = item.product_id ? await ctx.db.get(item.product_id) : null;
-        return { ...item, product };
+        const master = item.master_product_id ? await ctx.db.get(item.master_product_id) : null;
+        return { ...item, product, master };
       }),
     );
     const attachments = await ctx.db
@@ -101,11 +108,19 @@ export const getById = query({
       .collect();
     const quotesQuery = ctx.db.query("quotes").withIndex("by_rfq", (q) => q.eq("rfq_id", args.id));
     // ADMIN + AUDITOR (PRD §13.4) see in-flight quotes; clients/suppliers
-    // are filtered to released ones (PENDING_ADMIN is admin-internal staging).
+    // are filtered to released ones (PENDING_ADMIN is admin-internal staging
+    // and AUTO_DRAFT is supplier-internal review window).
     const quotes =
       profile.role === "ADMIN" || profile.role === "AUDITOR"
         ? await quotesQuery.collect()
-        : await quotesQuery.filter((q) => q.neq(q.field("status"), "PENDING_ADMIN")).collect();
+        : await quotesQuery
+            .filter((q) =>
+              q.and(
+                q.neq(q.field("status"), "PENDING_ADMIN"),
+                q.neq(q.field("status"), "AUTO_DRAFT"),
+              ),
+            )
+            .collect();
     const [costCenter, branch, department] = await Promise.all([
       rfq.cost_center_id ? ctx.db.get(rfq.cost_center_id) : null,
       rfq.branch_id ? ctx.db.get(rfq.branch_id) : null,
@@ -224,7 +239,8 @@ export const getAssigned = query({
     const itemsWithProducts = await Promise.all(
       items.map(async (item) => {
         const product = item.product_id ? await ctx.db.get(item.product_id) : null;
-        return { ...item, product };
+        const master = item.master_product_id ? await ctx.db.get(item.master_product_id) : null;
+        return { ...item, product, master };
       }),
     );
     const existingQuote = await ctx.db
@@ -285,6 +301,12 @@ export const create = mutation({
     items: v.array(
       v.object({
         product_id: v.optional(v.id("products")),
+        // Two-tier catalog: clients shop the master catalog, so RFQ lines can
+        // target a master_product_id + pack_type_code instead of a specific
+        // supplier offer. Either form is accepted; new flows should prefer
+        // master + pack.
+        master_product_id: v.optional(v.id("master_products")),
+        pack_type_code: v.optional(v.string()),
         custom_item_description: v.optional(v.string()),
         quantity: v.number(),
         flexibility: v.union(
@@ -336,21 +358,52 @@ export const create = mutation({
       ),
     );
 
-    // Auto-assign suppliers who own selected products
-    const productIds = args.items.flatMap((i) => (i.product_id ? [i.product_id] : []));
-    if (productIds.length > 0) {
-      const products = await Promise.all(productIds.map((id) => ctx.db.get(id)));
-      const supplierIds = [...new Set(products.filter(Boolean).map((p) => p!.supplier_id))];
-      await Promise.all(
-        supplierIds.map((supplierId) =>
-          ctx.db.insert("rfq_supplier_assignments", {
-            rfq_id: rfqId,
-            supplier_id: supplierId,
-            assigned_at: Date.now(),
-          }),
-        ),
-      );
+    // Auto-assign suppliers. Two paths:
+    //   1. Legacy/direct: item references a specific supplier offer (product_id)
+    //      → that offer's supplier is added.
+    //   2. Master-catalog: item references a master_product_id (+ pack_type_code)
+    //      → every approved offer on that master (matching the pack if set) is
+    //      pulled in, and each unique supplier is added.
+    const supplierSet = new Set<string>();
+
+    const directProductIds = args.items.flatMap((i) => (i.product_id ? [i.product_id] : []));
+    if (directProductIds.length > 0) {
+      const directProducts = await Promise.all(directProductIds.map((id) => ctx.db.get(id)));
+      for (const p of directProducts) {
+        if (p?.supplier_id) supplierSet.add(p.supplier_id);
+      }
     }
+
+    for (const item of args.items) {
+      if (!item.master_product_id) continue;
+      const offers = await ctx.db
+        .query("products")
+        .withIndex("by_master_product", (q) =>
+          q.eq("master_product_id", item.master_product_id!),
+        )
+        .filter((q) => q.eq(q.field("approval_status"), "APPROVED"))
+        .collect();
+      for (const o of offers) {
+        if (item.pack_type_code && o.pack_type_code !== item.pack_type_code) continue;
+        supplierSet.add(o.supplier_id);
+      }
+    }
+
+    await Promise.all(
+      [...supplierSet].map((supplierId) =>
+        ctx.db.insert("rfq_supplier_assignments", {
+          rfq_id: rfqId,
+          supplier_id: supplierId as any,
+          assigned_at: Date.now(),
+        }),
+      ),
+    );
+
+    // Auto-quote engine (Phase 2). Generate AUTO_DRAFT quotes for every
+    // supplier whose offer has auto_quote=true on a master_product_id
+    // referenced by this RFQ. INSTANT-window drafts flip to PENDING_ADMIN
+    // immediately; longer windows are scheduled.
+    await generateDraftsForRfq(ctx, rfqId);
 
     return rfqId;
   },

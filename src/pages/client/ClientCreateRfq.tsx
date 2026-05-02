@@ -18,6 +18,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 interface RfqItemDraft {
   key: string;
+  // Two paths into the RFQ:
+  //   - master_product_id (+ pack_type_code) → preferred; targets the master
+  //     catalog so every supplier with an offer on the master can quote.
+  //   - product_id → legacy direct supplier-offer path (cart-derived items).
+  master_product_id: string | null;
+  pack_type_code: string | null;
   product_id: string | null;
   custom_item_description: string;
   quantity: number;
@@ -44,6 +50,8 @@ interface RfqAttachmentDraft {
 
 const emptyItem = (): RfqItemDraft => ({
   key: crypto.randomUUID(),
+  master_product_id: null,
+  pack_type_code: null,
   product_id: null,
   custom_item_description: "",
   quantity: 1,
@@ -80,6 +88,8 @@ const ClientCreateRfq = () => {
   const productsData = useQuery(api.products.listApproved);
   const loadingProducts = productsData === undefined;
   const products = productsData ?? [];
+  const masterProductsData = useQuery(api.masterProducts.listActive, {});
+  const masterProducts = masterProductsData ?? [];
   const costCenters = useQuery(api.organization.listMyCostCenters) ?? [];
   const branches = useQuery(api.organization.listMyBranches) ?? [];
   const departments = useQuery(api.organization.listMyDepartments) ?? [];
@@ -94,6 +104,8 @@ const ClientCreateRfq = () => {
     fromCart
       ? cartItems!.map((c) => ({
           key: crypto.randomUUID(),
+          master_product_id: null,
+          pack_type_code: null,
           product_id: c.product_id,
           custom_item_description: "",
           quantity: c.quantity,
@@ -187,6 +199,8 @@ const ClientCreateRfq = () => {
     setItems(
       template.items.map((item) => ({
         key: crypto.randomUUID(),
+        master_product_id: null,
+        pack_type_code: null,
         product_id: null,
         custom_item_description: item.custom_item_description,
         quantity: item.quantity,
@@ -245,7 +259,8 @@ const ClientCreateRfq = () => {
       return;
     }
     for (const item of items) {
-      if (!item.product_id && !item.custom_item_description.trim()) {
+      const hasProduct = item.master_product_id || item.product_id;
+      if (!hasProduct && !item.custom_item_description.trim()) {
         toast.error(tr("Each item must have a product or description"));
         return;
       }
@@ -282,6 +297,8 @@ const ClientCreateRfq = () => {
           notes: attachmentNotes || undefined,
         })),
         items: items.map((item) => ({
+          master_product_id: item.master_product_id ? (item.master_product_id as any) : undefined,
+          pack_type_code: item.pack_type_code || undefined,
           product_id: item.product_id ? (item.product_id as any) : undefined,
           custom_item_description: item.custom_item_description || undefined,
           quantity: item.quantity,
@@ -396,40 +413,88 @@ const ClientCreateRfq = () => {
                 )}
               </CardHeader>
               <CardContent className="space-y-3 px-4 pb-4">
-                <div>
-                  <Label>{tr("Product from Catalog")}</Label>
-                  <Select
-                    value={item.product_id || "custom"}
-                    onValueChange={(v) =>
-                      updateItem(item.key, {
-                        product_id: v === "custom" ? null : v,
-                        custom_item_description: v === "custom" ? item.custom_item_description : "",
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={tr("Select a product or choose custom…")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="custom">{tr("— Custom item (not in catalog)")}</SelectItem>
-                      {products.map((p) => (
-                        <SelectItem key={p._id} value={p._id}>
-                          {p.name} ({p.category})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {!item.product_id && (
-                  <div>
-                    <Label>{tr("Custom Item Description")}</Label>
-                    <Textarea
-                      value={item.custom_item_description}
-                      onChange={(e) => updateItem(item.key, { custom_item_description: e.target.value })}
-                      placeholder={tr("Describe the item you need…")}
-                    />
+                {item.product_id && !item.master_product_id ? (
+                  // Legacy cart-derived line — keep the direct supplier offer link
+                  // until the cart is migrated to masters.
+                  <div className="rounded-md border border-border p-2.5 text-sm">
+                    <div className="text-muted-foreground text-xs">{tr("From cart")}</div>
+                    <div className="font-medium">
+                      {products.find((p) => p._id === item.product_id)?.name ?? item.product_id}
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label>{tr("Product from Catalog")}</Label>
+                      <Select
+                        value={item.master_product_id || "custom"}
+                        onValueChange={(v) => {
+                          if (v === "custom") {
+                            updateItem(item.key, {
+                              master_product_id: null,
+                              pack_type_code: null,
+                            });
+                            return;
+                          }
+                          // Default pack_type to first available so suppliers
+                          // can match a specific orderable unit.
+                          const m = masterProducts.find((mp: any) => mp._id === v);
+                          updateItem(item.key, {
+                            master_product_id: v,
+                            pack_type_code: m?.pack_types?.[0]?.code ?? null,
+                            custom_item_description: "",
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={tr("Select a product or choose custom…")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="custom">{tr("— Custom item (not in catalog)")}</SelectItem>
+                          {masterProducts.map((m: any) => (
+                            <SelectItem key={m._id} value={m._id}>
+                              {m.name_en}
+                              {m.brand ? ` · ${m.brand}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {item.master_product_id && (
+                      <div>
+                        <Label>{tr("Pack type")}</Label>
+                        <Select
+                          value={item.pack_type_code ?? ""}
+                          onValueChange={(v) => updateItem(item.key, { pack_type_code: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={tr("Select a pack type")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(masterProducts.find((m: any) => m._id === item.master_product_id)
+                              ?.pack_types ?? []).map((p: any) => (
+                              <SelectItem key={p.code} value={p.code}>
+                                {p.code} — {p.label_en} · {p.base_qty}
+                                {p.uom ? ` ${p.uom}` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {!item.master_product_id && (
+                      <div>
+                        <Label>{tr("Custom Item Description")}</Label>
+                        <Textarea
+                          value={item.custom_item_description}
+                          onChange={(e) => updateItem(item.key, { custom_item_description: e.target.value })}
+                          placeholder={tr("Describe the item you need…")}
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
 
                 <div className="grid grid-cols-2 gap-3">

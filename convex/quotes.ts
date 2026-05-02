@@ -259,7 +259,12 @@ export const listMine = query({
         ctx.db
           .query("quotes")
           .withIndex("by_rfq", (q) => q.eq("rfq_id", rfqId))
-          .filter((q) => q.neq(q.field("status"), "PENDING_ADMIN"))
+          .filter((q) =>
+            q.and(
+              q.neq(q.field("status"), "PENDING_ADMIN"),
+              q.neq(q.field("status"), "AUTO_DRAFT"),
+            ),
+          )
           .collect(),
       ),
     );
@@ -300,7 +305,12 @@ export const compareForClient = query({
     const quotes = await ctx.db
       .query("quotes")
       .withIndex("by_rfq", (q) => q.eq("rfq_id", args.rfq_id))
-      .filter((q) => q.neq(q.field("status"), "PENDING_ADMIN"))
+      .filter((q) =>
+        q.and(
+          q.neq(q.field("status"), "PENDING_ADMIN"),
+          q.neq(q.field("status"), "AUTO_DRAFT"),
+        ),
+      )
       .collect();
     return buildComparison(ctx, rfq, quotes);
   },

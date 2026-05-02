@@ -265,6 +265,216 @@ export const stockAlerts = query({
   },
 });
 
+// Two-tier (master + offer) mutations. createOffer/updateOffer attach a
+// supplier price-and-availability record to a master_product + pack_type.
+// Legacy `create`/`update` remain for back-compat with existing supplier UI
+// until that flow is migrated to call createOffer.
+
+export const createOffer = mutation({
+  args: {
+    master_product_id: v.id("master_products"),
+    pack_type_code: v.string(),
+    cost_price: v.number(),
+    lead_time_days: v.number(),
+    moq: v.optional(v.number()),
+    auto_quote: v.optional(v.boolean()),
+    review_window: v.optional(
+      v.union(v.literal("INSTANT"), v.literal("MIN_30"), v.literal("HR_2")),
+    ),
+    availability_status: v.union(
+      v.literal("AVAILABLE"),
+      v.literal("LIMITED_STOCK"),
+      v.literal("OUT_OF_STOCK"),
+    ),
+    stock_quantity: v.optional(v.number()),
+    low_stock_threshold: v.optional(v.number()),
+    sku: v.optional(v.string()),       // supplier's own SKU
+  },
+  handler: async (ctx, args) => {
+    const profile = await requireSupplier(ctx);
+    const master = await ctx.db.get(args.master_product_id);
+    if (!master) throw new ConvexError("Master product not found");
+    if (master.status !== "ACTIVE") {
+      throw new ConvexError("Master product is not available for offers");
+    }
+    const pack = master.pack_types.find((p) => p.code === args.pack_type_code);
+    if (!pack) {
+      throw new ConvexError(`Pack type ${args.pack_type_code} not on master`);
+    }
+    // One offer per (supplier, master, pack_type) — block duplicates.
+    const existing = await ctx.db
+      .query("products")
+      .withIndex("by_master_and_supplier", (q) =>
+        q
+          .eq("master_product_id", args.master_product_id)
+          .eq("supplier_id", profile._id),
+      )
+      .collect();
+    if (existing.some((o) => o.pack_type_code === args.pack_type_code)) {
+      throw new ConvexError(
+        "You already have an offer for this pack type — edit it instead",
+      );
+    }
+    const availability = deriveAvailability(
+      args.availability_status,
+      args.stock_quantity,
+      args.low_stock_threshold,
+    );
+    const id = await ctx.db.insert("products", {
+      supplier_id: profile._id,
+      master_product_id: args.master_product_id,
+      pack_type_code: args.pack_type_code,
+      // Mirror master fields onto the offer so legacy queries that read
+      // products.name / category still work without a join.
+      name: master.name_en,
+      description: master.description_en,
+      category: "", // legacy field; new offers rely on master.category_id
+      category_id: master.category_id,
+      sku: args.sku,
+      brand: master.brand,
+      images: master.images,
+      cost_price: args.cost_price,
+      lead_time_days: args.lead_time_days,
+      moq: args.moq,
+      auto_quote: args.auto_quote ?? false,
+      review_window: args.review_window ?? "INSTANT",
+      availability_status: availability,
+      approval_status: "PENDING",
+      stock_quantity: args.stock_quantity,
+      low_stock_threshold: args.low_stock_threshold,
+      stock_updated_at: args.stock_quantity !== undefined ? Date.now() : undefined,
+      updated_at: Date.now(),
+    });
+    await logAction(ctx, {
+      action: "offer.create",
+      target_type: "offer",
+      target_id: id,
+      details: {
+        master_product_id: args.master_product_id,
+        pack_type_code: args.pack_type_code,
+      },
+    });
+    return id;
+  },
+});
+
+export const updateOffer = mutation({
+  args: {
+    id: v.id("products"),
+    cost_price: v.number(),
+    lead_time_days: v.number(),
+    moq: v.optional(v.number()),
+    auto_quote: v.optional(v.boolean()),
+    review_window: v.optional(
+      v.union(v.literal("INSTANT"), v.literal("MIN_30"), v.literal("HR_2")),
+    ),
+    availability_status: v.union(
+      v.literal("AVAILABLE"),
+      v.literal("LIMITED_STOCK"),
+      v.literal("OUT_OF_STOCK"),
+    ),
+    stock_quantity: v.optional(v.number()),
+    low_stock_threshold: v.optional(v.number()),
+    sku: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, ...args }) => {
+    const profile = await requireSupplier(ctx);
+    const offer = await ctx.db.get(id);
+    if (!offer || offer.supplier_id !== profile._id) {
+      throw new ConvexError("Not found");
+    }
+    if (!offer.master_product_id) {
+      throw new ConvexError("Use update() for legacy products");
+    }
+    const availability = deriveAvailability(
+      args.availability_status,
+      args.stock_quantity,
+      args.low_stock_threshold,
+    );
+    await ctx.db.patch(id, {
+      ...args,
+      availability_status: availability,
+      // Price/term changes re-trigger the offer approval queue.
+      approval_status: "PENDING",
+      rejection_reason: undefined,
+      updated_at: Date.now(),
+      stock_updated_at:
+        args.stock_quantity !== undefined &&
+        args.stock_quantity !== offer.stock_quantity
+          ? Date.now()
+          : offer.stock_updated_at,
+    });
+    await logAction(ctx, {
+      action: "offer.update",
+      target_type: "offer",
+      target_id: id,
+      details: { requeued_for_review: true },
+    });
+  },
+});
+
+export const setAutoQuote = mutation({
+  args: {
+    id: v.id("products"),
+    auto_quote: v.boolean(),
+    review_window: v.optional(
+      v.union(v.literal("INSTANT"), v.literal("MIN_30"), v.literal("HR_2")),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const profile = await requireSupplier(ctx);
+    const offer = await ctx.db.get(args.id);
+    if (!offer || offer.supplier_id !== profile._id) {
+      throw new ConvexError("Not found");
+    }
+    await ctx.db.patch(args.id, {
+      auto_quote: args.auto_quote,
+      review_window: args.review_window ?? offer.review_window ?? "INSTANT",
+    });
+    await logAction(ctx, {
+      action: "offer.auto_quote.toggle",
+      target_type: "offer",
+      target_id: args.id,
+      after: {
+        auto_quote: args.auto_quote,
+        review_window: args.review_window ?? offer.review_window ?? "INSTANT",
+      },
+    });
+  },
+});
+
+// All approved offers for a given master product. Used by the auto-quote
+// engine (find candidate suppliers for an RFQ line) and by future client
+// "see who sells this" admin views.
+export const listOffersForMaster = query({
+  args: { master_product_id: v.id("master_products") },
+  handler: async (ctx, args) => {
+    await getAuthenticatedProfile(ctx);
+    return ctx.db
+      .query("products")
+      .withIndex("by_master_product", (q) =>
+        q.eq("master_product_id", args.master_product_id),
+      )
+      .filter((q) => q.eq(q.field("approval_status"), "APPROVED"))
+      .collect();
+  },
+});
+
+export const myOffersByMaster = query({
+  args: { master_product_id: v.id("master_products") },
+  handler: async (ctx, args) => {
+    const profile = await requireSupplier(ctx);
+    return ctx.db
+      .query("products")
+      .withIndex("by_master_and_supplier", (q) =>
+        q
+          .eq("master_product_id", args.master_product_id)
+          .eq("supplier_id", profile._id),
+      )
+      .collect();
+  },
+});
+
 export const bulkCreate = mutation({
   args: {
     rows: v.array(

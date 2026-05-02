@@ -32,4 +32,14 @@ crons.interval(
   internal.approvals.escalateStaleSteps,
 );
 
+// Phase 2 auto-quote: catch any AUTO_DRAFT whose review_until passed without
+// the scheduled flip firing (dev resets, scheduler hiccups). 5-minute cadence
+// because the shortest review window is INSTANT — anything longer is fine
+// with a 5-min slip.
+crons.interval(
+  "release expired auto-quote drafts",
+  { minutes: 5 },
+  internal.autoQuote.sweepExpiredDrafts,
+);
+
 export default crons;
