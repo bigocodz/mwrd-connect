@@ -19,6 +19,15 @@ import { api, internal } from "./_generated/api";
 import { getClientOrgId, requireClient } from "./lib";
 import { logAction } from "./audit";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const TEAM_ROLE = v.union(
   v.literal("OWNER"),
   v.literal("ADMIN"),
@@ -130,6 +139,75 @@ export const inviteMember = action({
     const newProfile = await ctx.runQuery(internal.admin.getProfileByEmail, {
       email: args.email,
     });
+
+    // Send invitation email to the new member.
+    const portalUrl = process.env.MWRD_PORTAL_URL ?? "https://app.mwrd.sa";
+    const loginUrl = `${portalUrl.replace(/\/+$/, "")}/login`;
+    const inviterName = myProfile.full_name ?? myProfile.company_name ?? "Your organisation";
+    const roleLabel: Record<string, string> = {
+      BUYER: "Buyer",
+      APPROVER: "Approver",
+      VIEWER: "Viewer",
+    };
+    const roleName = roleLabel[args.team_role] ?? args.team_role;
+
+    const subject = `You've been invited to join ${inviterName} on MWRD`;
+    const html = `<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<body style="font-family:-apple-system,system-ui,'IBM Plex Sans',sans-serif;background:#f5f5f0;padding:24px;color:#1a1a1a;">
+  <table role="presentation" cellspacing="0" cellpadding="0" width="100%"
+    style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;">
+    <tr><td>
+      <p style="margin:0 0 8px;color:#8a8a85;font-size:12px;text-transform:uppercase;letter-spacing:0.6px;">MWRD</p>
+      <h1 style="margin:0 0 16px;font-size:22px;font-weight:700;">You're invited!</h1>
+      <p style="margin:0 0 12px;line-height:1.55;color:#3a3a3a;">
+        Hi <strong>${escapeHtml(args.full_name)}</strong>,<br>
+        <strong>${escapeHtml(inviterName)}</strong> has invited you to join their organisation
+        on the <strong>MWRD</strong> procurement portal as a <strong>${escapeHtml(roleName)}</strong>.
+      </p>
+      <p style="margin:0 0 12px;line-height:1.55;color:#3a3a3a;">Use the credentials below to sign in:</p>
+      <table role="presentation" cellspacing="0" cellpadding="0"
+        style="background:#f5f5f0;border-radius:8px;padding:16px 20px;margin-bottom:20px;width:100%;">
+        <tr>
+          <td style="padding:4px 0;color:#8a8a85;font-size:13px;width:120px;">Email</td>
+          <td style="padding:4px 0;font-weight:600;font-size:13px;">${escapeHtml(args.email)}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0;color:#8a8a85;font-size:13px;">Temporary password</td>
+          <td style="padding:4px 0;font-weight:600;font-size:13px;font-family:monospace;">${escapeHtml(args.temp_password)}</td>
+        </tr>
+      </table>
+      <p style="margin:0 0 20px;line-height:1.55;color:#3a3a3a;">
+        You will be asked to set a new password on your first login.
+      </p>
+      <p style="margin:0 0 24px;">
+        <a href="${loginUrl}"
+          style="display:inline-block;padding:12px 24px;background:#ff6d43;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;font-size:15px;">
+          Sign in to MWRD
+        </a>
+      </p>
+      <hr style="border:none;border-top:1px solid #ece7e1;margin:0 0 16px;">
+      <p style="margin:0;color:#8a8a85;font-size:12px;">
+        You're receiving this because ${escapeHtml(inviterName)} added you as a team member.
+        If you weren't expecting this invitation, you can safely ignore this email.
+      </p>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    // Best-effort — don't fail the invite if email delivery fails.
+    try {
+      await ctx.runAction(internal.email.send, {
+        to: args.email,
+        subject,
+        html,
+      });
+    } catch (_emailErr) {
+      // Email failure is non-fatal; the account is already created.
+      console.warn("Team invite email failed to send:", _emailErr);
+    }
+
     return { public_id: newProfile?.public_id ?? null };
   },
 });
