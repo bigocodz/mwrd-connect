@@ -1,0 +1,60 @@
+# Production-ish docker-compose. Use this verbatim on a single VM (Hetzner /
+# DO / Lightsail equivalent) or as a model when porting to ECS task
+# definitions / Render services.
+#
+# What this stack runs:
+#   - web      gunicorn serving Django (DRF + spectacular)
+#   - worker   Celery worker for emails, Wafeq sync, etc.
+#   - beat     Celery beat scheduler (cron replacement)
+#   - migrate  one-shot: runs migrations + collectstatic, then exits
+#
+# What this DOES NOT include (use managed services in prod):
+#   - Postgres (use RDS / Neon / Supabase)
+#   - Redis    (use ElastiCache / Upstash)
+#   - S3       (real bucket, not MinIO)
+#   - SES      (Anymail backend already configured)
+#   - reverse proxy + TLS (use ALB / CloudFront / Caddy in front)
+services:
+  migrate:
+    image: ${IMAGE:-mwrd-backend:latest}
+    env_file: [../.env]
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    restart: "no"
+
+  web:
+    image: ${IMAGE:-mwrd-backend:latest}
+    env_file: [../.env]
+    command: [
+      "gunicorn", "config.wsgi:application",
+      "--bind", "0.0.0.0:8000",
+      "--workers", "3", "--threads", "2",
+      "--access-logfile", "-",
+    ]
+    ports: ["8000:8000"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/schema/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    image: ${IMAGE:-mwrd-backend:latest}
+    env_file: [../.env]
+    command: ["celery", "-A", "config", "worker", "-l", "info", "--concurrency=4"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  beat:
+    image: ${IMAGE:-mwrd-backend:latest}
+    env_file: [../.env]
+    command: ["celery", "-A", "config", "beat", "-l", "info"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped

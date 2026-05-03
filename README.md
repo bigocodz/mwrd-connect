@@ -1,83 +1,88 @@
 # MWRD Connect
 
-B2B procurement platform connecting verified clients with suppliers. Clients submit RFQs, suppliers respond with quotes, and admins review and approve every transaction.
+B2B procurement marketplace. Clients post RFQs, suppliers bid, MWRD staff
+moderate. KSA-localized (Wafeq accounting, Wathq CR registry, SPL national
+address).
+
+## Layout
+
+```
+backend/         Django 5 + DRF + Postgres + Celery + Redis (modular monolith)
+frontend/       pnpm + Turborepo monorepo — 3 Vite apps + shared packages
+.github/workflows/  CI: backend.yml, frontend.yml, deploy.yml
+docs/PHASES.md  Phase-by-phase build log
+
+convex/         ARCHIVED — old Convex backend (see convex/ARCHIVED.md)
+src/            ARCHIVED — old single-bundle frontend (see src/ARCHIVED.md)
+```
 
 ## Tech stack
 
-- **Frontend:** Vite + React 18 + TypeScript
-- **Styling:** Tailwind CSS + shadcn/ui + Radix primitives
-- **Backend:** [Convex](https://convex.dev) (database, functions, auth, HTTP endpoints)
-- **Auth:** `@convex-dev/auth` with the Password provider
-- **Email:** [Resend](https://resend.com) HTTP API (called from a Convex action)
-- **Testing:** Vitest + Testing Library + jsdom
+| Layer | Choice |
+|---|---|
+| Backend | Django 5 + DRF + drf-spectacular |
+| DB | Postgres 16 |
+| Background jobs | Celery + Redis (django-celery-beat for cron) |
+| Storage | S3-compatible (MinIO in dev, AWS S3 / Cloudflare R2 in prod) |
+| Email | Anymail + AWS SES (Mailhog in dev) |
+| Frontend | Vite + React 19 + TypeScript |
+| API client | `openapi-typescript` codegen from `/api/schema/` |
+| Auth | JWT in httpOnly cookies + TOTP for staff |
+| Observability | Structured JSON logs + Sentry |
 
-## Project layout
+## First-time setup
 
+```bash
+# 1. Backend
+cd backend
+brew install uv                                # one-time
+cp .env.example .env
+uv sync
+docker compose up -d                           # postgres + redis + minio + mailhog
+uv run python manage.py migrate
+uv run python manage.py seed_staff \
+    --email staff@mwrd.local --password 'ChangeMe' --enroll-totp
+uv run python manage.py runserver 8001
+
+# 2. Frontend (in a second terminal)
+cd ../frontend
+pnpm install
+pnpm dev                                       # admin:5175 client:5173 supplier:5174
 ```
-convex/                Convex backend (schema, queries, mutations, actions, HTTP routes)
-  _generated/          Auto-generated types — do not edit
-  auth.ts              Password provider + profile creation callback
-  email.ts             Resend email sender
-  schema.ts            Database schema
-  http.ts              Public HTTP endpoints (e.g. /submit-lead)
-  leads.ts             Interest submissions + admin approval flow
-  users.ts             Profile queries + password change action
-  ...                  (products, rfqs, quotes, payments, payouts, etc.)
-public/landing/        Static marketing page (served at /landing)
-src/
-  pages/               Route-level screens grouped by role (admin/, client/, supplier/)
-  components/          Shared UI (shadcn primitives + feature components)
-  hooks/useAuth.tsx    Auth context wrapping @convex-dev/auth
-  contexts/            Language + theming providers
-```
-
-## Getting started
-
-```sh
-# 1. Install dependencies
-npm install
-
-# 2. Start the Convex backend (first run will prompt you to log in and link a deployment)
-npx convex dev
-
-# 3. In another terminal, start the Vite dev server
-npm run dev
-```
-
-The frontend reads `VITE_CONVEX_URL` and `VITE_CONVEX_SITE_URL` from `.env.local`, which `npx convex dev` creates automatically.
-
-## Required Convex environment variables
-
-Set these on your Convex deployment with `npx convex env set <NAME> <VALUE>`:
-
-| Variable | Purpose |
-|----------|---------|
-| `RESEND_API_KEY` | API key used by `convex/email.ts` to send transactional email. |
-| `RESEND_FROM` | From address, e.g. `"MWRD <no-reply@yourdomain.com>"`. Defaults to Resend's sandbox sender, which only delivers to your Resend account email. |
-| `APP_URL` | Public login URL included in credentials emails, e.g. `https://app.mwrd.example/login`. |
 
 ## Onboarding flow
 
-1. **Interest:** Visitor submits the form on `/landing`. It POSTs to the Convex HTTP route `/submit-lead`, which inserts a row into `interest_submissions` with status `PENDING`.
-2. **Review:** An admin opens **Admin → Leads** (`/admin/leads`), reviews the submission, and clicks **Approve & email credentials**.
-3. **Provisioning:** `leads.approveAndCreateAccount` generates a 16-character temporary password, signs up a new user with the admin-chosen role (`CLIENT` or `SUPPLIER`), marks the profile `ACTIVE`, and sets `must_change_password = true`.
-4. **Email:** Resend delivers the temporary credentials to the user.
-5. **First login:** The user signs in; `ProtectedRoute` detects `must_change_password` and redirects them to `/change-password`. Their new password is written via `modifyAccountCredentials`, the flag is cleared, and they're routed to their role dashboard.
+Invite-only. MWRD staff create the org, the system emails the owner an
+invite link, the owner sets a password and submits KYC docs, staff approves
+KYC → org is `ACTIVE`. From there clients post RFQs and suppliers bid.
 
-## Available scripts
+```bash
+# Bootstrap a customer org from the CLI
+uv run python manage.py seed_org \
+    --type CLIENT --name 'Acme Co' --public-id ACME --email owner@acme.sa
+```
 
-| Command | Purpose |
-|---------|---------|
-| `npm run dev` | Start Vite in development mode on port 8080 (auto-reassigned if busy) |
-| `npm run build` | Production build |
-| `npm run build:dev` | Development-mode build (sourcemaps, non-minified) |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint across the repo |
-| `npm run test` | Run Vitest once |
-| `npm run test:watch` | Run Vitest in watch mode |
-| `npx convex dev` | Sync schema and functions to the dev Convex deployment |
-| `npx convex deploy` | Deploy Convex functions to production |
+## Tests
 
-## Deployment
+```bash
+cd backend
+uv run pytest -q                               # 86 tests, ~1.5s
+uv run ruff check .
+```
 
-Any static host works for the frontend (Vercel, Netlify, Cloudflare Pages, etc.). The Convex backend is hosted by Convex — run `npx convex deploy` for production. Make sure production Convex env vars (`RESEND_API_KEY`, `RESEND_FROM`, `APP_URL`) are set before the approval flow is used.
+```bash
+cd frontend
+pnpm typecheck
+pnpm build
+```
+
+## Deploy
+
+See `backend/deploy/README.md`. CI workflow `.github/workflows/deploy.yml`
+covers the AWS ECS Fargate path. Backups: `backend/scripts/backup_postgres.sh`
+on a daily schedule, weekly verified restore via `restore_postgres.sh`.
+
+## Phase log
+
+See `docs/PHASES.md` for the full build journal (Phase 0 scaffolding →
+Phase 9 cutover) plus the deferred-items list.

@@ -1,0 +1,20 @@
+{
+  "name": "mwrd-frontend",
+  "private": true,
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "api:generate": "openapi-typescript http://localhost:8000/api/schema/ -o packages/api/src/schema.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.0",
+    "openapi-typescript": "^7.4.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

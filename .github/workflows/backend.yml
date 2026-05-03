@@ -1,0 +1,64 @@
+name: backend
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: mwrd
+          POSTGRES_PASSWORD: mwrd
+          POSTGRES_DB: mwrd
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U mwrd"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-secret
+      JWT_SIGNING_KEY: ci-jwt
+      DEBUG: "False"
+      ALLOWED_HOSTS: "*"
+      DATABASE_URL: postgres://mwrd:mwrd@localhost:5432/mwrd
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      AWS_STORAGE_BUCKET_NAME: ci-bucket
+      AWS_ACCESS_KEY_ID: ci
+      AWS_SECRET_ACCESS_KEY: ci
+      FRONTEND_CLIENT_URL: http://localhost:5173
+      FRONTEND_SUPPLIER_URL: http://localhost:5174
+      FRONTEND_ADMIN_URL: http://localhost:5175
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - name: Install Python deps
+        run: uv sync --all-extras
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Django check
+        run: uv run python manage.py check
+      - name: Migrations apply cleanly
+        run: uv run python manage.py migrate --noinput
+      - name: Tests
+        run: uv run pytest -q

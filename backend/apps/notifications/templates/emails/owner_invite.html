@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: system-ui, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px;">
+    <h2 style="margin: 0 0 16px;">Welcome to MWRD</h2>
+    <p>You've been invited to join <strong>{{ org_name }}</strong> as the organization owner.</p>
+    <p>
+      <a href="{{ accept_url }}"
+         style="display: inline-block; background: #111; color: #fff; padding: 10px 16px; border-radius: 6px; text-decoration: none;">
+        Accept invite
+      </a>
+    </p>
+    <p style="color: #666; font-size: 13px;">
+      Or copy this link: <code>{{ accept_url }}</code><br>
+      Link expires {{ expires_at|date:"Y-m-d H:i" }} UTC.
+    </p>
+    <hr>
+    <p style="color: #888; font-size: 12px;">
+      If you didn't expect this invite, you can safely ignore this email.
+    </p>
+  </body>
+</html>

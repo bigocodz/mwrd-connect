@@ -1,0 +1,90 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write    # OIDC to AWS — no static keys
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.push.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - id: push
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/mwrd-backend:${GITHUB_SHA::8}"
+          docker build -t "$IMAGE" backend/
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  migrate:
+    needs: build-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Run migrate as one-shot ECS task
+        run: |
+          aws ecs run-task \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --task-definition ${{ vars.ECS_MIGRATE_TASKDEF }} \
+            --overrides "{\"containerOverrides\":[{\"name\":\"web\",\"image\":\"${{ needs.build-image.outputs.image }}\"}]}" \
+            --launch-type FARGATE \
+            --network-configuration "${{ vars.ECS_NETWORK_CONFIG }}"
+
+  deploy-services:
+    needs: [build-image, migrate]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [web, worker, beat]
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Update ${{ matrix.service }} service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --service mwrd-${{ matrix.service }} \
+            --force-new-deployment
+
+  build-frontend:
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm build
+        working-directory: frontend
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Sync apps to CloudFront origins
+        run: |
+          aws s3 sync frontend/apps/admin/dist     s3://${{ vars.ADMIN_BUCKET }}    --delete
+          aws s3 sync frontend/apps/client/dist    s3://${{ vars.CLIENT_BUCKET }}   --delete
+          aws s3 sync frontend/apps/supplier/dist  s3://${{ vars.SUPPLIER_BUCKET }} --delete
+          aws cloudfront create-invalidation --distribution-id ${{ vars.ADMIN_CF }}    --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ vars.CLIENT_CF }}   --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ vars.SUPPLIER_CF }} --paths "/*"

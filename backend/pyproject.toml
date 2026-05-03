@@ -1,0 +1,67 @@
+[project]
+name = "mwrd-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.1,<5.2",
+    "djangorestframework>=3.15",
+    "djangorestframework-simplejwt>=5.3",
+    "drf-spectacular>=0.27",
+    "psycopg[binary]>=3.2",
+    "django-cors-headers>=4.4",
+    "django-environ>=0.11",
+    "django-storages[s3]>=1.14",
+    "django-anymail[amazon-ses]>=11",
+    "celery>=5.4",
+    "redis>=5.0",
+    "django-celery-beat>=2.6",
+    "django-otp>=1.5",
+    "qrcode>=7.4",
+    "argon2-cffi>=23.1",
+    "pillow>=10.4",
+    "weasyprint>=62",
+    "gunicorn>=23.0",
+    "django-ratelimit>=4.1.0",
+    "sentry-sdk[celery,django]>=2.58.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "pytest-cov>=5.0",
+    "factory-boy>=3.3",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "django-stubs>=5.0",
+    "djangorestframework-stubs>=3.15",
+    "ipython>=8.27",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "B", "UP", "C4", "DJ", "S"]
+# DJ012: cosmetic ordering rule; we follow fields→Meta→managers which it dislikes.
+ignore = ["S101", "S105", "S106", "DJ012"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/migrations/*.py" = ["E501", "N806"]
+"**/tests/*.py" = ["S", "E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--reuse-db --no-header"
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.dev"

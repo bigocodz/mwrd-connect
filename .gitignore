@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code local state — worktrees and per-machine cache should not
+# be tracked. (Other .claude/ files like launch.json are checked in.)
+.claude/worktrees/
+

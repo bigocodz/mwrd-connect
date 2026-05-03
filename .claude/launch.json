@@ -2,11 +2,25 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 8080,
-      "autoPort": true
+      "name": "client",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@mwrd/client", "dev"],
+      "port": 5173,
+      "cwd": "frontend"
+    },
+    {
+      "name": "supplier",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@mwrd/supplier", "dev"],
+      "port": 5174,
+      "cwd": "frontend"
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@mwrd/admin", "dev"],
+      "port": 5175,
+      "cwd": "frontend"
     }
   ]
 }
